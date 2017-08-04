@@ -1,0 +1,23 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="Measurements.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="ShowGenie" Type="System.String" Scope="User">
+      <Value Profile="(Default)">"PUTVIEW /xy=1,1 /cxcy=-100,-75 /NO_DATASRC"
+
+</Value>
+    </Setting>
+    <Setting Name="StartStrings" Type="System.String" Scope="User">
+      <Value Profile="(Default)">"ECHO OFF"
+"REXXFCTS"
+CALL G2KENVMT
+IF RC &lt;&gt; 0 THEN EXIT
+
+</Value>
+    </Setting>
+    <Setting Name="addDetectors" Type="System.String" Scope="User">
+      <Value Profile="(Default)">"PVOPEN DET:"detname" /EXPAND"
+</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>
