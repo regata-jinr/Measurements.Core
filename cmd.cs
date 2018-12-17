@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Windows.Forms;
 using System.IO;
 using System.Diagnostics;
 
@@ -20,45 +21,16 @@ namespace Measurements
                 cmdp.StartInfo.UseShellExecute = false;
                 cmdp.StartInfo.StandardOutputEncoding = System.Text.Encoding.GetEncoding(866); //иначе в файле будет греческий зал вместо русских символов
                 cmdp.Start();
-               // cmdp.WaitForExit();
             }
-            catch (Exception ex)
-            {
-                logWrite("Exception type " + ex.GetType() + Environment.NewLine +
-         "Exception message: " + ex.Message + Environment.NewLine +
-         "Stack trace: " + ex.StackTrace + Environment.NewLine, "Exception");
-            }
+            catch (Exception ex) {logWrite("Exception", $"Exception type {ex.GetType()} {Environment.NewLine} Exception message: {ex.Message} {Environment.NewLine} Stack trace: {ex.StackTrace}");}
         }
 
-        public void runRex() //method for running the command and writing the logs
+          public void logWrite(string type, string message)
         {
-            try
+            if (String.IsNullOrEmpty(Properties.Settings.Default.user)) MessageBox.Show("Выберите пользователя!", "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                using (StreamWriter sw = File.AppendText(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/Measurements.log"))
             {
-                runProcess();
-                cmdp.StandardInput.WriteLine("c:/ENTREXX/rexx.exe C:/GENIE2K/EXEFILES/M.REX");
-                cmdp.StandardInput.Flush();
-                cmdp.StandardInput.Close();
-                cmdp.WaitForExit();
-               
-
-                logWrite(cmdp.StandardOutput.ReadToEnd(), "CmdOutPut");
-
-               // cmdp.Close();
-            }
-            catch (Exception ex)
-            {
-                logWrite("Exception type " + ex.GetType() + Environment.NewLine +
-        "Exception message: " + ex.Message + Environment.NewLine +
-        "Stack trace: " + ex.StackTrace + Environment.NewLine, "Exception");
-              
-            }
-        }
-
-        public void logWrite(string output, string type)
-        {
-            using (StreamWriter sw = File.AppendText(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/Measurements.log"))
-            {
-                sw.WriteLine(DateTime.Now.ToString("yyyy-MM-dd HH:mm") + System.Environment.NewLine + type + System.Environment.NewLine + output);
+                sw.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm")}  {Properties.Settings.Default.user}  {type} {message}");
             }
 
         }

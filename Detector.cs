@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using CDA = CanberraDeviceAccessLib;
+
 //using System.Collections.Generic;
 //using System.Linq;
 //using System.Text;
@@ -8,34 +10,51 @@ using System.IO;
 //using System.Threading.Tasks;
 //using CanberraSequenceAnalyzerLib;
 //using CanberraDataDisplayLib;
-//using CanberraDeviceAccessLib;
 //using CanberraDataAccessLib;
 //using CanberraReporterLib;
 
 
-namespace Measurements //почитать про namespace
+namespace Measurements
 {
     class Detector
     {
-                        
-        private void addToM(string content)
-        {
-           File.AppendAllText("C:/GENIE2K/EXEFILES/M.REX", content);
-                       
+        public string name;
+        //status
+        public bool isOn { get; private set; }
+        public bool isHV;
+        public bool isCold;
+        public bool isBusy;
+        public bool isError; // then text
+        //status
+        public double efficiency;
+
+        private CanberraDeviceAccessLib.DeviceAccess Det = new CanberraDeviceAccessLib.DeviceAccess();
+
+        /// <summary>
+        /// Initializes for new detector object
+        /// </summary>
+        private void Init() {
+        }
+        /// <summary>
+        /// Checks work status
+        /// </summary>
+        private void Checks() {
+            try
+            {
+                Det.Connect(name);
+                if (Det.IsConnected) isOn = true;
+            }
+            catch (Exception ex) { }
+
         }
 
-        public void ShowGenie()
-        {
-            File.WriteAllText("C:/GENIE2K/EXEFILES/M.REX", ""); //clear file
-            addToM(Measurements.Properties.Settings.Default.StartStrings + Measurements.Properties.Settings.Default.ShowGenie);
-            
+        public Detector(string name) {
+            this.name = name;
+            Init();
+            Checks();
         }
 
-        public void addDetector(string detname)
-        {
-            addToM(Measurements.Properties.Settings.Default.addDetectors.Replace("detname",detname));
-            
-        }
+
 
 
     }
