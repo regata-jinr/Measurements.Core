@@ -22,5 +22,53 @@ namespace Measurements.Properties {
                 return defaultInstance;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool logAll {
+            get {
+                return ((bool)(this["logAll"]));
+            }
+            set {
+                this["logAll"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool logInfo {
+            get {
+                return ((bool)(this["logInfo"]));
+            }
+            set {
+                this["logInfo"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool logWarn {
+            get {
+                return ((bool)(this["logWarn"]));
+            }
+            set {
+                this["logWarn"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool LogErr {
+            get {
+                return ((bool)(this["LogErr"]));
+            }
+            set {
+                this["LogErr"] = value;
+            }
+        }
     }
 }

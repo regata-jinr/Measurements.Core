@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -9,7 +8,12 @@ namespace Measurements
     class Measurement
     {
        public string mType;
-       public int mFileNumber;
+        private int fileNumber;
+        public int FileNumber
+        {
+            get { return this.fileNumber; }
+            set { this.fileNumber = value; }
+        }
        public string mOperatorName;
        public int mDuration;
        public DateTime mDateStart;
@@ -17,7 +21,7 @@ namespace Measurements
        public DateTime mDateFinish;
        public DateTime mTimeFinish;
 
-
+       Measurement() { }
        public void Start() { }
        public void Continue() { }
        public void Reset() { }

@@ -27,18 +27,11 @@ Before we start, I would like to notice, that we will try to use user story and 
  
 
 #### Class Detector
-Detector is the main class, because detector is the main part of our experiment. It should be the most effective in all components: perfomance, safety, and so on.
+Detector is one of the main class, because detector is the main part of our experiment. It should be the most effective in all components: perfomance, safety, and so on. The good idea is add the implementation of auto calibration.
 
-_Conditions:
-High voltage(HV) - status {[on, off]}
-HV - limit
-HV - current value
-Gain
-LLD_
+#### Fields:
+Satus - {ready, off, busy, error}
 
-It's not needed right now.
-
-Good idea is auto calibration.
 
 The basic part is:
 
