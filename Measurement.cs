@@ -4,6 +4,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Data;
 using System.Data.SqlClient;
+using System.Diagnostics;
 
 namespace Measurements
 {
@@ -19,14 +20,14 @@ namespace Measurements
         public DateTime mDateFinish { get; set; }
         public DateTime mTimeFinish { get; set; }
         public float Height { get; set; }
-        private DataTable mTable;
-        private readonly Dictionary<string, string> QTJournalsDate = new Dictionary<string, string> { { "radioButtonSLI", "select distinct Date_Start  from table_SLI_Irradiation_Log order by Date_Start desc;" }, { "radioButtonLLI1", "select distinct Date_Start  from table_LLI_Irradiation_Log order by Date_Start desc;" }, { "radioButtonLLI2", "select distinct Date_Start  from table_LLI_Irradiation_Log order by Date_Start desc;" }, { "radioButtonBgrn", "" } };
+
+        private readonly Dictionary<string, string> QTJournalsDate = new Dictionary<string, string> { { "radioButtonSLI", "SLI" }, { "radioButtonLLI1", "LLI" }, { "radioButtonLLI2", "LLI" }};
 
         public List<DateTime> GetJournalsDates(string type)
         {
             List<DateTime> JList = new List<DateTime>();
             if (string.IsNullOrEmpty(type)) return JList;
-            SqlCommand sCmd = new SqlCommand(QTJournalsDate[type], mCon);
+            SqlCommand sCmd = new SqlCommand($"select distinct Date_Start  from table_{QTJournalsDate[type]}_Irradiation_Log order by Date_Start desc;", mCon);
             mCon.Open();
             SqlDataReader reader = sCmd.ExecuteReader();
             while (reader.Read()) JList.Add(reader.GetDateTime(0));
@@ -34,9 +35,22 @@ namespace Measurements
             return JList;
         }
 
+        public DataTable GetMeasurementsData(DateTime date, string type)
+        {
+            DataTable mTable = new DataTable();
+            SqlCommand sCmd = new SqlCommand($"select Country_Code, Client_Id, Year, Sample_Set_ID, Sample_Set_Index, Sample_ID, null Date_Start, null Date_Finish, null Time_Start, null Time_Finish, null Duration, null DetectorN, null FileN, {FormLogin.user} Operator, null CellN, null as Height, null as Weight from table_{QTJournalsDate[type]}_Irradiation_Log where Date_Start = '{date.ToShortDateString()}';", mCon);
+            mCon.Open();
+            SqlDataAdapter a = new SqlDataAdapter(sCmd);
+            a.Fill(mTable);
+            mCon.Close();
+            sCmd.CommandText = "";
+            return mTable;
+        }
+
        public Measurement(SqlConnection con)
         {
             mCon = con;
+          
         }
         public void Start() { }
         public void Continue() { }

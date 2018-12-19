@@ -28,13 +28,14 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             this.groupBoxTypes = new System.Windows.Forms.GroupBox();
             this.radioButtonBgrn = new System.Windows.Forms.RadioButton();
             this.radioButtonLLI2 = new System.Windows.Forms.RadioButton();
             this.radioButtonSLI = new System.Windows.Forms.RadioButton();
             this.radioButtonLLI1 = new System.Windows.Forms.RadioButton();
             this.groupBoxDB = new System.Windows.Forms.GroupBox();
-            this.dataGridView1 = new System.Windows.Forms.DataGridView();
+            this.dataGridViewMeasurements = new System.Windows.Forms.DataGridView();
             this.label16 = new System.Windows.Forms.Label();
             this.listBoxJournals = new System.Windows.Forms.ListBox();
             this.groupBoxTime = new System.Windows.Forms.GroupBox();
@@ -73,7 +74,7 @@
             this.buttonMeasure = new System.Windows.Forms.Button();
             this.groupBoxTypes.SuspendLayout();
             this.groupBoxDB.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewMeasurements)).BeginInit();
             this.groupBoxTime.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownTimeSec)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownTimeMin)).BeginInit();
@@ -103,7 +104,6 @@
             this.radioButtonBgrn.Name = "radioButtonBgrn";
             this.radioButtonBgrn.Size = new System.Drawing.Size(54, 19);
             this.radioButtonBgrn.TabIndex = 8;
-            this.radioButtonBgrn.TabStop = true;
             this.radioButtonBgrn.Text = "ФОН";
             this.radioButtonBgrn.UseVisualStyleBackColor = true;
             // 
@@ -115,7 +115,6 @@
             this.radioButtonLLI2.Name = "radioButtonLLI2";
             this.radioButtonLLI2.Size = new System.Drawing.Size(65, 19);
             this.radioButtonLLI2.TabIndex = 7;
-            this.radioButtonLLI2.TabStop = true;
             this.radioButtonLLI2.Tag = "";
             this.radioButtonLLI2.Text = "ДЖИ-2";
             this.radioButtonLLI2.UseVisualStyleBackColor = true;
@@ -129,7 +128,6 @@
             this.radioButtonSLI.Name = "radioButtonSLI";
             this.radioButtonSLI.Size = new System.Drawing.Size(53, 19);
             this.radioButtonSLI.TabIndex = 6;
-            this.radioButtonSLI.TabStop = true;
             this.radioButtonSLI.Tag = "";
             this.radioButtonSLI.Text = "КЖИ";
             this.radioButtonSLI.UseVisualStyleBackColor = true;
@@ -138,6 +136,7 @@
             // radioButtonLLI1
             // 
             this.radioButtonLLI1.AutoSize = true;
+            this.radioButtonLLI1.Checked = true;
             this.radioButtonLLI1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
             this.radioButtonLLI1.Location = new System.Drawing.Point(65, 20);
             this.radioButtonLLI1.Name = "radioButtonLLI1";
@@ -151,27 +150,36 @@
             // 
             // groupBoxDB
             // 
-            this.groupBoxDB.Controls.Add(this.dataGridView1);
+            this.groupBoxDB.Controls.Add(this.dataGridViewMeasurements);
             this.groupBoxDB.Controls.Add(this.label16);
             this.groupBoxDB.Controls.Add(this.listBoxJournals);
             this.groupBoxDB.Location = new System.Drawing.Point(0, 82);
             this.groupBoxDB.Name = "groupBoxDB";
-            this.groupBoxDB.Size = new System.Drawing.Size(998, 371);
+            this.groupBoxDB.Size = new System.Drawing.Size(1174, 394);
             this.groupBoxDB.TabIndex = 5;
             this.groupBoxDB.TabStop = false;
             this.groupBoxDB.Text = "База данных";
             // 
-            // dataGridView1
+            // dataGridViewMeasurements
             // 
-            this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView1.GridColor = System.Drawing.SystemColors.ControlLight;
-            this.dataGridView1.Location = new System.Drawing.Point(132, 16);
-            this.dataGridView1.Name = "dataGridView1";
-            this.dataGridView1.ReadOnly = true;
-            this.dataGridView1.RowHeadersVisible = false;
-            this.dataGridView1.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dataGridView1.Size = new System.Drawing.Size(860, 349);
-            this.dataGridView1.TabIndex = 5;
+            this.dataGridViewMeasurements.AllowUserToAddRows = false;
+            this.dataGridViewMeasurements.AllowUserToDeleteRows = false;
+            this.dataGridViewMeasurements.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.dataGridViewMeasurements.DefaultCellStyle = dataGridViewCellStyle1;
+            this.dataGridViewMeasurements.GridColor = System.Drawing.SystemColors.ControlLight;
+            this.dataGridViewMeasurements.Location = new System.Drawing.Point(136, 16);
+            this.dataGridViewMeasurements.Name = "dataGridViewMeasurements";
+            this.dataGridViewMeasurements.RowHeadersVisible = false;
+            this.dataGridViewMeasurements.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.dataGridViewMeasurements.Size = new System.Drawing.Size(1032, 370);
+            this.dataGridViewMeasurements.TabIndex = 5;
             // 
             // label16
             // 
@@ -190,8 +198,9 @@
             this.listBoxJournals.ItemHeight = 18;
             this.listBoxJournals.Location = new System.Drawing.Point(6, 35);
             this.listBoxJournals.Name = "listBoxJournals";
-            this.listBoxJournals.Size = new System.Drawing.Size(120, 328);
+            this.listBoxJournals.Size = new System.Drawing.Size(124, 346);
             this.listBoxJournals.TabIndex = 3;
+            this.listBoxJournals.SelectedValueChanged += new System.EventHandler(this.FillDataGridView);
             // 
             // groupBoxTime
             // 
@@ -261,7 +270,7 @@
             // 
             this.groupBoxDetectors.Location = new System.Drawing.Point(574, 27);
             this.groupBoxDetectors.Name = "groupBoxDetectors";
-            this.groupBoxDetectors.Size = new System.Drawing.Size(291, 55);
+            this.groupBoxDetectors.Size = new System.Drawing.Size(454, 55);
             this.groupBoxDetectors.TabIndex = 10;
             this.groupBoxDetectors.TabStop = false;
             this.groupBoxDetectors.Text = "Детекторы";
@@ -275,7 +284,7 @@
             this.ToolStripMenuItem});
             this.menuStripBase.Location = new System.Drawing.Point(0, 0);
             this.menuStripBase.Name = "menuStripBase";
-            this.menuStripBase.Size = new System.Drawing.Size(1006, 24);
+            this.menuStripBase.Size = new System.Drawing.Size(1186, 24);
             this.menuStripBase.TabIndex = 11;
             this.menuStripBase.Text = "menuStrip1";
             // 
@@ -468,9 +477,9 @@
             // 
             this.buttonMeasure.BackColor = System.Drawing.SystemColors.ActiveCaption;
             this.buttonMeasure.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.buttonMeasure.Location = new System.Drawing.Point(871, 27);
+            this.buttonMeasure.Location = new System.Drawing.Point(1034, 29);
             this.buttonMeasure.Name = "buttonMeasure";
-            this.buttonMeasure.Size = new System.Drawing.Size(127, 55);
+            this.buttonMeasure.Size = new System.Drawing.Size(140, 55);
             this.buttonMeasure.TabIndex = 12;
             this.buttonMeasure.Text = "Пуск";
             this.buttonMeasure.UseVisualStyleBackColor = false;
@@ -480,7 +489,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1006, 456);
+            this.ClientSize = new System.Drawing.Size(1186, 480);
             this.Controls.Add(this.buttonMeasure);
             this.Controls.Add(this.groupBoxDetectors);
             this.Controls.Add(this.groupBoxTime);
@@ -498,7 +507,7 @@
             this.groupBoxTypes.PerformLayout();
             this.groupBoxDB.ResumeLayout(false);
             this.groupBoxDB.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewMeasurements)).EndInit();
             this.groupBoxTime.ResumeLayout(false);
             this.groupBoxTime.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownTimeSec)).EndInit();
@@ -519,7 +528,7 @@
         private System.Windows.Forms.RadioButton radioButtonSLI;
         private System.Windows.Forms.RadioButton radioButtonLLI1;
         private System.Windows.Forms.GroupBox groupBoxDB;
-        private System.Windows.Forms.DataGridView dataGridView1;
+        private System.Windows.Forms.DataGridView dataGridViewMeasurements;
         private System.Windows.Forms.Label label16;
         private System.Windows.Forms.ListBox listBoxJournals;
         private System.Windows.Forms.GroupBox groupBoxTime;

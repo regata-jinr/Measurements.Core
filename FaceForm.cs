@@ -10,6 +10,7 @@ using System.Windows.Forms;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System;
 
 namespace Measurements
 {
@@ -18,6 +19,7 @@ namespace Measurements
         // public NLog.LogManager
         private Detector[] dets;
         internal Measurement mes;
+        private string NameOfCheckedTypeRB;
         
         private void InitialsSettings()
         {
@@ -97,8 +99,15 @@ namespace Measurements
 
         private void FillJournalsDate(object sender, System.EventArgs e)
         {
-            listBoxJournals.DataSource = mes.GetJournalsDates(groupBoxTypes.Controls.OfType<RadioButton>()
-              .FirstOrDefault(n => n.Checked).Name);
+            NameOfCheckedTypeRB = groupBoxTypes.Controls.OfType<RadioButton>()
+              .FirstOrDefault(n => n.Checked).Name;
+            listBoxJournals.DataSource = mes.GetJournalsDates(NameOfCheckedTypeRB);
+        }
+
+        private void FillDataGridView(object sender, System.EventArgs e)
+        {
+           // Debug.WriteLine((DateTime)listBoxJournals.SelectedValue);
+            dataGridViewMeasurements.DataSource = mes.GetMeasurementsData((DateTime)listBoxJournals.SelectedValue, NameOfCheckedTypeRB);
         }
     }
 }
