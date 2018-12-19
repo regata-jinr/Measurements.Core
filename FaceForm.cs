@@ -17,7 +17,7 @@ namespace Measurements
     {
         // public NLog.LogManager
         private Detector[] dets;
-        private readonly Dictionary<Status, Color> StatusColorDict = new Dictionary<Status, Color> { { Status.busy, Color.Gold }, { Status.ready, Color.LimeGreen }, { Status.off, Color.Gray }, { Status.error, Color.Red } };
+        
         private void InitialsSettings()
         {
             string version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
@@ -53,12 +53,12 @@ namespace Measurements
             }
 
 
-            dets[0].Clear();
-            dets[0].SpectroscopyAcquireSetup(CanberraDeviceAccessLib.AcquisitionModes.aCountToLiveTime, 15);
-            dets[0].AcquireStart();
-            if (dets[0].AnalyzerStatus == CanberraDeviceAccessLib.DeviceStatus.aAcquireDone)
-                Debug.WriteLine(dets[0].AnalyzerStatus.ToString());
-            dets[0].Disconnect();
+            //dets[0].Clear();
+            //dets[0].SpectroscopyAcquireSetup(CanberraDeviceAccessLib.AcquisitionModes.aCountToLiveTime, 15);
+            //dets[0].AcquireStart();
+            //if (dets[0].AnalyzerStatus == CanberraDeviceAccessLib.DeviceStatus.aAcquireDone)
+            //    Debug.WriteLine(dets[0].AnalyzerStatus.ToString());
+            //dets[0].Disconnect();
          
 
         }
@@ -77,27 +77,25 @@ namespace Measurements
         //TODO: size and location will not work for auto scale(maximize, grow and shrink...)
         private void AddDetectorControl(Detector d, int number)
         {
-            CheckBox chb = new CheckBox();
-            chb.Name = $"checkBox{d.Name}";
-            chb.Text = d.Name;
-            chb.Location = new Point(6 + number * 48, 15);
-            chb.Size = new Size(42, 19);
-            PictureBox pb = new PictureBox();
-            pb.Name = $"PictureBox{d.Name}";
-            pb.BackColor = StatusColorDict[d.Status];
-            pb.Location = new Point(6+number*48, 31);
-            pb.Size = new Size(13, 14);
-            ToolTip tt = new ToolTip();
-            tt.SetToolTip(pb, $"Status of detector is {StatusColorDict.FirstOrDefault(x => x.Value == pb.BackColor).Key}");
-            if (d.Status == Status.error) tt.SetToolTip(pb, $"Status of detector is {StatusColorDict.FirstOrDefault(x => x.Value == pb.BackColor).Key}. Error message: {d.ErrorStr}");
-
-            groupBoxDetectors.Controls.Add(chb);
-            groupBoxDetectors.Controls.Add(pb);
+            d.DetForm.Location = new Point(6 + number * 48, groupBoxDetectors.Location.Y - d.DetForm.Size.Height/2 + 4);
+            groupBoxDetectors.Controls.Add(d.DetForm);
+            ToolStripMenuItemDetectors.DropDownItems.Add(d.Name);
         }
 
         private void buttonMeasure_Click(object sender, System.EventArgs e)
         {
             //SetListOfCommand 140page S560
+            foreach (var det in dets)
+            {
+                Debug.WriteLine($"{det.Name} is Checked = {det.DetForm.Checked}");
+            }
         }
+
+        private void CheckDetectors()
+        {
+
+        }
+
+
     }
 }

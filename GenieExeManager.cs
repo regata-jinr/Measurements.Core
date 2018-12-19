@@ -36,6 +36,7 @@ namespace Measurements
         public void StopMca(string args) {RunExe("stopmca", args); }
 
 
+
         private void runProcess() //constructor create cmd process
         {
             try

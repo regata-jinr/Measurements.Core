@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Drawing;
 
-//using System.Collections.Generic;
+using System.Collections.Generic;
 //using System.Linq;
 //using System.Text;
 
@@ -13,6 +14,9 @@ using System.IO;
 //using CanberraReporterLib;
 using CanberraDeviceAccessLib;
 
+
+//NOTE: Ending of task is not stop acquire. I should control it via VDM manager. I have a corresponding class here C:\GENIE2K\EXEFILES\ru
+//NOTE: perhaps, add object of control class it's not a good idea. But it allow to not programming chain checkboxed checked event with some bool field in Detector.
 namespace Measurements
 {
     enum Status {ready, off, busy, error}
@@ -25,16 +29,28 @@ namespace Measurements
     {
         /// <summary> Gets Status of detector. {ready, off, busy, error}. </summary>
         public Status Status { get; private set; }
-        
+        private readonly Dictionary<Status, Color> StatusColorDict = new Dictionary<Status, Color> { { Status.busy, Color.Gold }, { Status.ready, Color.LimeGreen }, { Status.off, Color.Gray }, { Status.error, Color.Red } };
         /// <summary> Gets the error string. </summary>
         public string ErrorStr { get; private set; }
         //status
         public bool IsHV { get; private set; }
+
+        public CheckBoxAndStatus DetForm;
+
+        //true if checkbox Marked
+        
+
+        // TODO: add information about detector
+        // HV(status, value), gain, cold,...
+        // should be field for each parameter, but wrapper should be common for easily adding to form in loop
+        // public Dictionary<string, string> Parameters;
         /// <summary>Initializes for new detector object</summary>
         private void Init() {
-            IsHV = this.HighVoltage.On;
-            if (this.IsConnected) Status = Status.ready;
-           
+            DetForm = new CheckBoxAndStatus();
+            DetForm.SetCheckBoxText(Name);
+            DetForm.SetStatusColor(StatusColorDict[Status]);
+            if (Status != Status.error) DetForm.SetTootTipText($"{Status}");
+            else DetForm.SetTootTipText($"{Status}. Error message: {ErrorStr}");
         }
 
         /// <summary>Constructor of Detector class. By default ConnectOptions is ReadWrite.</summary>
@@ -44,7 +60,7 @@ namespace Measurements
             {
                 Status = Status.off;
                 this.Connect(name, ConnectOptions.aReadWrite);
-                Init();
+                Status = Status.ready;
             }
             catch (System.Runtime.InteropServices.COMException ex) {
                 if (ex.Message.Contains("278e2a")) Status = Status.busy;
@@ -54,6 +70,7 @@ namespace Measurements
                     ErrorStr = ex.Message;        
                 }
             }
+            Init();
         }
 
         /// <summary>Constructor of Detector class.</summary>
@@ -65,9 +82,10 @@ namespace Measurements
             {
                 Status = Status.off;
                 this.Connect(name, option);
-                Init();
+                Status = Status.ready;
             }
             catch (System.Runtime.InteropServices.COMException ex) { if (ex.Message.Contains("278e2a")) Status = Status.busy; }
+            Init();
         }
 
         /// <summary>Overload method Connect from CanberraDeviceAccessLib. After second parametr always uses default values.</summary>
@@ -83,23 +101,14 @@ namespace Measurements
         //TODO: 3. if no, find process and close it;
         //TODO: 4. then user should choose continue or rewrite;
         //TODO: 5. for error status might be wrong!;
+        //TODO: 6. try to use VDM for reset detector;
+
         public void ReConnect() {
             if (Status == Status.ready) return;
             if (Status == Status.off) { Connect(Name); return; }
             // else for error and busy
-
-            Process[] proc = Process.GetProcessesByName("mvcg");
-            if (proc[0] != null)
-            {
-                Process p = new Process();
-                p.StartInfo.UseShellExecute = false;
-                p.StartInfo.RedirectStandardOutput = true;
-                p.StartInfo.FileName = @"C:\Ge";
-            }
-            proc[0].Close();
+            Connect(Name); return;
         }
-
-
 
 
     }
