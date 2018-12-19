@@ -7,7 +7,7 @@ using System.Collections.Generic;
 //using System.Linq;
 //using System.Text;
 
-//using System.Threading.Tasks;
+using System.Threading.Tasks;
 //using CanberraSequenceAnalyzerLib;
 //using CanberraDataDisplayLib;
 //using CanberraDataAccessLib;
@@ -88,11 +88,12 @@ namespace Measurements
             Init();
         }
 
+        //TODO: connect should has a timeout exception. In case I turn off vdm manager it stucks on connecting.
         /// <summary>Overload method Connect from CanberraDeviceAccessLib. After second parametr always uses default values.</summary>
         /// <param name="name">Name of detector. Without path.</param>
         /// <param name="option">CanberraDeviceAccessLib.ConnectOptions {aReadWrite, aContinue, aNoVerifyLicense, aReadOnly, aTakeControl, aTakeOver}</param>
         public void Connect(string name, ConnectOptions option) {
-            this.Connect(name, option, AnalyzerType.aSpectralDetector, "", BaudRate.aUseSystemSettings);
+                this.Connect(name, option, AnalyzerType.aSpectralDetector, "", BaudRate.aUseSystemSettings);
         }
 
         //TODO: 0. Impelement class for control and run exe files; //pvopen, pvclose,...

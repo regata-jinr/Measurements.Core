@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.groupBoxTypes = new System.Windows.Forms.GroupBox();
             this.radioButtonBgrn = new System.Windows.Forms.RadioButton();
             this.radioButtonLLI2 = new System.Windows.Forms.RadioButton();
             this.radioButtonSLI = new System.Windows.Forms.RadioButton();
@@ -36,7 +36,7 @@
             this.groupBoxDB = new System.Windows.Forms.GroupBox();
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
             this.label16 = new System.Windows.Forms.Label();
-            this.listBox1 = new System.Windows.Forms.ListBox();
+            this.listBoxJournals = new System.Windows.Forms.ListBox();
             this.groupBoxTime = new System.Windows.Forms.GroupBox();
             this.labelSeconds = new System.Windows.Forms.Label();
             this.numericUpDownTimeSec = new System.Windows.Forms.NumericUpDown();
@@ -53,6 +53,7 @@
             this.открытьToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.обновитьToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.информацияToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.высотаToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.уСОToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ToolStripMenuItemAutoHeight = new System.Windows.Forms.ToolStripMenuItem();
@@ -70,7 +71,7 @@
             this.ToolStripMenuItemLoggingWarn = new System.Windows.Forms.ToolStripMenuItem();
             this.ToolStripMenuItemLoggingErr = new System.Windows.Forms.ToolStripMenuItem();
             this.buttonMeasure = new System.Windows.Forms.Button();
-            this.groupBox2.SuspendLayout();
+            this.groupBoxTypes.SuspendLayout();
             this.groupBoxDB.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.groupBoxTime.SuspendLayout();
@@ -80,19 +81,19 @@
             this.menuStripBase.SuspendLayout();
             this.SuspendLayout();
             // 
-            // groupBox2
+            // groupBoxTypes
             // 
-            this.groupBox2.Controls.Add(this.radioButtonBgrn);
-            this.groupBox2.Controls.Add(this.radioButtonLLI2);
-            this.groupBox2.Controls.Add(this.radioButtonSLI);
-            this.groupBox2.Controls.Add(this.radioButtonLLI1);
-            this.groupBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.groupBox2.Location = new System.Drawing.Point(6, 27);
-            this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(274, 55);
-            this.groupBox2.TabIndex = 2;
-            this.groupBox2.TabStop = false;
-            this.groupBox2.Text = "Тип измерений";
+            this.groupBoxTypes.Controls.Add(this.radioButtonBgrn);
+            this.groupBoxTypes.Controls.Add(this.radioButtonLLI2);
+            this.groupBoxTypes.Controls.Add(this.radioButtonSLI);
+            this.groupBoxTypes.Controls.Add(this.radioButtonLLI1);
+            this.groupBoxTypes.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.groupBoxTypes.Location = new System.Drawing.Point(6, 27);
+            this.groupBoxTypes.Name = "groupBoxTypes";
+            this.groupBoxTypes.Size = new System.Drawing.Size(274, 55);
+            this.groupBoxTypes.TabIndex = 2;
+            this.groupBoxTypes.TabStop = false;
+            this.groupBoxTypes.Text = "Тип измерений";
             // 
             // radioButtonBgrn
             // 
@@ -115,8 +116,10 @@
             this.radioButtonLLI2.Size = new System.Drawing.Size(65, 19);
             this.radioButtonLLI2.TabIndex = 7;
             this.radioButtonLLI2.TabStop = true;
+            this.radioButtonLLI2.Tag = "";
             this.radioButtonLLI2.Text = "ДЖИ-2";
             this.radioButtonLLI2.UseVisualStyleBackColor = true;
+            this.radioButtonLLI2.Click += new System.EventHandler(this.FillJournalsDate);
             // 
             // radioButtonSLI
             // 
@@ -127,8 +130,10 @@
             this.radioButtonSLI.Size = new System.Drawing.Size(53, 19);
             this.radioButtonSLI.TabIndex = 6;
             this.radioButtonSLI.TabStop = true;
+            this.radioButtonSLI.Tag = "";
             this.radioButtonSLI.Text = "КЖИ";
             this.radioButtonSLI.UseVisualStyleBackColor = true;
+            this.radioButtonSLI.Click += new System.EventHandler(this.FillJournalsDate);
             // 
             // radioButtonLLI1
             // 
@@ -139,14 +144,16 @@
             this.radioButtonLLI1.Size = new System.Drawing.Size(65, 19);
             this.radioButtonLLI1.TabIndex = 4;
             this.radioButtonLLI1.TabStop = true;
+            this.radioButtonLLI1.Tag = "";
             this.radioButtonLLI1.Text = "ДЖИ-1";
             this.radioButtonLLI1.UseVisualStyleBackColor = true;
+            this.radioButtonLLI1.Click += new System.EventHandler(this.FillJournalsDate);
             // 
             // groupBoxDB
             // 
             this.groupBoxDB.Controls.Add(this.dataGridView1);
             this.groupBoxDB.Controls.Add(this.label16);
-            this.groupBoxDB.Controls.Add(this.listBox1);
+            this.groupBoxDB.Controls.Add(this.listBoxJournals);
             this.groupBoxDB.Location = new System.Drawing.Point(0, 82);
             this.groupBoxDB.Name = "groupBoxDB";
             this.groupBoxDB.Size = new System.Drawing.Size(998, 371);
@@ -176,13 +183,15 @@
             this.label16.TabIndex = 6;
             this.label16.Text = "Журналы облучений";
             // 
-            // listBox1
+            // listBoxJournals
             // 
-            this.listBox1.FormattingEnabled = true;
-            this.listBox1.Location = new System.Drawing.Point(6, 35);
-            this.listBox1.Name = "listBox1";
-            this.listBox1.Size = new System.Drawing.Size(120, 329);
-            this.listBox1.TabIndex = 3;
+            this.listBoxJournals.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.listBoxJournals.FormattingEnabled = true;
+            this.listBoxJournals.ItemHeight = 18;
+            this.listBoxJournals.Location = new System.Drawing.Point(6, 35);
+            this.listBoxJournals.Name = "listBoxJournals";
+            this.listBoxJournals.Size = new System.Drawing.Size(120, 328);
+            this.listBoxJournals.TabIndex = 3;
             // 
             // groupBoxTime
             // 
@@ -285,7 +294,8 @@
             this.продолжитьToolStripMenuItem,
             this.открытьToolStripMenuItem,
             this.обновитьToolStripMenuItem,
-            this.информацияToolStripMenuItem});
+            this.информацияToolStripMenuItem,
+            this.высотаToolStripMenuItem});
             this.detPatternToolStripMenuItem.Name = "detPatternToolStripMenuItem";
             this.detPatternToolStripMenuItem.Size = new System.Drawing.Size(130, 22);
             this.detPatternToolStripMenuItem.Text = "DetPattern";
@@ -322,6 +332,12 @@
             this.информацияToolStripMenuItem.Name = "информацияToolStripMenuItem";
             this.информацияToolStripMenuItem.Size = new System.Drawing.Size(148, 22);
             this.информацияToolStripMenuItem.Text = "Информация";
+            // 
+            // высотаToolStripMenuItem
+            // 
+            this.высотаToolStripMenuItem.Name = "высотаToolStripMenuItem";
+            this.высотаToolStripMenuItem.Size = new System.Drawing.Size(148, 22);
+            this.высотаToolStripMenuItem.Text = "Высота";
             // 
             // уСОToolStripMenuItem
             // 
@@ -469,7 +485,7 @@
             this.Controls.Add(this.groupBoxDetectors);
             this.Controls.Add(this.groupBoxTime);
             this.Controls.Add(this.groupBoxDB);
-            this.Controls.Add(this.groupBox2);
+            this.Controls.Add(this.groupBoxTypes);
             this.Controls.Add(this.menuStripBase);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MainMenuStrip = this.menuStripBase;
@@ -478,8 +494,8 @@
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Измерения - ";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.ExitFromApp);
-            this.groupBox2.ResumeLayout(false);
-            this.groupBox2.PerformLayout();
+            this.groupBoxTypes.ResumeLayout(false);
+            this.groupBoxTypes.PerformLayout();
             this.groupBoxDB.ResumeLayout(false);
             this.groupBoxDB.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
@@ -497,7 +513,7 @@
 
         #endregion
 
-        private System.Windows.Forms.GroupBox groupBox2;
+        private System.Windows.Forms.GroupBox groupBoxTypes;
         private System.Windows.Forms.RadioButton radioButtonBgrn;
         private System.Windows.Forms.RadioButton radioButtonLLI2;
         private System.Windows.Forms.RadioButton radioButtonSLI;
@@ -505,7 +521,7 @@
         private System.Windows.Forms.GroupBox groupBoxDB;
         private System.Windows.Forms.DataGridView dataGridView1;
         private System.Windows.Forms.Label label16;
-        private System.Windows.Forms.ListBox listBox1;
+        private System.Windows.Forms.ListBox listBoxJournals;
         private System.Windows.Forms.GroupBox groupBoxTime;
         private System.Windows.Forms.Label labelSeconds;
         private System.Windows.Forms.NumericUpDown numericUpDownTimeSec;
@@ -539,5 +555,6 @@
         private System.Windows.Forms.ToolStripMenuItem открытьToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem обновитьToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem информацияToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem высотаToolStripMenuItem;
     }
 }

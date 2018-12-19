@@ -17,6 +17,7 @@ namespace Measurements
     {
         // public NLog.LogManager
         private Detector[] dets;
+        internal Measurement mes;
         
         private void InitialsSettings()
         {
@@ -52,6 +53,7 @@ namespace Measurements
                 i++;
             }
 
+            
 
             //dets[0].Clear();
             //dets[0].SpectroscopyAcquireSetup(CanberraDeviceAccessLib.AcquisitionModes.aCountToLiveTime, 15);
@@ -91,11 +93,12 @@ namespace Measurements
             }
         }
 
-        private void CheckDetectors()
+   
+
+        private void FillJournalsDate(object sender, System.EventArgs e)
         {
-
+            listBoxJournals.DataSource = mes.GetJournalsDates(groupBoxTypes.Controls.OfType<RadioButton>()
+              .FirstOrDefault(n => n.Checked).Name);
         }
-
-
     }
 }

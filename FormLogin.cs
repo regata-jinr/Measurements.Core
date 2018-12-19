@@ -32,7 +32,9 @@ namespace Measurements
                 con.ConnectionString = $"{Properties.Resources.conString} User ID={user};Password={textBoxPass.Text};";
                 con.Open();
                 con.Close();
+             
                 var fm = new FaceForm();
+                fm.mes = new Measurement(con);
                 Hide();
                 fm.Show();
             }
