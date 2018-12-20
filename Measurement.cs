@@ -21,7 +21,11 @@ namespace Measurements
         public DateTime mTimeFinish { get; set; }
         public float Height { get; set; }
 
-        private readonly Dictionary<string, string> QTJournalsDate = new Dictionary<string, string> { { "radioButtonSLI", "SLI" }, { "radioButtonLLI1", "LLI" }, { "radioButtonLLI2", "LLI" }};
+        private readonly Dictionary<string, string> QTJournalsDate = new Dictionary<string, string> { { "radioButtonSLI", "SLI" }, { "radioButtonLLI1", "LLI" }, { "radioButtonLLI2", "LLI" } };
+
+        //private Dictionary<string, int> uniqSetsCnt;
+
+        public Dictionary<string, int> UniqSetsCnt { get; private set; }
 
         public List<DateTime> GetJournalsDates(string type)
         {
@@ -35,19 +39,25 @@ namespace Measurements
             return JList;
         }
 
+        // TODO: this should refactor. only for demonstartion!
         public DataTable GetMeasurementsData(DateTime date, string type)
         {
             DataTable mTable = new DataTable();
-            SqlCommand sCmd = new SqlCommand($"select Country_Code, Client_Id, Year, Sample_Set_ID, Sample_Set_Index, Sample_ID, null Date_Start, null Date_Finish, null Time_Start, null Time_Finish, null Duration, null DetectorN, null FileN, {FormLogin.user} Operator, null CellN, null as Height, null as Weight from table_{QTJournalsDate[type]}_Irradiation_Log where Date_Start = '{date.ToShortDateString()}';", mCon);
+            SqlCommand sCmd = new SqlCommand($"select Country_Code + '-' + Client_Id + '-' + Year + '-' + Sample_Set_ID + '-' + Sample_Set_Index as SampleSetId, Sample_ID, null Date_Start, null Time_Start, null Date_Finish, null Time_Finish, null Duration, null DetectorN, null CellN, null FileN, null as Height, null as Weight from table_{QTJournalsDate[type]}_Irradiation_Log where Date_Start = '{date.ToShortDateString()}'", mCon);
             mCon.Open();
             SqlDataAdapter a = new SqlDataAdapter(sCmd);
             a.Fill(mTable);
+            
+            sCmd.CommandText = $"select SampleSetId, count(*) from ( {sCmd.CommandText}) as a group by SampleSetId";
+            SqlDataReader reader = sCmd.ExecuteReader();
+            UniqSetsCnt = new Dictionary<string, int>();
+            while (reader.Read())
+                UniqSetsCnt.Add(reader[0].ToString(), (int)reader[1]);
             mCon.Close();
-            sCmd.CommandText = "";
             return mTable;
         }
 
-       public Measurement(SqlConnection con)
+        public Measurement(SqlConnection con)
         {
             mCon = con;
           

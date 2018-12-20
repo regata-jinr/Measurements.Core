@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 
 namespace Measurements
 {
-    struct Sample
+    //todo: add get and set string like 'RU-01-18-55-j' to corresponding parameters
+    struct  Sample
     {
         public string countryCode; //"RU"
         public int clientId; // 1

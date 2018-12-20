@@ -12,6 +12,13 @@ using System.IO;
 using System.Linq;
 using System;
 
+
+// TODO: add logging(NLog);
+// TODO: add tests(?);
+// TODO: add documentation(doxygen);
+
+// NOTE: implementations problems and extensions see in concrete parts of code.
+
 namespace Measurements
 {
     public partial class FaceForm : Form
@@ -55,7 +62,6 @@ namespace Measurements
                 i++;
             }
 
-            
 
             //dets[0].Clear();
             //dets[0].SpectroscopyAcquireSetup(CanberraDeviceAccessLib.AcquisitionModes.aCountToLiveTime, 15);
@@ -84,15 +90,29 @@ namespace Measurements
             d.DetForm.Location = new Point(6 + number * 48, groupBoxDetectors.Location.Y - d.DetForm.Size.Height/2 + 4);
             groupBoxDetectors.Controls.Add(d.DetForm);
             ToolStripMenuItemDetectors.DropDownItems.Add(d.Name);
+            d.DetForm.Click += new System.EventHandler(this.ColorizeDataGridView);
         }
 
+
+        //TODO: split processes. Now after run already open application doesn't allow to connect with detectors, but if I'll close it, I can run putview DET:D1(TASK?)
         private void buttonMeasure_Click(object sender, System.EventArgs e)
         {
+            GenieExeManager gm = new GenieExeManager();
             //SetListOfCommand 140page S560
-            foreach (var det in dets)
+            foreach (var d in dets)
             {
-                Debug.WriteLine($"{det.Name} is Checked = {det.DetForm.Checked}");
+                if (d.DetForm.Checked)
+                {
+                    d.Clear();
+                    d.SpectroscopyAcquireSetup(CanberraDeviceAccessLib.AcquisitionModes.aCountToLiveTime, 15);
+                    d.AcquireStart();
+                   // gm.PutView($"/NO_DATASRC");
+                   // gm.PvOpen($"DET:{d.Name} /EXPAND");
+                }
             }
+
+            
+
         }
 
    
@@ -108,6 +128,40 @@ namespace Measurements
         {
            // Debug.WriteLine((DateTime)listBoxJournals.SelectedValue);
             dataGridViewMeasurements.DataSource = mes.GetMeasurementsData((DateTime)listBoxJournals.SelectedValue, NameOfCheckedTypeRB);
+            //foreach (var ind in mes.UniqSetsCnt.Values)
+            //                i += ind;
+          ///  dataGridViewMeasurements.Rows[0].Cells[0].Bor
+
+
+
         }
+
+
+        private void ColorizeDataGridView(object sender, System.EventArgs e)
+        {
+            dataGridViewMeasurements.DefaultCellStyle.BackColor = Color.White;
+            int i = 0;
+            int numChDets = groupBoxDetectors.Controls.OfType<CheckBoxAndStatus>().Count(n => n.Checked);
+            Debug.WriteLine(numChDets);
+            var detColor = new Dictionary<int, Color> { { 1, Color.AliceBlue }, { 5, Color.LightSlateGray }, { 6, Color.OldLace } };
+            while (i < dataGridViewMeasurements.Rows.Count - 1)
+            {
+                foreach (var d in dets)
+                {
+                    if (d.DetForm.Checked)
+                    {
+                        Debug.WriteLine($"i-{i}|Name{d.Name}");
+                        dataGridViewMeasurements.Rows[i].Cells[7].Value = int.Parse(d.Name[1].ToString());
+                        dataGridViewMeasurements.Rows[i].DefaultCellStyle.BackColor = detColor[int.Parse(d.Name[1].ToString())];
+                       i++;
+                    }
+                }
+                if (i == 0) break;
+            }
+        }
+
+
+
+
     }
 }
