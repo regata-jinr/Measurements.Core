@@ -74,38 +74,31 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CheckBoxAndStatus.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="CheckBoxAndStatus.Designer.cs">
-      <DependentUpon>CheckBoxAndStatus.cs</DependentUpon>
-    </Compile>
-    <Compile Include="FormLogin.cs">
+    <Compile Include="WinForms\FormLogin.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="FormLogin.Designer.cs">
+    <Compile Include="WinForms\FormLogin.Designer.cs">
       <DependentUpon>FormLogin.cs</DependentUpon>
     </Compile>
-    <Compile Include="Measurement.cs" />
-    <Compile Include="FaceForm.cs">
+    <Compile Include="Core\Interfaces\IDetector.cs" />
+    <Compile Include="Core\Interfaces\IMeasurement.cs" />
+    <Compile Include="Core\Classes\Measurement.cs" />
+    <Compile Include="WinForms\FaceForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="FaceForm.Designer.cs">
+    <Compile Include="WinForms\FaceForm.Designer.cs">
       <DependentUpon>FaceForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="GenieExeManager.cs" />
-    <Compile Include="Detector.cs" />
+    <Compile Include="Core\Classes\GenieExeManager.cs" />
+    <Compile Include="Core\Classes\Detector.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Sample.cs" />
-    <Compile Include="SampleChanger.cs" />
-    <EmbeddedResource Include="CheckBoxAndStatus.resx">
-      <DependentUpon>CheckBoxAndStatus.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="FormLogin.resx">
+    <Compile Include="Core\Classes\Sample.cs" />
+    <Compile Include="Core\Classes\SampleChanger.cs" />
+    <EmbeddedResource Include="WinForms\FormLogin.resx">
       <DependentUpon>FormLogin.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="FaceForm.resx">
+    <EmbeddedResource Include="WinForms\FaceForm.resx">
       <DependentUpon>FaceForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
@@ -118,14 +111,14 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
-    <Content Include="NLog.config">
+    <Content Include="Config\NLog.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <SubType>Designer</SubType>
     </Content>
     <None Include="NLog.xsd">
       <SubType>Designer</SubType>
     </None>
-    <None Include="packages.config" />
+    <None Include="Config\packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -135,12 +128,10 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <None Include="Design.md" />
     <None Include="UserStory.docx" />
-    <None Include="UserStorySummary.md" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config">
+    <None Include="Config\App.config">
       <SubType>Designer</SubType>
     </None>
   </ItemGroup>
@@ -157,6 +148,15 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <COMReference Include="CanberraDataAccessLib">
+      <Guid>{5531FC70-C3DF-11D1-9CF4-AA0004004105}</Guid>
+      <VersionMajor>1</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>tlbimp</WrapperTool>
+      <Isolated>False</Isolated>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
+    </COMReference>
     <COMReference Include="CanberraDeviceAccessLib">
       <Guid>{592A6920-EA90-11D2-97BD-ECB1F3000000}</Guid>
       <VersionMajor>1</VersionMajor>
@@ -187,19 +187,13 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />
-    <None Include="Resources\greenInd.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\redInd.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\redInd.bmp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\redInd1.bmp" />
   </ItemGroup>
   <ItemGroup>
     <WCFMetadata Include="Connected Services\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Resources\" />
+    <Folder Include="Tests\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

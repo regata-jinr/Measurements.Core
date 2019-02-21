@@ -1,9 +1,7 @@
-﻿//using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 //using System.ComponentModel;
 //using System.Data;
 using System.Drawing;
-//using System.Linq;
 //using System.Text;
 //using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -11,21 +9,28 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System;
+using CanberraDataAccessLib;
 
 
+// TODO: MAIN TODO LIST AFTER HOLIDAYS:
+
+// TODO: create new OO design, define objects and their behaviour
+// TODO: Define the interfaces before implementations and use Interface and implement it in classes.
+// TODO: Create new folders structure
+// TODO: 
 // TODO: add logging(NLog);
 // TODO: add tests(?);
 // TODO: add documentation(doxygen);
 
 // NOTE: implementations problems and extensions see in concrete parts of code.
 
-namespace Measurements
+namespace Measurements.WinForms
 {
     public partial class FaceForm : Form
     {
         // public NLog.LogManager
-        private Detector[] dets;
-        internal Measurement mes;
+        private Core.Classes.Detector[] dets;
+        internal Core.Classes.Measurement mes;
         private string NameOfCheckedTypeRB;
         
         private void InitialsSettings()
@@ -34,11 +39,10 @@ namespace Measurements
             Text += version.Substring(0, version.Length - 2);
             Text += $" - [{FormLogin.user}]";
 
-            ToolStripMenuItemLoggingAll.Checked = Properties.Settings.Default.logAll;
+            ToolStripMenuItemLoggingAll.Checked  = Properties.Settings.Default.logAll;
             ToolStripMenuItemLoggingInfo.Checked = Properties.Settings.Default.logInfo;
             ToolStripMenuItemLoggingWarn.Checked = Properties.Settings.Default.logWarn;
-            ToolStripMenuItemLoggingErr.Checked = Properties.Settings.Default.LogErr;
-
+            ToolStripMenuItemLoggingErr.Checked  = Properties.Settings.Default.LogErr;
            
             var logger = NLog.LogManager.GetCurrentClassLogger();
             logger.Debug("Hello World");
@@ -52,15 +56,17 @@ namespace Measurements
             InitializeComponent();
             InitialsSettings();
             string[] filePaths = Directory.GetFiles(@"C:\GENIE2K\MIDFILES", "*.MID", SearchOption.TopDirectoryOnly);
-            dets = new Detector[filePaths.Length];
-
+            var dets = new Core.Classes.Detector[filePaths.Length];
             int i = 0;
             foreach (string file in filePaths)
             {
-                dets[i] = new Detector(Path.GetFileNameWithoutExtension(file));
-                AddDetectorControl(dets[i], i);
+                dets[i] = new Core.Classes.Detector(Path.GetFileNameWithoutExtension(file));
                 i++;
             }
+            string fileName = @"C:\GENIE2K\CAMFILES\1000001.CNF";
+            DataAccessClass da = new DataAccessClass();
+            if (!da.FileExists(fileName)) return;
+            da.Open(fileName);
 
 
             //dets[0].Clear();
@@ -69,28 +75,19 @@ namespace Measurements
             //if (dets[0].AnalyzerStatus == CanberraDeviceAccessLib.DeviceStatus.aAcquireDone)
             //    Debug.WriteLine(dets[0].AnalyzerStatus.ToString());
             //dets[0].Disconnect();
-         
-
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void ExitFromApp(object sender, FormClosingEventArgs e)
         {
-
             Properties.Settings.Default.logAll = ToolStripMenuItemLoggingAll.Checked;
             Properties.Settings.Default.logInfo = ToolStripMenuItemLoggingInfo.Checked;
             Properties.Settings.Default.logWarn = ToolStripMenuItemLoggingWarn.Checked;
             Properties.Settings.Default.LogErr = ToolStripMenuItemLoggingErr.Checked;
             Application.Exit();
-
-        }
-
-        //TODO: size and location will not work for auto scale(maximize, grow and shrink...)
-        private void AddDetectorControl(Detector d, int number)
-        {
-            d.DetForm.Location = new Point(6 + number * 48, groupBoxDetectors.Location.Y - d.DetForm.Size.Height/2 + 4);
-            groupBoxDetectors.Controls.Add(d.DetForm);
-            ToolStripMenuItemDetectors.DropDownItems.Add(d.Name);
-            d.DetForm.Click += new System.EventHandler(this.ColorizeDataGridView);
         }
 
 
@@ -101,67 +98,27 @@ namespace Measurements
             //SetListOfCommand 140page S560
             foreach (var d in dets)
             {
-                if (d.DetForm.Checked)
-                {
                     d.Clear();
                     d.SpectroscopyAcquireSetup(CanberraDeviceAccessLib.AcquisitionModes.aCountToLiveTime, 15);
                     d.AcquireStart();
                    // gm.PutView($"/NO_DATASRC");
                    // gm.PvOpen($"DET:{d.Name} /EXPAND");
-                }
             }
-
-            
-
         }
-
-   
 
         private void FillJournalsDate(object sender, System.EventArgs e)
         {
             NameOfCheckedTypeRB = groupBoxTypes.Controls.OfType<RadioButton>()
               .FirstOrDefault(n => n.Checked).Name;
-            listBoxJournals.DataSource = mes.GetJournalsDates(NameOfCheckedTypeRB);
         }
 
         private void FillDataGridView(object sender, System.EventArgs e)
         {
            // Debug.WriteLine((DateTime)listBoxJournals.SelectedValue);
-            dataGridViewMeasurements.DataSource = mes.GetMeasurementsData((DateTime)listBoxJournals.SelectedValue, NameOfCheckedTypeRB);
             //foreach (var ind in mes.UniqSetsCnt.Values)
             //                i += ind;
           ///  dataGridViewMeasurements.Rows[0].Cells[0].Bor
-
-
-
         }
-
-
-        private void ColorizeDataGridView(object sender, System.EventArgs e)
-        {
-            dataGridViewMeasurements.DefaultCellStyle.BackColor = Color.White;
-            int i = 0;
-            int numChDets = groupBoxDetectors.Controls.OfType<CheckBoxAndStatus>().Count(n => n.Checked);
-            Debug.WriteLine(numChDets);
-            var detColor = new Dictionary<int, Color> { { 1, Color.AliceBlue }, { 5, Color.LightSlateGray }, { 6, Color.OldLace } };
-            while (i < dataGridViewMeasurements.Rows.Count - 1)
-            {
-                foreach (var d in dets)
-                {
-                    if (d.DetForm.Checked)
-                    {
-                        Debug.WriteLine($"i-{i}|Name{d.Name}");
-                        dataGridViewMeasurements.Rows[i].Cells[7].Value = int.Parse(d.Name[1].ToString());
-                        dataGridViewMeasurements.Rows[i].DefaultCellStyle.BackColor = detColor[int.Parse(d.Name[1].ToString())];
-                       i++;
-                    }
-                }
-                if (i == 0) break;
-            }
-        }
-
-
-
 
     }
 }

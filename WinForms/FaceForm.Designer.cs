@@ -1,4 +1,4 @@
-﻿namespace Measurements
+﻿namespace Measurements.WinForms
 {
     partial class FaceForm
     {

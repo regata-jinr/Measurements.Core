@@ -33,8 +33,7 @@ namespace Measurements
                 con.Open();
                 con.Close();
              
-                var fm = new FaceForm();
-                fm.mes = new Measurement(con);
+                var fm = new WinForms.FaceForm();
                 Hide();
                 fm.Show();
             }

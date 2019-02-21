@@ -17,7 +17,7 @@ using CanberraDeviceAccessLib;
 
 //NOTE: Ending of task is not stop acquire. I should control it via VDM manager. I have a corresponding class here C:\GENIE2K\EXEFILES\ru
 //NOTE: perhaps, add object of control class it's not a good idea. But it allow to not programming chain checkboxed checked event with some bool field in Detector.
-namespace Measurements
+namespace Measurements.Core.Classes
 {
     enum Status {ready, off, busy, error}
     /// <summary>
@@ -29,29 +29,15 @@ namespace Measurements
     {
         /// <summary> Gets Status of detector. {ready, off, busy, error}. </summary>
         public Status Status { get; private set; }
+
         private readonly Dictionary<Status, Color> StatusColorDict = new Dictionary<Status, Color> { { Status.busy, Color.Gold }, { Status.ready, Color.LimeGreen }, { Status.off, Color.Gray }, { Status.error, Color.Red } };
         /// <summary> Gets the error string. </summary>
         public string ErrorStr { get; private set; }
-        //status
+        /// <summary>
+        /// 
+        ///
+        /// </summary>
         public bool IsHV { get; private set; }
-
-        public CheckBoxAndStatus DetForm;
-
-        //true if checkbox Marked
-        
-
-        // TODO: add information about detector
-        // HV(status, value), gain, cold,...
-        // should be field for each parameter, but wrapper should be common for easily adding to form in loop
-        // public Dictionary<string, string> Parameters;
-        /// <summary>Initializes for new detector object</summary>
-        private void Init() {
-            DetForm = new CheckBoxAndStatus();
-            DetForm.SetCheckBoxText(Name);
-            DetForm.SetStatusColor(StatusColorDict[Status]);
-            if (Status != Status.error) DetForm.SetTootTipText($"{Status}");
-            else DetForm.SetTootTipText($"{Status}. Error message: {ErrorStr}");
-        }
 
         /// <summary>Constructor of Detector class. By default ConnectOptions is ReadWrite.</summary>
         /// <param name="name">Name of detector. Without path.</param>
@@ -70,7 +56,6 @@ namespace Measurements
                     ErrorStr = ex.Message;        
                 }
             }
-            Init();
         }
 
         /// <summary>Constructor of Detector class.</summary>
@@ -85,7 +70,6 @@ namespace Measurements
                 Status = Status.ready;
             }
             catch (System.Runtime.InteropServices.COMException ex) { if (ex.Message.Contains("278e2a")) Status = Status.busy; }
-            Init();
         }
 
         //TODO: connect should has a timeout exception. In case I turn off vdm manager it stucks on connecting.
@@ -111,6 +95,9 @@ namespace Measurements
             Connect(Name); return;
         }
 
-
+        public Task Start()
+        {
+            return null;
+        }
     }
 }
