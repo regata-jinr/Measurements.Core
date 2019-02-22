@@ -32,7 +32,6 @@ using System.Diagnostics;
             /// <returns></returns>
             async Task Interfaces.IMeasurement.Start()
             {
-                await _det.Start();
             }
             void Interfaces.IMeasurement.Continue()
             { }

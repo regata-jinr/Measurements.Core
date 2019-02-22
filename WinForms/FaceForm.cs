@@ -98,9 +98,9 @@ namespace Measurements.WinForms
             //SetListOfCommand 140page S560
             foreach (var d in dets)
             {
-                    d.Clear();
-                    d.SpectroscopyAcquireSetup(CanberraDeviceAccessLib.AcquisitionModes.aCountToLiveTime, 15);
-                    d.AcquireStart();
+                    //d.Clear();
+                    //d.SpectroscopyAcquireSetup(CanberraDeviceAccessLib.AcquisitionModes.aCountToLiveTime, 15);
+                    //d.AcquireStart();
                    // gm.PutView($"/NO_DATASRC");
                    // gm.PvOpen($"DET:{d.Name} /EXPAND");
             }
