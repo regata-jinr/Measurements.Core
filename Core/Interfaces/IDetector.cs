@@ -1,31 +1,29 @@
 ﻿using System;
-using System.Threading.Tasks;
-using CanberraDeviceAccessLib;
-
 
 namespace Measurements.Core.Interfaces
 {
-    interface IDetector
+    public delegate void ChangedStatusDelegate();
+    public delegate void AcquiringCompletedDelegate();
+    interface IDetector 
     {
-        // void Connect(); is unavalible because Detector connects automatically with device which name and connecting options specify in constructor
         void Disconnect();
         void Reconnect();
         void Reset();
         bool IsConnected { get; }
-        Classes.Status Status { get; }
+        Classes.DetectorStatus DetStatus { get; }
+        Classes.AcquringStatus AcqStatus { get; }
         bool IsHV { get; }
-        Task AStart();
+        void AStart(int time);
         void AStop();
         void AClear();
         string ErrorMessage { get; }
 
 
-        //Dispose()
-
-        event EventHandler StatusChanged;
-        event EventHandler ACompleted;
+        event ChangedStatusDelegate ChangedStatusEvent;
+        event AcquiringCompletedDelegate AcquiringCompletedEvent;
         event EventHandler AStoped;
-        event EventHandler AGotError;
+        event EventHandler AErrorOccured;
+        event EventHandler ErrorOccured;
         event EventHandler HVOff;
 
     }

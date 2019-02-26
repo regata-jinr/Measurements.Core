@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             this.groupBoxTypes = new System.Windows.Forms.GroupBox();
             this.radioButtonBgrn = new System.Windows.Forms.RadioButton();
             this.radioButtonLLI2 = new System.Windows.Forms.RadioButton();
@@ -72,6 +72,7 @@
             this.ToolStripMenuItemLoggingWarn = new System.Windows.Forms.ToolStripMenuItem();
             this.ToolStripMenuItemLoggingErr = new System.Windows.Forms.ToolStripMenuItem();
             this.buttonMeasure = new System.Windows.Forms.Button();
+            this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.groupBoxTypes.SuspendLayout();
             this.groupBoxDB.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewMeasurements)).BeginInit();
@@ -79,7 +80,9 @@
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownTimeSec)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownTimeMin)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownTimeHo)).BeginInit();
+            this.groupBoxDetectors.SuspendLayout();
             this.menuStripBase.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
             // 
             // groupBoxTypes
@@ -167,14 +170,14 @@
             this.dataGridViewMeasurements.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dataGridViewMeasurements.AutoSizeRowsMode = System.Windows.Forms.DataGridViewAutoSizeRowsMode.DisplayedCells;
             this.dataGridViewMeasurements.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.dataGridViewMeasurements.DefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle2.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle2.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            dataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.dataGridViewMeasurements.DefaultCellStyle = dataGridViewCellStyle2;
             this.dataGridViewMeasurements.GridColor = System.Drawing.SystemColors.ControlLight;
             this.dataGridViewMeasurements.Location = new System.Drawing.Point(136, 16);
             this.dataGridViewMeasurements.Name = "dataGridViewMeasurements";
@@ -202,7 +205,6 @@
             this.listBoxJournals.Name = "listBoxJournals";
             this.listBoxJournals.Size = new System.Drawing.Size(124, 346);
             this.listBoxJournals.TabIndex = 3;
-            this.listBoxJournals.SelectedValueChanged += new System.EventHandler(this.FillDataGridView);
             // 
             // groupBoxTime
             // 
@@ -270,6 +272,7 @@
             // 
             // groupBoxDetectors
             // 
+            this.groupBoxDetectors.Controls.Add(this.pictureBox1);
             this.groupBoxDetectors.Location = new System.Drawing.Point(574, 27);
             this.groupBoxDetectors.Name = "groupBoxDetectors";
             this.groupBoxDetectors.Size = new System.Drawing.Size(454, 55);
@@ -487,6 +490,15 @@
             this.buttonMeasure.UseVisualStyleBackColor = false;
             this.buttonMeasure.Click += new System.EventHandler(this.buttonMeasure_Click);
             // 
+            // pictureBox1
+            // 
+            this.pictureBox1.BackColor = System.Drawing.Color.Gray;
+            this.pictureBox1.Location = new System.Drawing.Point(17, 18);
+            this.pictureBox1.Name = "pictureBox1";
+            this.pictureBox1.Size = new System.Drawing.Size(63, 29);
+            this.pictureBox1.TabIndex = 0;
+            this.pictureBox1.TabStop = false;
+            // 
             // FaceForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -515,8 +527,10 @@
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownTimeSec)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownTimeMin)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownTimeHo)).EndInit();
+            this.groupBoxDetectors.ResumeLayout(false);
             this.menuStripBase.ResumeLayout(false);
             this.menuStripBase.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -567,5 +581,6 @@
         private System.Windows.Forms.ToolStripMenuItem обновитьToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem информацияToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem высотаToolStripMenuItem;
+        private System.Windows.Forms.PictureBox pictureBox1;
     }
 }

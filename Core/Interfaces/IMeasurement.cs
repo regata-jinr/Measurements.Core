@@ -1,17 +1,19 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Measurements.Core.Classes;
 
 namespace Measurements.Core.Interfaces
 {
     interface IMeasurement
     {
-        Task Start();
+        void Start(int time);
         void Restart();
         void Pause();
         void Continue();
         void Stop();
         void Clear();
-        Task Save();
+        void Save();
+        void SetInfo(Sample s, string type, string experimentator, string description);
 
         //ToString
         //Dispose

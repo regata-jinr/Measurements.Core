@@ -30,8 +30,9 @@ using System.Diagnostics;
             /// 
             /// </summary>
             /// <returns></returns>
-            async Task Interfaces.IMeasurement.Start()
+            async void Interfaces.IMeasurement.Start(int time)
             {
+                await Task.Run(() => _det.AStart(time));
             }
             void Interfaces.IMeasurement.Continue()
             { }
@@ -43,10 +44,11 @@ using System.Diagnostics;
             { }
             void Interfaces.IMeasurement.Clear()
             { }
-            Task Interfaces.IMeasurement.Save()
-            {
-                return null;
-            }
+            void Interfaces.IMeasurement.Save()
+            { }
+            void Interfaces.IMeasurement.SetInfo(Sample s, string type, string experimentator, string description)
+            { }
+
             public event EventHandler Completed;
             public event EventHandler Paused;
             public event EventHandler ErrorOccured;
