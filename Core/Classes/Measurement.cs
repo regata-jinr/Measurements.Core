@@ -8,15 +8,15 @@ using System.Diagnostics;
 
     namespace Measurements.Core.Classes
     {
-        class Measurement : Interfaces.IMeasurement, IDisposable
+        class Measurement : Detector, Interfaces.IMeasurement, IDisposable
         {
-            public Measurement(Detector det, Sample s, bool withSampleChanger, bool withDataBase)
+
+            public Measurement(string detectorName, Sample s, string type, bool withSampleChanger, bool withDataBase) : base(detectorName)
             {
-                _det = det;
+
             }
 
-            private Detector _det;
-            public string Type { get; set; }
+        public string Type { get; set; }
             public int FileNumber { get; set; }
             public string mOperatorName { get; set; }
             public int mDuration { get; set; }
@@ -32,7 +32,7 @@ using System.Diagnostics;
             /// <returns></returns>
             async void Interfaces.IMeasurement.Start(int time)
             {
-                await Task.Run(() => _det.AStart(time));
+                await Task.Run(() => base.AStart(time));
             }
             void Interfaces.IMeasurement.Continue()
             { }
@@ -48,11 +48,6 @@ using System.Diagnostics;
             { }
             void Interfaces.IMeasurement.SetInfo(Sample s, string type, string experimentator, string description)
             { }
-
-            public event EventHandler Completed;
-            public event EventHandler Paused;
-            public event EventHandler ErrorOccured;
-            public event EventHandler Stoped;
 
             void IDisposable.Dispose()
             { }

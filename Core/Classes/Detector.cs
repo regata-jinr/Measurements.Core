@@ -20,24 +20,28 @@ namespace Measurements.Core.Classes
     ///  error - Detector has porblems
     /// </summary>
     enum DetectorStatus { ready, off, busy, error}
-    enum AcquringStatus { done, started, stoped, error }
     /// <summary>
     /// Detector is one of the main class, because detector is the main part of our experiment. It allows to manage real detector and has protection from crashes. You can start, stop and do any basics operations which you have with detector via mvcg.exe. This software based on dlls provided by [Genie2000] (https://www.mirion.com/products/genie-2000-basic-spectroscopy-software) for interactions with [HPGE](https://www.mirion.com/products/standard-high-purity-germanium-detectors) detectors also from [Mirion Tech.](https://www.mirion.com). Personally we are working with [Standard Electrode Coaxial Ge Detectors](https://www.mirion.com/products/sege-standard-electrode-coaxial-ge-detectors)
     /// </summary>
     /// <seealso cref="https://www.mirion.com/products/genie-2000-basic-spectroscopy-software"/>
-    class Detector : Interfaces.IDetector, IDisposable
+    class Detector : IDisposable
     {
+
+        protected delegate void ChangingStatusDelegate();
+        protected delegate void AcquiringStatusDelegate();
+
         private DeviceAccessClass _device;
         private string _name;
+        private double _height;
         private DetectorStatus _detStatus;
-        private AcquringStatus _acqStatus;
         private ConnectOptions _conOption;
-        public delegate void EventsMethods();
+        private Sample _currentSample;
+        protected delegate void EventsMethods();
 
         /// <summary>Constructor of Detector class.</summary>
         /// <param name="name">Name of detector. Without path.</param>
         /// <param name="option">CanberraDeviceAccessLib.ConnectOptions {aReadWrite, aContinue, aNoVerifyLicense, aReadOnly, aTakeControl, aTakeOver}.By default ConnectOptions is ReadWrite.</param>
-        public Detector(string name, ConnectOptions option = ConnectOptions.aReadWrite)
+        protected Detector(string name, ConnectOptions option = ConnectOptions.aReadWrite)
         {
             _name = name;
             Debug.WriteLine($"Current detector is {_name}");
@@ -73,16 +77,29 @@ namespace Measurements.Core.Classes
         private void ProcessDeviceMessages(int message, int wParam, int lParam)
         {
             Debug.WriteLine($"Messages are got: {message}, {wParam}, {lParam}");
-           // var dm = new DeviceMessages();
-            var mm = new AdviseMessageMasks();
-            mm = AdviseMessageMasks.amAcquireDone;
-
-            if ((int)mm == lParam)
+            Debug.WriteLine($"wParam: {wParam}");
+            Debug.WriteLine($"lParam: {lParam}");
+            if ((int)AdviseMessageMasks.amAcquireDone == lParam)
             {
                 Debug.WriteLine($"Status will change to 'ready'");
                 DetStatus = DetectorStatus.ready;
             }
 
+            if ((int)AdviseMessageMasks.amAcquireStart == lParam)
+            {
+                Debug.WriteLine($"Det Status will change to 'busy'");
+                DetStatus = DetectorStatus.busy;
+            }
+
+            if ((int)AdviseMessageMasks.amHardwareError == lParam)
+            {
+                Debug.WriteLine($"Det Status will change to 'error'");
+                DetStatus = DetectorStatus.error;
+                //TODO: figure out how to convert it to string
+                // here I have MessageCodes. ... I sohuld catch what exactly code
+                // I have and convert it to string via $"{_device.Message()}";
+                ErrorMessage = $"{_device.Message(MessageCodes.PLC__HARD_ERR)}";
+            }
 
         }
 
@@ -90,32 +107,26 @@ namespace Measurements.Core.Classes
         /// <summary>Overload method Connect from CanberraDeviceAccessLib. After second parametr always uses default values.</summary>
         /// <param name="name">Name of detector. Without path.</param>
         /// <param name="option">CanberraDeviceAccessLib.ConnectOptions {aReadWrite, aContinue, aNoVerifyLicense, aReadOnly, aTakeControl, aTakeOver}</param>
-        async void ConnectAsync()
+        protected async void ConnectAsync()
         {
-                await Task.Run(() => Connect());
-            //if (tsk.Wait(TimeSpan.FromSeconds(10))) Status = Status.ready;
-            //else
-            //{
-            //    Status = Status.error;
-            //    ErrorMessage = "Time out error";
-            //}
+            DetStatus = DetectorStatus.off;
+            var task = new Task(() => _device.Connect(_name, _conOption, AnalyzerType.aSpectralDetector, "", BaudRate.aUseSystemSettings));
+            if (await Task.WhenAny(task, Task.Delay(15000)) != task)
+            {
+                DetStatus = DetectorStatus.error;
+                ErrorMessage = "Time out error";
+            }
         }
 
-        void Connect()
+        protected void Connect()
         {
             try
             {
                 DetStatus = DetectorStatus.off;
+                // thats already async
                 _device.Connect(_name, _conOption, AnalyzerType.aSpectralDetector, "", BaudRate.aUseSystemSettings);
                 DetStatus = DetectorStatus.ready;
-                // var tsk = new Task(() => _device.Connect(_name, _conOption, AnalyzerType.aSpectralDetector, "", BaudRate.aUseSystemSettings));
-                //tsk.RunSynchronously();
-                //if (tsk.Wait(TimeSpan.FromSeconds(10))) Status = Status.ready;
-                //else
-                //{
-                //    Status = Status.error;
-                //    ErrorMessage = "Time out error";
-                //}
+
             }
             catch (System.Runtime.InteropServices.COMException ex)
             {
@@ -134,10 +145,9 @@ namespace Measurements.Core.Classes
 
         }
 
-        //TODO: for DetStatus and AcqStatus I have the same code. How to combine it into one?
         /// <summary> Returns status of detector. {ready, off, busy, error}. </summary>
         /// <seealso cref="Enum Status"/>
-        public DetectorStatus DetStatus
+        protected DetectorStatus DetStatus
         {
             get { return _detStatus; }
 
@@ -146,26 +156,8 @@ namespace Measurements.Core.Classes
                 if (_detStatus != value)
                 {
                     _detStatus = value;
-                    ChangedStatusEvent?.Invoke();
+                    ChangingStatusEvent?.Invoke();
                     Debug.WriteLine($"Current detector status is {_detStatus}");
-                }
-            }
-        }
-
-        /// <summary>
-        ///  Returns status of acquring process. {done, started, stoped, error}
-        /// </summary>
-        public AcquringStatus AcqStatus
-        {
-            get { return _acqStatus; }
-
-            private set
-            {
-                if (_acqStatus != value)
-                {
-                    _acqStatus = value;
-                    AcquiringCompletedEvent?.Invoke();
-                    Debug.WriteLine($"Current acquiring status is {_acqStatus}");
                 }
             }
         }
@@ -173,28 +165,19 @@ namespace Measurements.Core.Classes
         /// <summary>
         /// Returns true if high voltage is on.
         /// </summary>
-        public bool IsHV { get { return _device.HighVoltage.On; } }
+        protected bool IsHV { get { return _device.HighVoltage.On; } }
         /// <summary>
         /// Returns true if detector connected successfully.
         /// </summary>
-        public bool IsConnected { get { return _device.IsConnected; } }
+        protected bool IsConnected { get { return _device.IsConnected; } }
         /// <summary>
         /// Returns error message.
         /// </summary>
-        public string ErrorMessage { get; private set; }
-
-        //TODO: 0. Impelement class for control and run exe files; //pvopen, pvclose,...
-        //TODO: 1. Check if run via putview;
-        //TODO: 2. if yes, call pvclose;
-        //TODO: 3. if no, find process and close it;
-        //TODO: 4. then user should choose continue or rewrite;
-        //TODO: 5. for error status might be wrong!;
-        //TODO: 6. try to use VDM for reset detector;
-        //TODO: 7. So that connect to the busy detector, I've two ways - open it (actually it very usefull) and reset it and connect again.
+        protected string ErrorMessage { get; private set; }
 
         /// <summary>
         /// Recconects will trying to ressurect connection via detector. In case detector has status error or ready, it will do nothing. In case detector is off it will just call connect. In case status is busy, it will run recursively before 3 attempts with 5sec pausing.
-        public void Reconnect()
+        protected void Reconnect()
         {
             if (_device.IsConnected) { Connect(); return; }
             Disconnect();
@@ -205,10 +188,11 @@ namespace Measurements.Core.Classes
         /// <summary>
         /// Disconnects from detector. Change status to off. Reset ErrorMessage. Not clearing the detector.
         /// </summary>
-        public void Disconnect()
+        protected void Disconnect()
         {
             try
             {
+                _device.Clear();
                 _device.Disconnect();
                 DetStatus = DetectorStatus.off;
                 ErrorMessage = "";
@@ -220,14 +204,15 @@ namespace Measurements.Core.Classes
             }
         }
 
-        public void Reset()
+        protected void Reset()
         {
+
         }
         /// <summary>
         ///  Starts acquiring with specified aCountToLiveTime.
         /// </summary>
         /// <param name="time"></param>
-        public void AStart(int time)
+        protected void AStart(int time)
         {
             try
             {
@@ -238,8 +223,8 @@ namespace Measurements.Core.Classes
                 _device.SpectroscopyAcquireSetup(CanberraDeviceAccessLib.AcquisitionModes.aCountToLiveTime, time);
                 _device.AcquireStart();
                 //await Task.Run(() =>_device.AcquireStart());
-               // Status = Status.ready;
-                
+                // Status = Status.ready;
+
 
             }
             catch (Exception ex)
@@ -251,7 +236,7 @@ namespace Measurements.Core.Classes
         /// <summary>
         /// Stops acquiring.
         /// </summary>
-        public void AStop()
+        protected void AStop()
         {
             try { _device.AcquireStop(); }
             catch (Exception ex)
@@ -263,7 +248,7 @@ namespace Measurements.Core.Classes
         /// <summary>
         /// Clears current acquiring status.
         /// </summary>
-        public void AClear()
+        protected void AClear()
         {
             try { _device.Clear(); }
             catch (Exception ex)
@@ -282,11 +267,45 @@ namespace Measurements.Core.Classes
             Disconnect();
         }
 
-        public event Interfaces.ChangedStatusDelegate ChangedStatusEvent;
-        public event Interfaces.AcquiringCompletedDelegate AcquiringCompletedEvent;
-        public event EventHandler AStoped;
-        public event EventHandler AErrorOccured;
-        public event EventHandler ErrorOccured;
-        public event EventHandler HVOff;
+        protected event Interfaces.ChangingStatusDelegate ChangingStatusEvent;
+        protected event Interfaces.AcquiringStatusDelegate AcquiringCompletedEvent;
+
+        /// <summary>
+        /// Fill the sample information
+        /// </summary>
+        /// <param name="sample"></param>
+        /// <param name="type"></param>
+        protected void FillSampleInfo(ref Sample sample, string type)
+        {
+            _device.Param[ParamCodes.CAM_T_STITLE] = $"{sample.SampleSetIndex}-{sample.SampleNumber}";// title
+            //todo: dictionary for login - [last name] filling from db
+            _device.Param[ParamCodes.CAM_T_SCOLLNAME] = FormLogin.user; // operator name
+            _device.Param[ParamCodes.CAM_T_SDESC1] = sample.Description; // description 4 - row CAM_T_SDESC1-4
+            _device.Param[ParamCodes.CAM_T_SIDENT] = $"{sample.SetKey}"; // sample code
+            //TODO: perhaps the better idea to devide type setting from FillSampleInfo
+            _device.Param[ParamCodes.CAM_T_STYPE] = type;  // type
+            _device.Param[ParamCodes.CAM_F_SQUANT] = sample.Weight; // weight
+            _device.Param[ParamCodes.CAM_F_SQUANTERR] = 0; // err = 0
+            _device.Param[ParamCodes.CAM_T_SUNITS] = "gram"; // units = gram
+            // type sample creation = irradiation by default
+            _device.Param[ParamCodes.CAM_X_SDEPOSIT] = sample.IrradiationStartDateTime; // irr start date time
+            _device.Param[ParamCodes.CAM_X_STIME] = sample.IrradiationFinishDateTime; // irr finish date time
+            _device.Param[ParamCodes.CAM_F_SSYSERR] = 0; // Random sample error (%)
+            _device.Param[ParamCodes.CAM_F_SSYSTERR] = 0; // Non-random sample error (%)
+        }
+
+        /// <summary>
+        /// Property for geometry of sample. In our case this is height above detector.
+        /// </summary>
+        protected double Height
+        {
+            get {return _height;}
+            set
+            {
+            _height = value;
+            _device.Param[ParamCodes.CAM_T_SGEOMTRY] = value.ToString();
+            } 
+        }
+
     }
 }

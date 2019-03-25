@@ -2,8 +2,8 @@
 
 namespace Measurements.Core.Interfaces
 {
-    public delegate void ChangedStatusDelegate();
-    public delegate void AcquiringCompletedDelegate();
+    public delegate void ChangingStatusDelegate();
+    public delegate void AcquiringStatusDelegate();
     interface IDetector 
     {
         void Disconnect();
@@ -17,14 +17,11 @@ namespace Measurements.Core.Interfaces
         void AStop();
         void AClear();
         string ErrorMessage { get; }
+        void FillSampleInfo(Core.Classes.Sample s);
+        void FillMeasurementInfo(Core.Classes.Measurement m);
 
-
-        event ChangedStatusDelegate ChangedStatusEvent;
-        event AcquiringCompletedDelegate AcquiringCompletedEvent;
-        event EventHandler AStoped;
-        event EventHandler AErrorOccured;
-        event EventHandler ErrorOccured;
-        event EventHandler HVOff;
+        event ChangingStatusDelegate StatusChangedEvent;
+        event AcquiringStatusDelegate AcquiringStatusChangedEvent;
 
     }
 }

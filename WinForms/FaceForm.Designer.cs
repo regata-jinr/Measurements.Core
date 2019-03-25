@@ -28,7 +28,8 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FaceForm));
             this.groupBoxTypes = new System.Windows.Forms.GroupBox();
             this.radioButtonBgrn = new System.Windows.Forms.RadioButton();
             this.radioButtonLLI2 = new System.Windows.Forms.RadioButton();
@@ -46,6 +47,7 @@
             this.labelHours = new System.Windows.Forms.Label();
             this.numericUpDownTimeHo = new System.Windows.Forms.NumericUpDown();
             this.groupBoxDetectors = new System.Windows.Forms.GroupBox();
+            this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.menuStripBase = new System.Windows.Forms.MenuStrip();
             this.ToolStripMenuItemDetectors = new System.Windows.Forms.ToolStripMenuItem();
             this.detPatternToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -72,7 +74,6 @@
             this.ToolStripMenuItemLoggingWarn = new System.Windows.Forms.ToolStripMenuItem();
             this.ToolStripMenuItemLoggingErr = new System.Windows.Forms.ToolStripMenuItem();
             this.buttonMeasure = new System.Windows.Forms.Button();
-            this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.groupBoxTypes.SuspendLayout();
             this.groupBoxDB.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewMeasurements)).BeginInit();
@@ -81,8 +82,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownTimeMin)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownTimeHo)).BeginInit();
             this.groupBoxDetectors.SuspendLayout();
-            this.menuStripBase.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
+            this.menuStripBase.SuspendLayout();
             this.SuspendLayout();
             // 
             // groupBoxTypes
@@ -170,14 +171,14 @@
             this.dataGridViewMeasurements.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dataGridViewMeasurements.AutoSizeRowsMode = System.Windows.Forms.DataGridViewAutoSizeRowsMode.DisplayedCells;
             this.dataGridViewMeasurements.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle2.BackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle2.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            dataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.dataGridViewMeasurements.DefaultCellStyle = dataGridViewCellStyle2;
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.dataGridViewMeasurements.DefaultCellStyle = dataGridViewCellStyle1;
             this.dataGridViewMeasurements.GridColor = System.Drawing.SystemColors.ControlLight;
             this.dataGridViewMeasurements.Location = new System.Drawing.Point(136, 16);
             this.dataGridViewMeasurements.Name = "dataGridViewMeasurements";
@@ -279,6 +280,15 @@
             this.groupBoxDetectors.TabIndex = 10;
             this.groupBoxDetectors.TabStop = false;
             this.groupBoxDetectors.Text = "Детекторы";
+            // 
+            // pictureBox1
+            // 
+            this.pictureBox1.BackColor = System.Drawing.Color.Gray;
+            this.pictureBox1.Location = new System.Drawing.Point(17, 18);
+            this.pictureBox1.Name = "pictureBox1";
+            this.pictureBox1.Size = new System.Drawing.Size(63, 29);
+            this.pictureBox1.TabIndex = 0;
+            this.pictureBox1.TabStop = false;
             // 
             // menuStripBase
             // 
@@ -490,15 +500,6 @@
             this.buttonMeasure.UseVisualStyleBackColor = false;
             this.buttonMeasure.Click += new System.EventHandler(this.buttonMeasure_Click);
             // 
-            // pictureBox1
-            // 
-            this.pictureBox1.BackColor = System.Drawing.Color.Gray;
-            this.pictureBox1.Location = new System.Drawing.Point(17, 18);
-            this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(63, 29);
-            this.pictureBox1.TabIndex = 0;
-            this.pictureBox1.TabStop = false;
-            // 
             // FaceForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -511,6 +512,7 @@
             this.Controls.Add(this.groupBoxTypes);
             this.Controls.Add(this.menuStripBase);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MainMenuStrip = this.menuStripBase;
             this.MaximizeBox = false;
             this.Name = "FaceForm";
@@ -528,9 +530,9 @@
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownTimeMin)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownTimeHo)).EndInit();
             this.groupBoxDetectors.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.menuStripBase.ResumeLayout(false);
             this.menuStripBase.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
