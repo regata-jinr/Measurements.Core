@@ -5,8 +5,9 @@ using System.Threading;
 using CanberraDeviceAccessLib;
 
 
-//NOTE: Ending of task is not stop acquire. I should control it via VDM manager. I have a corresponding class here C:\GENIE2K\EXEFILES\ru
-//NOTE: The good idea is add the implementation of auto calibration.
+//TODO: Add tests!
+//TODO: Add logs!
+
 /// <summary>
 /// 
 /// </summary>
@@ -32,6 +33,7 @@ namespace Measurements.Core.Classes
 
         private DeviceAccessClass _device;
         private string _name;
+        private string _type;
         private double _height;
         private DetectorStatus _detStatus;
         private ConnectOptions _conOption;
@@ -112,10 +114,7 @@ namespace Measurements.Core.Classes
             DetStatus = DetectorStatus.off;
             var task = new Task(() => _device.Connect(_name, _conOption, AnalyzerType.aSpectralDetector, "", BaudRate.aUseSystemSettings));
             if (await Task.WhenAny(task, Task.Delay(15000)) != task)
-            {
-                DetStatus = DetectorStatus.error;
-                ErrorMessage = "Time out error";
-            }
+                HandleError("Time out error");
         }
 
         protected void Connect()
@@ -131,17 +130,10 @@ namespace Measurements.Core.Classes
             catch (System.Runtime.InteropServices.COMException ex)
             {
                 if (ex.Message.Contains("278e2a")) DetStatus = DetectorStatus.busy;
-                else
-                {
-                    DetStatus = DetectorStatus.error;
-                    ErrorMessage = ex.Message;
-                }
+                else HandleError(ex.Message);
+                
             }
-            catch (Exception ex)
-            {
-                DetStatus = DetectorStatus.error;
-                ErrorMessage = ex.Message;
-            }
+            catch (Exception ex) { HandleError(ex.Message); }
 
         }
 
@@ -184,7 +176,19 @@ namespace Measurements.Core.Classes
             Connect();
         }
 
-        //TODO: add hard disconnect for dispose or maybe let it be soft disconnection by dispose should be hard disconnection
+        /// <summary>
+        /// Save current session on device.
+        /// </summary>
+        protected void Save()
+        {
+            try
+            {
+                if (!_device.IsConnected) return;
+                _device.Save(_name);
+            }
+            catch (Exception ex) { HandleError(ex.Message); }
+        }
+
         /// <summary>
         /// Disconnects from detector. Change status to off. Reset ErrorMessage. Not clearing the detector.
         /// </summary>
@@ -192,24 +196,24 @@ namespace Measurements.Core.Classes
         {
             try
             {
-                _device.Clear();
+                Save();
                 _device.Disconnect();
                 DetStatus = DetectorStatus.off;
                 ErrorMessage = "";
             }
-            catch (Exception ex)
-            {
-                DetStatus = DetectorStatus.error;
-                ErrorMessage = ex.Message;
-            }
+            catch (Exception ex) { HandleError(ex.Message); }
         }
 
+        //TODO: find out how to call VDM.Control.Reset()
+        /// <summary>
+        /// 
+        /// </summary>
         protected void Reset()
         {
 
         }
         /// <summary>
-        ///  Starts acquiring with specified aCountToLiveTime.
+        ///  Starts acquiring with specified aCountToLiveTime, before this clear the device.
         /// </summary>
         /// <param name="time"></param>
         protected void AStart(int time)
@@ -221,41 +225,32 @@ namespace Measurements.Core.Classes
                 Debug.WriteLine($"Acquring is started with time {time}");
                 DetStatus = DetectorStatus.busy;
                 _device.SpectroscopyAcquireSetup(CanberraDeviceAccessLib.AcquisitionModes.aCountToLiveTime, time);
-                _device.AcquireStart();
-                //await Task.Run(() =>_device.AcquireStart());
-                // Status = Status.ready;
-
+                _device.AcquireStart(); //already async
 
             }
-            catch (Exception ex)
-            {
-                DetStatus = DetectorStatus.error;
-                ErrorMessage = ex.Message;
-            }
+            catch (Exception ex) { HandleError(ex.Message); }
         }
         /// <summary>
         /// Stops acquiring.
         /// </summary>
         protected void AStop()
         {
-            try { _device.AcquireStop(); }
-            catch (Exception ex)
+            try
             {
-                DetStatus = DetectorStatus.error;
-                ErrorMessage = ex.Message;
+                _device.AcquireStop();
             }
+            catch (Exception ex) { HandleError(ex.Message); }
         }
         /// <summary>
         /// Clears current acquiring status.
         /// </summary>
         protected void AClear()
         {
-            try { _device.Clear(); }
-            catch (Exception ex)
+            try
             {
-                DetStatus = DetectorStatus.error;
-                ErrorMessage = ex.Message;
+                _device.Clear();
             }
+            catch (Exception ex) { HandleError(ex.Message); }
         }
 
         /// <summary>
@@ -263,7 +258,6 @@ namespace Measurements.Core.Classes
         /// </summary>
         void IDisposable.Dispose()
         {
-            AClear();
             Disconnect();
         }
 
@@ -282,8 +276,6 @@ namespace Measurements.Core.Classes
             _device.Param[ParamCodes.CAM_T_SCOLLNAME] = FormLogin.user; // operator name
             _device.Param[ParamCodes.CAM_T_SDESC1] = sample.Description; // description 4 - row CAM_T_SDESC1-4
             _device.Param[ParamCodes.CAM_T_SIDENT] = $"{sample.SetKey}"; // sample code
-            //TODO: perhaps the better idea to devide type setting from FillSampleInfo
-            _device.Param[ParamCodes.CAM_T_STYPE] = type;  // type
             _device.Param[ParamCodes.CAM_F_SQUANT] = sample.Weight; // weight
             _device.Param[ParamCodes.CAM_F_SQUANTERR] = 0; // err = 0
             _device.Param[ParamCodes.CAM_T_SUNITS] = "gram"; // units = gram
@@ -292,6 +284,20 @@ namespace Measurements.Core.Classes
             _device.Param[ParamCodes.CAM_X_STIME] = sample.IrradiationFinishDateTime; // irr finish date time
             _device.Param[ParamCodes.CAM_F_SSYSERR] = 0; // Random sample error (%)
             _device.Param[ParamCodes.CAM_F_SSYSTERR] = 0; // Non-random sample error (%)
+        }
+
+        /// <summary>
+        /// Type of current measurement.
+        /// </summary>
+        protected string Type
+        {
+            get { return _type; }
+            set
+            {
+                _type = value;
+                _device.Param[ParamCodes.CAM_T_STYPE] = value;
+
+            }
         }
 
         /// <summary>
@@ -305,6 +311,12 @@ namespace Measurements.Core.Classes
             _height = value;
             _device.Param[ParamCodes.CAM_T_SGEOMTRY] = value.ToString();
             } 
+        }
+
+        private void HandleError(string text)
+        {
+            DetStatus = DetectorStatus.error;
+            ErrorMessage = text;
         }
 
     }
