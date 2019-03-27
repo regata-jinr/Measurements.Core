@@ -1,15 +1,13 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Threading.Tasks;
-using System.Threading;
+using System.Diagnostics;
 using CanberraDeviceAccessLib;
-
 
 //TODO: Add tests!
 //TODO: Add logs!
 
 /// <summary>
-/// 
+/// This namespace contains implementations of core interfaces or internal classes.
 /// </summary>
 namespace Measurements.Core.Classes
 {
@@ -20,7 +18,7 @@ namespace Measurements.Core.Classes
     ///  busy  - Detector is acquiring spectrum
     ///  error - Detector has porblems
     /// </summary>
-    enum DetectorStatus { ready, off, busy, error}
+    enum DetectorStatus { ready, off, busy, error }
     /// <summary>
     /// Detector is one of the main class, because detector is the main part of our experiment. It allows to manage real detector and has protection from crashes. You can start, stop and do any basics operations which you have with detector via mvcg.exe. This software based on dlls provided by [Genie2000] (https://www.mirion.com/products/genie-2000-basic-spectroscopy-software) for interactions with [HPGE](https://www.mirion.com/products/standard-high-purity-germanium-detectors) detectors also from [Mirion Tech.](https://www.mirion.com). Personally we are working with [Standard Electrode Coaxial Ge Detectors](https://www.mirion.com/products/sege-standard-electrode-coaxial-ge-detectors)
     /// </summary>
@@ -35,22 +33,26 @@ namespace Measurements.Core.Classes
         private string _name;
         private string _type;
         private double _height;
+        private int _timeOutLimitSeconds;
         private DetectorStatus _detStatus;
         private ConnectOptions _conOption;
         private Sample _currentSample;
         protected delegate void EventsMethods();
+        private bool _disposed;
 
         /// <summary>Constructor of Detector class.</summary>
         /// <param name="name">Name of detector. Without path.</param>
         /// <param name="option">CanberraDeviceAccessLib.ConnectOptions {aReadWrite, aContinue, aNoVerifyLicense, aReadOnly, aTakeControl, aTakeOver}.By default ConnectOptions is ReadWrite.</param>
-        protected Detector(string name, ConnectOptions option = ConnectOptions.aReadWrite)
+        protected Detector(string name, ConnectOptions option = ConnectOptions.aReadWrite, int timeOutLimitSeconds = 5)
         {
+            _disposed = false;
             _name = name;
             Debug.WriteLine($"Current detector is {_name}");
             _conOption = option;
             ErrorMessage = "";
             _device = new DeviceAccessClass();
             _device.DeviceMessages += ProcessDeviceMessages;
+            _timeOutLimitSeconds = timeOutLimitSeconds * 1000;
             Connect();
         }
 
@@ -97,32 +99,25 @@ namespace Measurements.Core.Classes
             {
                 Debug.WriteLine($"Det Status will change to 'error'");
                 DetStatus = DetectorStatus.error;
-                //TODO: figure out how to convert it to string
-                // here I have MessageCodes. ... I sohuld catch what exactly code
-                // I have and convert it to string via $"{_device.Message()}";
-                ErrorMessage = $"{_device.Message(MessageCodes.PLC__HARD_ERR)}";
+                ErrorMessage = $"{_device.Message((MessageCodes)lParam)}";
             }
 
         }
 
-        //TODO: connect should has a timeout exception. In case I turn off vdm manager it stucks on connecting. But in such case with Task I can't be able to catch exception
-        /// <summary>Overload method Connect from CanberraDeviceAccessLib. After second parametr always uses default values.</summary>
-        /// <param name="name">Name of detector. Without path.</param>
-        /// <param name="option">CanberraDeviceAccessLib.ConnectOptions {aReadWrite, aContinue, aNoVerifyLicense, aReadOnly, aTakeControl, aTakeOver}</param>
-        protected async void ConnectAsync()
+        /// <summary>Overload Connect method from CanberraDeviceAccessLib. After second parametr always uses default values.</summary>
+        protected void Connect()
         {
-            DetStatus = DetectorStatus.off;
-            var task = new Task(() => _device.Connect(_name, _conOption, AnalyzerType.aSpectralDetector, "", BaudRate.aUseSystemSettings));
-            if (await Task.WhenAny(task, Task.Delay(15000)) != task)
-                HandleError("Time out error");
+            var task = new Task(() => ConnectInternal());
+            if (!task.Wait(TimeSpan.FromMilliseconds(_timeOutLimitSeconds))) throw new TimeoutException("Connection timeout");
+            HandleError("Connection timeout");
+
         }
 
-        protected void Connect()
+        private void ConnectInternal()
         {
             try
             {
                 DetStatus = DetectorStatus.off;
-                // thats already async
                 _device.Connect(_name, _conOption, AnalyzerType.aSpectralDetector, "", BaudRate.aUseSystemSettings);
                 DetStatus = DetectorStatus.ready;
 
@@ -131,7 +126,7 @@ namespace Measurements.Core.Classes
             {
                 if (ex.Message.Contains("278e2a")) DetStatus = DetectorStatus.busy;
                 else HandleError(ex.Message);
-                
+
             }
             catch (Exception ex) { HandleError(ex.Message); }
 
@@ -179,12 +174,17 @@ namespace Measurements.Core.Classes
         /// <summary>
         /// Save current session on device.
         /// </summary>
-        protected void Save()
+        protected void Save(string name = "")
         {
             try
             {
                 if (!_device.IsConnected) return;
-                _device.Save(_name);
+                if (string.IsNullOrEmpty(name)) _device.Save(_name);
+                else
+                {
+                    if (System.IO.Directory.Exists(System.IO.Path.GetDirectoryName(name))) _device.Save(name, true);
+                    else Debug.WriteLine($"Directory {(System.IO.Path.GetDirectoryName(name))} doesn't exist.");
+                }
             }
             catch (Exception ex) { HandleError(ex.Message); }
         }
@@ -204,13 +204,13 @@ namespace Measurements.Core.Classes
             catch (Exception ex) { HandleError(ex.Message); }
         }
 
-        //TODO: find out how to call VDM.Control.Reset()
         /// <summary>
-        /// 
+        /// Power reset for detector. 
         /// </summary>
         protected void Reset()
         {
-
+            if (_device.IsConnected) _device.SendCommand(DeviceCommands.aReset);
+            else Debug.WriteLine("Device is not connected");
         }
         /// <summary>
         ///  Starts acquiring with specified aCountToLiveTime, before this clear the device.
@@ -221,11 +221,15 @@ namespace Measurements.Core.Classes
             try
             {
                 _device.Clear();
-                _device.AcquireStop();
+                if (DetStatus != DetectorStatus.ready)
+                {
+                    Debug.WriteLine($"Detector is not ready for acquiring.");
+                    return;
+                }
                 Debug.WriteLine($"Acquring is started with time {time}");
-                DetStatus = DetectorStatus.busy;
-                _device.SpectroscopyAcquireSetup(CanberraDeviceAccessLib.AcquisitionModes.aCountToLiveTime, time);
+                _device.SpectroscopyAcquireSetup(CanberraDeviceAccessLib.AcquisitionModes.aCountToRealTime, time);
                 _device.AcquireStart(); //already async
+                DetStatus = DetectorStatus.busy;
 
             }
             catch (Exception ex) { HandleError(ex.Message); }
@@ -256,9 +260,11 @@ namespace Measurements.Core.Classes
         /// <summary>
         /// Disconnects from detector. Changes status to off. Resets ErrorMessage. Clears the detector.
         /// </summary>
-        void IDisposable.Dispose()
+        public virtual void Dispose()
         {
-            Disconnect();
+            if (!_disposed && DetStatus != DetectorStatus.off) Disconnect();
+            _disposed = true;
+            GC.SuppressFinalize(this);
         }
 
         protected event Interfaces.ChangingStatusDelegate ChangingStatusEvent;
@@ -305,12 +311,12 @@ namespace Measurements.Core.Classes
         /// </summary>
         protected double Height
         {
-            get {return _height;}
+            get { return _height; }
             set
             {
-            _height = value;
-            _device.Param[ParamCodes.CAM_T_SGEOMTRY] = value.ToString();
-            } 
+                _height = value;
+                _device.Param[ParamCodes.CAM_T_SGEOMTRY] = value.ToString();
+            }
         }
 
         private void HandleError(string text)
@@ -319,5 +325,10 @@ namespace Measurements.Core.Classes
             ErrorMessage = text;
         }
 
+        ~Detector()
+        {
+            Dispose();
+        }
     }
 }
+
