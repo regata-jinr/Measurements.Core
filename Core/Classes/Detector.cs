@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Threading.Tasks;
-using System.Diagnostics;
 using CanberraDeviceAccessLib;
 
 //TODO: Add tests!
-//TODO: Add logs!
+//TODO: Add logs! 
+//TODO: Add information about user in logs. Try to use ${callsite} - The call site (class name, method name and source information) to avoid implicit specifying in log messages.
+//TODO: add db target
 
 /// <summary>
 /// This namespace contains implementations of core interfaces or internal classes.
@@ -19,16 +20,13 @@ namespace Measurements.Core.Classes
     ///  error - Detector has porblems
     /// </summary>
     enum DetectorStatus { ready, off, busy, error }
+
     /// <summary>
     /// Detector is one of the main class, because detector is the main part of our experiment. It allows to manage real detector and has protection from crashes. You can start, stop and do any basics operations which you have with detector via mvcg.exe. This software based on dlls provided by [Genie2000] (https://www.mirion.com/products/genie-2000-basic-spectroscopy-software) for interactions with [HPGE](https://www.mirion.com/products/standard-high-purity-germanium-detectors) detectors also from [Mirion Tech.](https://www.mirion.com). Personally we are working with [Standard Electrode Coaxial Ge Detectors](https://www.mirion.com/products/sege-standard-electrode-coaxial-ge-detectors)
     /// </summary>
     /// <seealso cref="https://www.mirion.com/products/genie-2000-basic-spectroscopy-software"/>
     class Detector : IDisposable
     {
-
-        protected delegate void ChangingStatusDelegate();
-        protected delegate void AcquiringStatusDelegate();
-
         private DeviceAccessClass _device;
         private string _name;
         private string _type;
@@ -37,17 +35,21 @@ namespace Measurements.Core.Classes
         private DetectorStatus _detStatus;
         private ConnectOptions _conOption;
         private Sample _currentSample;
-        protected delegate void EventsMethods();
+        protected event EventHandler DetectorChangedStatusEvent;
+        protected event EventHandler<DetectorEventsArgs> DetectorMessageEvent;
         private bool _disposed;
+        private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         /// <summary>Constructor of Detector class.</summary>
         /// <param name="name">Name of detector. Without path.</param>
         /// <param name="option">CanberraDeviceAccessLib.ConnectOptions {aReadWrite, aContinue, aNoVerifyLicense, aReadOnly, aTakeControl, aTakeOver}.By default ConnectOptions is ReadWrite.</param>
         protected Detector(string name, ConnectOptions option = ConnectOptions.aReadWrite, int timeOutLimitSeconds = 5)
         {
+
+            logger.Info($"Detector({name}, {option.ToString()}, {timeOutLimitSeconds})", $"Starts to initialising of detector {name}");
+
             _disposed = false;
             _name = name;
-            Debug.WriteLine($"Current detector is {_name}");
             _conOption = option;
             ErrorMessage = "";
             _device = new DeviceAccessClass();
@@ -80,26 +82,23 @@ namespace Measurements.Core.Classes
         /// <param name="lParam">The second parameter of information associated with the message</param>
         private void ProcessDeviceMessages(int message, int wParam, int lParam)
         {
-            Debug.WriteLine($"Messages are got: {message}, {wParam}, {lParam}");
-            Debug.WriteLine($"wParam: {wParam}");
-            Debug.WriteLine($"lParam: {lParam}");
             if ((int)AdviseMessageMasks.amAcquireDone == lParam)
             {
-                Debug.WriteLine($"Status will change to 'ready'");
+                logger.Debug($"Detector({_name}).ProcessDeviceMessages({message},{wParam},{lParam})", $"From detector {_name} got message amAcquireDone. Status will change to 'ready'");
                 DetStatus = DetectorStatus.ready;
             }
 
             if ((int)AdviseMessageMasks.amAcquireStart == lParam)
             {
-                Debug.WriteLine($"Det Status will change to 'busy'");
+                logger.Debug($"Detector({_name}).ProcessDeviceMessages({message},{wParam},{lParam})", $"From detector {_name} got message amAcquireStart. Status will change to 'busy'");
                 DetStatus = DetectorStatus.busy;
             }
 
             if ((int)AdviseMessageMasks.amHardwareError == lParam)
             {
-                Debug.WriteLine($"Det Status will change to 'error'");
                 DetStatus = DetectorStatus.error;
                 ErrorMessage = $"{_device.Message((MessageCodes)lParam)}";
+                GenerateWarnOrErr(NLog.LogLevel.Error, $"Detector({_name}).ProcessDeviceMessages({message},{wParam},{lParam}). From detector {_name} got message amHardwareError. Status will change to 'error'. Error Message is [{ErrorMessage}]");
             }
 
         }
@@ -107,9 +106,23 @@ namespace Measurements.Core.Classes
         /// <summary>Overload Connect method from CanberraDeviceAccessLib. After second parametr always uses default values.</summary>
         protected void Connect()
         {
-            var task = new Task(() => ConnectInternal());
-            if (!task.Wait(TimeSpan.FromMilliseconds(_timeOutLimitSeconds))) throw new TimeoutException("Connection timeout");
-            HandleError("Connection timeout");
+            try
+            {
+                logger.Info($"Detector({_name}).Connect()", $"Starts to connect to detector {_name}");
+
+                var task = new Task(() => ConnectInternal());
+                if (!task.Wait(TimeSpan.FromMilliseconds(_timeOutLimitSeconds)))
+                    throw new TimeoutException("Connection timeout");
+
+                logger.Info($"Detector({_name}).Connect()", $"Connection to detector {_name} is successful");
+
+            }
+            catch (TimeoutException tex)
+            {
+                DetStatus = DetectorStatus.error;
+                ErrorMessage = "Connection timeout";
+                logger.Error(tex, $"Exception in Detector({_name}).ConnectInternal()");
+            }
 
         }
 
@@ -117,18 +130,25 @@ namespace Measurements.Core.Classes
         {
             try
             {
+                logger.Debug($"Detector({_name}).ConnectInternal()", $"Starts internal connection to detector {_name}");
+
                 DetStatus = DetectorStatus.off;
                 _device.Connect(_name, _conOption, AnalyzerType.aSpectralDetector, "", BaudRate.aUseSystemSettings);
                 DetStatus = DetectorStatus.ready;
+
+                logger.Debug($"Detector({_name}).ConnectInternal()", $"Detector {_name} internal connection is successful");
+
 
             }
             catch (System.Runtime.InteropServices.COMException ex)
             {
                 if (ex.Message.Contains("278e2a")) DetStatus = DetectorStatus.busy;
-                else HandleError(ex.Message);
-
+                else HandleError(ex);
             }
-            catch (Exception ex) { HandleError(ex.Message); }
+            catch (Exception ex)
+            {
+                HandleError(ex);
+            }
 
         }
 
@@ -142,9 +162,9 @@ namespace Measurements.Core.Classes
             {
                 if (_detStatus != value)
                 {
+                    logger.Info($"Detector({_name}).DetStatus", $"Detector {_name} status changed from {_detStatus } to {value}");
                     _detStatus = value;
-                    ChangingStatusEvent?.Invoke();
-                    Debug.WriteLine($"Current detector status is {_detStatus}");
+                    DetectorChangedStatusEvent?.Invoke(this, EventArgs.Empty);
                 }
             }
         }
@@ -153,10 +173,12 @@ namespace Measurements.Core.Classes
         /// Returns true if high voltage is on.
         /// </summary>
         protected bool IsHV { get { return _device.HighVoltage.On; } }
+
         /// <summary>
         /// Returns true if detector connected successfully.
         /// </summary>
         protected bool IsConnected { get { return _device.IsConnected; } }
+
         /// <summary>
         /// Returns error message.
         /// </summary>
@@ -166,6 +188,7 @@ namespace Measurements.Core.Classes
         /// Recconects will trying to ressurect connection via detector. In case detector has status error or ready, it will do nothing. In case detector is off it will just call connect. In case status is busy, it will run recursively before 3 attempts with 5sec pausing.
         protected void Reconnect()
         {
+            logger.Info($"Detector({_name}).Reconnect()", $"Attempt to reconnect to detector {_name}.");
             if (_device.IsConnected) { Connect(); return; }
             Disconnect();
             Connect();
@@ -174,19 +197,29 @@ namespace Measurements.Core.Classes
         /// <summary>
         /// Save current session on device.
         /// </summary>
-        protected void Save(string name = "")
+        protected void Save(string fName = "")
         {
             try
             {
                 if (!_device.IsConnected) return;
-                if (string.IsNullOrEmpty(name)) _device.Save(_name);
+                if (string.IsNullOrEmpty(fName))
+                {
+                    logger.Info($"Detector({_name}).Save({fName})", $"Attempt to save current acquiring session");
+                    _device.Save(_name);
+                }
                 else
                 {
-                    if (System.IO.Directory.Exists(System.IO.Path.GetDirectoryName(name))) _device.Save(name, true);
-                    else Debug.WriteLine($"Directory {(System.IO.Path.GetDirectoryName(name))} doesn't exist.");
+                    logger.Info($"Detector({_name}).Save({fName})", $"Attempt to save current acquiring session in file {fName}");
+                    if (System.IO.Directory.Exists(System.IO.Path.GetDirectoryName(fName))) _device.Save(fName, true);
+                    else
+                    {
+                        GenerateWarnOrErr(NLog.LogLevel.Warn, $"Detector({_name}).Save({fName}).Such directory doesn't exist. File will be save to C:\\GENIE2K\\CAMFILES\\");
+                        _device.Save($"C:\\GENIE2K\\CAMFILES\\{System.IO.Path.GetFileName(fName)}", true);
+                    }
                 }
+                logger.Info($"Detector({_name}).Save({fName})", $"Saving is successful");
             }
-            catch (Exception ex) { HandleError(ex.Message); }
+            catch (Exception ex) { HandleError(ex); }
         }
 
         /// <summary>
@@ -196,22 +229,33 @@ namespace Measurements.Core.Classes
         {
             try
             {
+                logger.Info($"Detector({_name}).Disconnect()", $"Disconnecting from the detector");
                 Save();
                 _device.Disconnect();
                 DetStatus = DetectorStatus.off;
                 ErrorMessage = "";
+                logger.Info($"Detector({_name}).Disconnect()", $"Disconnecting is successful");
+
             }
-            catch (Exception ex) { HandleError(ex.Message); }
+            catch (Exception ex) { HandleError(ex); }
         }
 
         /// <summary>
-        /// Power reset for detector. 
+        /// Power reset for the detector. 
         /// </summary>
         protected void Reset()
         {
-            if (_device.IsConnected) _device.SendCommand(DeviceCommands.aReset);
-            else Debug.WriteLine("Device is not connected");
+            try
+            {
+                logger.Info($"Detector({_name}).Reset()", $"Attempt to reset the detector");
+                _device.SendCommand(DeviceCommands.aReset);
+                if (DetStatus == DetectorStatus.ready) logger.Info($"Detector({_name}).Reset()", $"Resetting is successful");
+                else GenerateWarnOrErr(NLog.LogLevel.Warn, $"Detector({_name}).Reset().Reset command was passed, but status is {DetStatus}");
+            }
+            catch (Exception ex) { HandleError(ex); }
         }
+
+
         /// <summary>
         ///  Starts acquiring with specified aCountToLiveTime, before this clear the device.
         /// </summary>
@@ -220,20 +264,24 @@ namespace Measurements.Core.Classes
         {
             try
             {
+                logger.Info($"Detector({_name}).AStart({time} sec)", $"Initialising starting of acquire. Clearing the device:");
                 _device.Clear();
+                logger.Info($"Detector({_name}).AStart({time} sec)", $"Clearing was successful");
+
                 if (DetStatus != DetectorStatus.ready)
                 {
-                    Debug.WriteLine($"Detector is not ready for acquiring.");
+                    GenerateWarnOrErr(NLog.LogLevel.Warn, $"Detector({_name}).AStart({time} sec). Detector is not ready for acquiring. Status is {DetStatus}");
                     return;
                 }
-                Debug.WriteLine($"Acquring is started with time {time}");
                 _device.SpectroscopyAcquireSetup(CanberraDeviceAccessLib.AcquisitionModes.aCountToRealTime, time);
-                _device.AcquireStart(); //already async
+                _device.AcquireStart(); // already async
                 DetStatus = DetectorStatus.busy;
+                logger.Info($"Detector({_name}).AStart({time} sec)", $"Acquiring in process...");
 
             }
-            catch (Exception ex) { HandleError(ex.Message); }
+            catch (Exception ex) { HandleError(ex); }
         }
+
         /// <summary>
         /// Stops acquiring.
         /// </summary>
@@ -241,10 +289,15 @@ namespace Measurements.Core.Classes
         {
             try
             {
+                logger.Info($"Detector({_name}).AStop()", $"Attempt to stop the acquiring");
                 _device.AcquireStop();
+                if (DetStatus == DetectorStatus.ready) logger.Info($"Detector({_name}).AStop()", $"Stopping was successful. Detector ready to acquire again");
+                else GenerateWarnOrErr(NLog.LogLevel.Warn, $"Detector({_name}).AStop(). Stop command was passed, but status is {DetStatus}");
+                Save();
             }
-            catch (Exception ex) { HandleError(ex.Message); }
+            catch (Exception ex) { HandleError(ex); }
         }
+
         /// <summary>
         /// Clears current acquiring status.
         /// </summary>
@@ -252,9 +305,10 @@ namespace Measurements.Core.Classes
         {
             try
             {
+                logger.Info($"Detector({_name}).AClear()", $"Clearing the detector");
                 _device.Clear();
             }
-            catch (Exception ex) { HandleError(ex.Message); }
+            catch (Exception ex) { HandleError(ex); }
         }
 
         /// <summary>
@@ -262,21 +316,21 @@ namespace Measurements.Core.Classes
         /// </summary>
         public virtual void Dispose()
         {
+            logger.Info($"Detector({_name}).Dispose()", $"Disposing the detector");
             if (!_disposed && DetStatus != DetectorStatus.off) Disconnect();
             _disposed = true;
             GC.SuppressFinalize(this);
+            NLog.LogManager.Shutdown();
         }
-
-        protected event Interfaces.ChangingStatusDelegate ChangingStatusEvent;
-        protected event Interfaces.AcquiringStatusDelegate AcquiringCompletedEvent;
 
         /// <summary>
         /// Fill the sample information
         /// </summary>
         /// <param name="sample"></param>
         /// <param name="type"></param>
-        protected void FillSampleInfo(ref Sample sample, string type)
+        protected void FillSampleInfo(ref Sample sample)
         {
+            logger.Info($"Detector({_name}).FillSampleInfo()", $"Filling information about sample: {sample.ToString()}");
             _device.Param[ParamCodes.CAM_T_STITLE] = $"{sample.SampleSetIndex}-{sample.SampleNumber}";// title
             //todo: dictionary for login - [last name] filling from db
             _device.Param[ParamCodes.CAM_T_SCOLLNAME] = FormLogin.user; // operator name
@@ -319,16 +373,34 @@ namespace Measurements.Core.Classes
             }
         }
 
-        private void HandleError(string text)
+        private void HandleError(Exception ex)
         {
             DetStatus = DetectorStatus.error;
-            ErrorMessage = text;
+            ErrorMessage = ex.Message;
+            GenerateWarnOrErr(NLog.LogLevel.Error, $"Exception in Detector({_name}).{ex.Message}");
+
         }
 
         ~Detector()
         {
+            logger.Info($"~Detector({_name})", $"Deleting all data of the detector");
             Dispose();
         }
+
+
+        private void GenerateWarnOrErr(NLog.LogLevel level, string text)
+        {
+            var dea = new DetectorEventsArgs();
+            dea.level = level.Name;
+            dea.text = text;
+            logger.Log(level, text);
+            DetectorMessageEvent?.Invoke(this, dea);
+        }
+    }
+     class DetectorEventsArgs : EventArgs
+    {
+        public string level;
+        public string text;
     }
 }
 
