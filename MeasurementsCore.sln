@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26430.13
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Measurements", "Measurements.csproj", "{67A7B240-6B58-4622-860F-B03153EA87D4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MeasurementsCore", "MeasurementsCore.csproj", "{67A7B240-6B58-4622-860F-B03153EA87D4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -18,5 +18,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F08D2284-B980-47DF-80FD-DD5BD8DF60A4}
 	EndGlobalSection
 EndGlobal

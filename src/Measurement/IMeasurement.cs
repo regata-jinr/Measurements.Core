@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Measurements.Core.Classes;
+using MeasurementsCore;
 
-namespace Measurements.Core.Interfaces
+namespace MeasurementsCore
 {
     interface IMeasurement
     {
@@ -13,16 +13,12 @@ namespace Measurements.Core.Interfaces
         void Stop();
         void Clear();
         void Save();
-        void SaveToFile();
-        void SaveToDB();
+        //void SaveToFile();
+        //void SaveToDB();
         void SetInfo(Sample s, string type, string experimentator, string description);
 
         //ToString
         //Dispose
 
-        event EventHandler Completed;
-        event EventHandler Paused;
-        event EventHandler Stoped;
-        event EventHandler ErrorOccured;
     }
 }

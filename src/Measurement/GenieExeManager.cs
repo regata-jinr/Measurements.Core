@@ -1,7 +1,8 @@
 ﻿using System;
-using System.Windows.Forms;
 using System.IO;
 using System.Diagnostics;
+
+// TODO: should be part of Measurement.cs
 
 namespace Measurements
 {
@@ -44,19 +45,10 @@ namespace Measurements
                 proc.StartInfo.FileName = "cmd.exe";
                 proc.Start();
             }
-            catch (Exception ex) {logWrite("Exception", $"Exception type {ex.GetType()} {Environment.NewLine} Exception message: {ex.Message} {Environment.NewLine} Stack trace: {ex.StackTrace}");}
+            catch (Exception) {}
         }
 
-          public void logWrite(string type, string message)
-        {
-            
-            if (String.IsNullOrEmpty(FormLogin.user)) MessageBox.Show("Выберите пользователя!", "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                using (StreamWriter sw = File.AppendText(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/Measurements.log"))
-            {
-                sw.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm")}  {FormLogin.user}  {type} {message}");
-            }
-
-        }
+        
 
     }
 }

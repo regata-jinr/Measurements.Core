@@ -2,15 +2,12 @@
 using System.Threading.Tasks;
 using CanberraDeviceAccessLib;
 
-//TODO: Add tests!
-//TODO: Add logs! 
-//TODO: Add information about user in logs. Try to use ${callsite} - The call site (class name, method name and source information) to avoid implicit specifying in log messages.
-//TODO: add db target
+//TODO: set up db target https://knightcodes.com/.net/2016/05/25/logging-to-a-database-wth-nlog.html
 
 /// <summary>
 /// This namespace contains implementations of core interfaces or internal classes.
 /// </summary>
-namespace Measurements.Core.Classes
+namespace MeasurementsCore
 {
     /// <summary>
     ///  Enumeration of possible detector's working statuses
@@ -25,20 +22,23 @@ namespace Measurements.Core.Classes
     /// Detector is one of the main class, because detector is the main part of our experiment. It allows to manage real detector and has protection from crashes. You can start, stop and do any basics operations which you have with detector via mvcg.exe. This software based on dlls provided by [Genie2000] (https://www.mirion.com/products/genie-2000-basic-spectroscopy-software) for interactions with [HPGE](https://www.mirion.com/products/standard-high-purity-germanium-detectors) detectors also from [Mirion Tech.](https://www.mirion.com). Personally we are working with [Standard Electrode Coaxial Ge Detectors](https://www.mirion.com/products/sege-standard-electrode-coaxial-ge-detectors)
     /// </summary>
     /// <seealso cref="https://www.mirion.com/products/genie-2000-basic-spectroscopy-software"/>
-    class Detector : IDisposable
+    internal class Detector : IDisposable
     {
         private DeviceAccessClass _device;
         private string _name;
         private string _type;
-        private double _height;
+        private float _height;
         private int _timeOutLimitSeconds;
         private DetectorStatus _detStatus;
         private ConnectOptions _conOption;
-        private Sample _currentSample;
+        //private Sample _currentSample;
         protected event EventHandler DetectorChangedStatusEvent;
         protected event EventHandler<DetectorEventsArgs> DetectorMessageEvent;
         private bool _disposed;
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
+        protected string Name { get;}
+        protected string OperatorName { get; set; }
 
         /// <summary>Constructor of Detector class.</summary>
         /// <param name="name">Name of detector. Without path.</param>
@@ -333,7 +333,7 @@ namespace Measurements.Core.Classes
             logger.Info($"Detector({_name}).FillSampleInfo()", $"Filling information about sample: {sample.ToString()}");
             _device.Param[ParamCodes.CAM_T_STITLE] = $"{sample.SampleSetIndex}-{sample.SampleNumber}";// title
             //todo: dictionary for login - [last name] filling from db
-            _device.Param[ParamCodes.CAM_T_SCOLLNAME] = FormLogin.user; // operator name
+            _device.Param[ParamCodes.CAM_T_SCOLLNAME] = OperatorName; // operator's name
             _device.Param[ParamCodes.CAM_T_SDESC1] = sample.Description; // description 4 - row CAM_T_SDESC1-4
             _device.Param[ParamCodes.CAM_T_SIDENT] = $"{sample.SetKey}"; // sample code
             _device.Param[ParamCodes.CAM_F_SQUANT] = sample.Weight; // weight
@@ -363,7 +363,7 @@ namespace Measurements.Core.Classes
         /// <summary>
         /// Property for geometry of sample. In our case this is height above detector.
         /// </summary>
-        protected double Height
+        protected float Height
         {
             get { return _height; }
             set

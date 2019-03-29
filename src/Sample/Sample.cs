@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Data;
 
-namespace Measurements.Core.Classes
+namespace MeasurementsCore
 {
     struct  Sample
     {
