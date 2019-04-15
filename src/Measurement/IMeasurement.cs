@@ -1,8 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using MeasurementsCore;
-
-namespace MeasurementsCore
+﻿namespace MeasurementsCore
 {
     interface IMeasurement
     {
@@ -12,8 +8,8 @@ namespace MeasurementsCore
         void Continue();
         void Stop();
         void Clear();
-        void Save();
-        //void SaveToFile();
+        //void Restore();
+        //void Backup();
         //void SaveToDB();
         void SetInfo(Sample s, string type, string experimentator, string description);
 

@@ -113,6 +113,7 @@
     <Content Include="NLog.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <None Include="Diary.md" />
     <None Include="NLog.xsd">
       <SubType>Designer</SubType>
     </None>
