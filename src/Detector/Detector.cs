@@ -16,19 +16,22 @@ namespace MeasurementsCore
     ///  busy  - Detector is acquiring spectrum
     ///  error - Detector has porblems
     /// </summary>
-    enum DetectorStatus { ready, off, busy, error }
+    public enum DetectorStatus { ready, off, busy, error }
 
     /// <summary>
     /// Detector is one of the main class, because detector is the main part of our experiment. It allows to manage real detector and has protection from crashes. You can start, stop and do any basics operations which you have with detector via mvcg.exe. This software based on dlls provided by [Genie2000] (https://www.mirion.com/products/genie-2000-basic-spectroscopy-software) for interactions with [HPGE](https://www.mirion.com/products/standard-high-purity-germanium-detectors) detectors also from [Mirion Tech.](https://www.mirion.com). Personally we are working with [Standard Electrode Coaxial Ge Detectors](https://www.mirion.com/products/sege-standard-electrode-coaxial-ge-detectors)
     /// </summary>
     /// <seealso cref="https://www.mirion.com/products/genie-2000-basic-spectroscopy-software"/>
-    internal class Detector : IDisposable
+    public class Detector : IDisposable
     {
         private DeviceAccessClass _device;
         private string _name;
         private string _type;
         private float _height;
         private int _timeOutLimitSeconds;
+        private int _countToRealTime;
+        private int _countToLiveTime;
+        private int _countNormal;
         private DetectorStatus _detStatus;
         private ConnectOptions _conOption;
         //private Sample _currentSample;
@@ -39,6 +42,35 @@ namespace MeasurementsCore
 
         protected string Name { get;}
         protected string OperatorName { get; set; }
+        protected int CountToRealTime
+        {
+            get { return _countToRealTime; }
+            set
+            {
+                logger.Info($"Detector({_name}).CountToRealTime", $"Acquiring will start with aCountToRealTime = {value}");
+                _device.SpectroscopyAcquireSetup(CanberraDeviceAccessLib.AcquisitionModes.aCountToRealTime, value);
+            }
+        }
+
+        protected int CountToLiveTime
+        {
+            get { return _countToLiveTime; }
+            set
+            {
+                logger.Info($"Detector({_name}).CountToLiveTime", $"Acquiring will start with aCountToLiveTime = {value}");
+                _device.SpectroscopyAcquireSetup(CanberraDeviceAccessLib.AcquisitionModes.aCountToLiveTime, value);
+            }
+        }
+
+        protected int CountNormal
+        {
+            get { return _countNormal; }
+            set
+            {
+                logger.Info($"Detector({_name}).CountNormal", $"Acquiring will start with aCountNormal = {value}");
+                _device.SpectroscopyAcquireSetup(CanberraDeviceAccessLib.AcquisitionModes.aCountNormal, value);
+            }
+        }
 
         /// <summary>Constructor of Detector class.</summary>
         /// <param name="name">Name of detector. Without path.</param>
@@ -255,32 +287,50 @@ namespace MeasurementsCore
             catch (Exception ex) { HandleError(ex); }
         }
 
+        protected void AOptions(CanberraDeviceAccessLib.AcquisitionModes opt, int param)
+        {
+            _device.SpectroscopyAcquireSetup(CanberraDeviceAccessLib.AcquisitionModes., param);
+
+        }
+
 
         /// <summary>
         ///  Starts acquiring with specified aCountToLiveTime, before this clear the device.
         /// </summary>
         /// <param name="time"></param>
-        protected void AStart(int time)
+        protected void AStart()
         {
             try
             {
-                logger.Info($"Detector({_name}).AStart({time} sec)", $"Initialising starting of acquire. Clearing the device:");
+                logger.Info($"Detector({_name}).AStart()", $"Initialising starting of acquire. Clearing the device:");
                 _device.Clear();
-                logger.Info($"Detector({_name}).AStart({time} sec)", $"Clearing was successful");
+                logger.Info($"Detector({_name}).AStart()", $"Clearing was successful");
 
                 if (DetStatus != DetectorStatus.ready)
                 {
-                    GenerateWarnOrErr(NLog.LogLevel.Warn, $"Detector({_name}).AStart({time} sec). Detector is not ready for acquiring. Status is {DetStatus}");
+                    GenerateWarnOrErr(NLog.LogLevel.Warn, $"Detector({_name}).AStart(). Detector is not ready for acquiring. Status is {DetStatus}");
                     return;
                 }
-                _device.SpectroscopyAcquireSetup(CanberraDeviceAccessLib.AcquisitionModes.aCountToRealTime, time);
                 _device.AcquireStart(); // already async
                 DetStatus = DetectorStatus.busy;
-                logger.Info($"Detector({_name}).AStart({time} sec)", $"Acquiring in process...");
+                logger.Info($"Detector({_name}).AStart()", $"Acquiring in process...");
 
             }
             catch (Exception ex) { HandleError(ex); }
         }
+
+
+        protected void AContinue()
+        {
+            if (DetStatus != DetectorStatus.ready)
+            {
+                GenerateWarnOrErr(NLog.LogLevel.Warn, $"Detector({_name}).AContinue(). Detector is not ready for acquiring. Status is {DetStatus}");
+                return;
+            }
+            logger.Info($"Detector({_name}).AContinue()", $"Acquiring will continue after pause");
+            _device.AcquireStart();
+        }
+
 
         /// <summary>
         /// Stops acquiring.
@@ -334,7 +384,7 @@ namespace MeasurementsCore
             _device.Param[ParamCodes.CAM_T_STITLE] = $"{sample.SampleSetIndex}-{sample.SampleNumber}";// title
             //todo: dictionary for login - [last name] filling from db
             _device.Param[ParamCodes.CAM_T_SCOLLNAME] = OperatorName; // operator's name
-            _device.Param[ParamCodes.CAM_T_SDESC1] = sample.Description; // description 4 - row CAM_T_SDESC1-4
+            DivideString(sample.Description);
             _device.Param[ParamCodes.CAM_T_SIDENT] = $"{sample.SetKey}"; // sample code
             _device.Param[ParamCodes.CAM_F_SQUANT] = sample.Weight; // weight
             _device.Param[ParamCodes.CAM_F_SQUANTERR] = 0; // err = 0
@@ -344,6 +394,42 @@ namespace MeasurementsCore
             _device.Param[ParamCodes.CAM_X_STIME] = sample.IrradiationFinishDateTime; // irr finish date time
             _device.Param[ParamCodes.CAM_F_SSYSERR] = 0; // Random sample error (%)
             _device.Param[ParamCodes.CAM_F_SSYSTERR] = 0; // Non-random sample error (%)
+        }
+
+        private void DivideString(string iStr)
+        {
+            if (string.IsNullOrEmpty(iStr)) return;
+            int descriptionsCount = iStr.Length / 65;
+
+            switch (descriptionsCount)
+            {
+                case 0:
+                    _device.Param[ParamCodes.CAM_T_SDESC1] = iStr;
+                    break;
+                case 1:
+                    _device.Param[ParamCodes.CAM_T_SDESC1] = iStr.Substring(0,65);
+                    _device.Param[ParamCodes.CAM_T_SDESC2] = iStr.Substring(66);
+                    break;
+                case 2:
+                    _device.Param[ParamCodes.CAM_T_SDESC1] = iStr.Substring(0, 65);
+                    _device.Param[ParamCodes.CAM_T_SDESC2] = iStr.Substring(66,65);
+                    _device.Param[ParamCodes.CAM_T_SDESC3] = iStr.Substring(132);
+                    break;
+                case 3:
+                    _device.Param[ParamCodes.CAM_T_SDESC1] = iStr.Substring(0, 65);
+                    _device.Param[ParamCodes.CAM_T_SDESC2] = iStr.Substring(66, 65);
+                    _device.Param[ParamCodes.CAM_T_SDESC3] = iStr.Substring(132,65);
+                    _device.Param[ParamCodes.CAM_T_SDESC4] = iStr.Substring(198);
+                    break;
+                default:
+                    _device.Param[ParamCodes.CAM_T_SDESC1] = iStr.Substring(0, 65);
+                    _device.Param[ParamCodes.CAM_T_SDESC2] = iStr.Substring(66, 65);
+                    _device.Param[ParamCodes.CAM_T_SDESC3] = iStr.Substring(132, 65);
+                    _device.Param[ParamCodes.CAM_T_SDESC4] = iStr.Substring(198, 65);
+                    break;
+            }
+
+
         }
 
         /// <summary>
@@ -397,7 +483,7 @@ namespace MeasurementsCore
             DetectorMessageEvent?.Invoke(this, dea);
         }
     }
-     class DetectorEventsArgs : EventArgs
+    public class DetectorEventsArgs : EventArgs
     {
         public string level;
         public string text;

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using System.Data;
 using System.Data.SqlClient;
@@ -12,19 +11,20 @@ namespace MeasurementsCore
     /// Measurement class ia a wrapper for measurements process. 
     /// This class uses Detector, Sample, DataBase, FileStreamers so that control process of measurement.
     /// </summary>
-    class Measurement : Detector, IMeasurement, IDisposable
+    public class Measurement : Detector, IMeasurement, IDisposable
     {
 
-
-        public Measurement(string detectorName, Sample s, string type, int duration, string operatorName, bool withSampleChanger = true, bool withDataBase = true) : base(detectorName)
+        public Measurement(string detectorName, Sample s, string type, float height, int duration, string operatorName, bool withSampleChanger = true, bool withDataBase = true) : base(detectorName)
         {
-            mOperatorName = operatorName;
-            Start(duration);
+            CountToRealTime = duration;
+            FillSampleInfo(ref s);
+            Type = type;
+            OperatorName = operatorName;
+            Height = height;
+            // StartAsync();
         }
 
         public int FileNumber { get; set; }
-        public string mOperatorName { get; set; }
-        public int mDuration { get; set; }
         public DateTime mDateTimeStart { get; set; }
         public DateTime mDateTimeFinish { get; set; }
 
@@ -32,32 +32,39 @@ namespace MeasurementsCore
         /// 
         /// </summary>
         /// <returns></returns>
-        public async void Start(int time)
+        public async void StartAsync()
         {
             mDateTimeStart = DateTime.Now;
-            await Task.Run(() => AStart(time));
+            await Task.Run(() => AStart());
         }
         public void Continue()
-        { }
-        public void Restart()
-        { }
+        {
+            AContinue();
+        }
         public void Stop()
-        { }
-        public void Pause()
-        { }
+        {
+            AStop();
+        }
         public void Clear()
-        { }
+        {
+            AClear();
+        }
+
+        public void ShowMvcg()
+        {
+
+        }
         //void IMeasurement.SaveToDB()
         //{ }
         //void IMeasurement.Backup()
         //{ }
         //void IMeasurement.Restore()
         //{ }
-        public void SetInfo(Sample s, string type, string experimentator, string description)
-        { }
 
         void IDisposable.Dispose()
-        { }
+        {
+            Dispose();
+        }
 
 
     }

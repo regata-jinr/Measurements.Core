@@ -4,7 +4,7 @@ using System.Diagnostics;
 
 // TODO: should be part of Measurement.cs
 
-namespace Measurements
+namespace MeasurementsCore
 {
     class GenieExeManager
     {

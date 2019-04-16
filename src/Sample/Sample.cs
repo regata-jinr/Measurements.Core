@@ -3,7 +3,7 @@ using System.Data;
 
 namespace MeasurementsCore
 {
-    struct  Sample
+    public struct  Sample
     {
         public string CountryCode { get; set; } // "RU"
         public int ClientId { get; set; } // 1
