@@ -13,7 +13,8 @@ namespace MeasurementsCore
     /// </summary>
     public class Measurement : Detector, IMeasurement, IDisposable
     {
-
+        private ProcessManager _mProcessManager;
+        private bool _isShowed;
         public Measurement(string detectorName, Sample s, string type, float height, int duration, string operatorName, bool withSampleChanger = true, bool withDataBase = true) : base(detectorName)
         {
             CountToRealTime = duration;
@@ -21,6 +22,8 @@ namespace MeasurementsCore
             Type = type;
             OperatorName = operatorName;
             Height = height;
+            _mProcessManager = new ProcessManager();
+            _isShowed = false;
             // StartAsync();
         }
 
@@ -50,10 +53,13 @@ namespace MeasurementsCore
             AClear();
         }
 
-        public void ShowMvcg()
+        public void ShowDetectorInMvcg()
         {
-
+            _mProcessManager.ShowDetectorInMvcg(Name);
         }
+
+
+
         //void IMeasurement.SaveToDB()
         //{ }
         //void IMeasurement.Backup()

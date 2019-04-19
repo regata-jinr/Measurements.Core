@@ -6,7 +6,7 @@
         void Continue();
         void Stop();
         void Clear();
-        void ShowMvcg();
+        void ShowDetectorInMvcg();
         //void Restore();
         //void Backup();
         //void SaveToDB();

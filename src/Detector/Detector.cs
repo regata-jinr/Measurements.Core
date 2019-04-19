@@ -289,7 +289,7 @@ namespace MeasurementsCore
 
         protected void AOptions(CanberraDeviceAccessLib.AcquisitionModes opt, int param)
         {
-            _device.SpectroscopyAcquireSetup(CanberraDeviceAccessLib.AcquisitionModes., param);
+            _device.SpectroscopyAcquireSetup(opt, param);
 
         }
 
@@ -364,7 +364,7 @@ namespace MeasurementsCore
         /// <summary>
         /// Disconnects from detector. Changes status to off. Resets ErrorMessage. Clears the detector.
         /// </summary>
-        public virtual void Dispose()
+        public void Dispose()
         {
             logger.Info($"Detector({_name}).Dispose()", $"Disposing the detector");
             if (!_disposed && DetStatus != DetectorStatus.off) Disconnect();
