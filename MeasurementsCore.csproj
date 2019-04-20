@@ -67,6 +67,9 @@
     <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
       <HintPath>packages\NLog.4.6.0\lib\net45\NLog.dll</HintPath>
     </Reference>
+    <Reference Include="Renci.SshNet, Version=2016.1.0.0, Culture=neutral, PublicKeyToken=1cee9f8bde3db106, processorArchitecture=MSIL">
+      <HintPath>packages\SSH.NET.2016.1.0\lib\net40\Renci.SshNet.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
@@ -91,9 +94,9 @@
   <ItemGroup>
     <Compile Include="src\Measurement\IMeasurement.cs" />
     <Compile Include="src\Measurement\Measurement.cs" />
-    <Compile Include="src\Measurement\GenieExeManager.cs" />
     <Compile Include="src\Detector\Detector.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="src\Measurement\ProcessManager.cs" />
     <Compile Include="src\Sample\Sample.cs" />
     <Compile Include="src\SampleChanger\SampleChanger.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">

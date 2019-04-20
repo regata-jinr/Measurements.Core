@@ -482,6 +482,12 @@ namespace MeasurementsCore
             logger.Log(level, text);
             DetectorMessageEvent?.Invoke(this, dea);
         }
+
+        protected void SaveSpectraToFile(string file)
+        {
+            _device.Save(file);
+        }
+
     }
     public class DetectorEventsArgs : EventArgs
     {

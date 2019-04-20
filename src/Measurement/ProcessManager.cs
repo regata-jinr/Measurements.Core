@@ -49,7 +49,7 @@ namespace MeasurementsCore
 
         public void Dispose()
         {
-            //TODO: I can't use it, because detector opened from dlls. I should check disconnecting from detector close devise in mvcg or not.
+            //TODO: I can't use it, because detector opened from dlls. I should check is detector closing automatically after disconnecting in mvcg or not.
             //TODO: It should be called only for last measurement process
             proc.StartInfo.FileName = "endview.exe";
             if (_isSpawned) proc.Start();
