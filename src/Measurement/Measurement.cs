@@ -15,9 +15,15 @@ namespace MeasurementsCore
     /// </summary>
     public class Measurement : Detector, IMeasurement, IDisposable
     {
+
         private ProcessManager _mProcessManager;
         private bool _isShowed;
-        private string _spectraFile;
+        private int _spectraFile;
+        private string _localDir;
+        private string _remoteDir;
+        private string _mType;
+
+
         public Measurement(string detectorName, Sample s, string type, float height, int duration, string operatorName, bool withSampleChanger = true, bool withDataBase = true) : base(detectorName)
         {
             CountToRealTime = duration;
@@ -27,12 +33,73 @@ namespace MeasurementsCore
             Height = height;
             _mProcessManager = new ProcessManager();
             _isShowed = false;
-            // StartAsync();
+            MType = type;
+            SpectraFile = 0;
+            LocalDir = $"D:\\Spectra\\{DateTimeStart.Year}\\{DateTimeStart.Month.ToString("D2")}\\{MType}\\";
+            RemoteDir = $"/Users/bdrum/Spectra/{DateTimeStart.Year}/{DateTimeStart.Month.ToString("D2")}/{MType}/";
+            StartAsync();
         }
 
-        public int FileNumber { get; set; }
-        public DateTime mDateTimeStart { get; set; }
-        public DateTime mDateTimeFinish { get; set; }
+        public string LocalDir
+        {
+            get { return _localDir; }
+            set
+            {
+                if (!Directory.Exists(value))
+                    Directory.CreateDirectory(value);
+                _localDir = value;
+            }
+        }
+
+        public string RemoteDir
+        {
+            get { return _remoteDir; }
+            set
+            {
+                try
+                {
+                    using (var sftp = new SftpClient(Properties.Resources.sftpHost, Properties.Resources.sftpUser, Properties.Resources.sftpPass))
+                    {
+                        sftp.Connect();
+
+                        if (!sftp.Exists(value))
+                            sftp.CreateDirectory(value);
+                        _remoteDir = value;
+                    }
+                }
+                catch (Exception ex)
+                {
+
+                }
+            }
+        }
+
+        //TODO: generate file number from last file in DB
+        public int SpectraFile
+        {
+            get { return _spectraFile; }
+            private set
+            {
+                var r = new Random();
+                _spectraFile = r.Next();
+            }
+        }
+        public string MType {
+            get { return _mType; }
+            set
+            {
+                if (string.Equals(value, "SLI", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(value, "LLI-1", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(value, "LLI-2", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(value, "BACKGROUND", StringComparison.OrdinalIgnoreCase))
+                    _mType = value.ToUpper();
+                else
+                    throw new InvalidOperationException($"Such type {value} can't be used. You should choose from that list: " +
+                                                        $"['SLI', 'LLI-1', 'LLI-2', 'BACKGROUND']");
+            }
+        }
+        public DateTime DateTimeStart { get; set; }
+        public DateTime DateTimeFinish { get; set; }
 
         /// <summary>
         /// 
@@ -40,7 +107,7 @@ namespace MeasurementsCore
         /// <returns></returns>
         public async void StartAsync()
         {
-            mDateTimeStart = DateTime.Now;
+            DateTimeStart = DateTime.Now;
             await Task.Run(() => AStart());
         }
         public void Continue()
@@ -63,26 +130,25 @@ namespace MeasurementsCore
 
         public void CompleteMeasurement()
         {
-
+            DateTimeFinish = DateTime.Now;
         }
         public void SaveSpectraToFile()
         {
-            if (!Directory.Exists(Path.GetDirectoryName(_spectraFile)))
-                Directory.CreateDirectory(Path.GetDirectoryName(_spectraFile));
-            SaveSpectraToFile(_spectraFile);
-            //TODO: prepare settings file
-            using (var sftp = new SftpClient("", "", "")) // new SftpClient(Properties.Settings.Default.host, Properties.Settings.Default.user, Properties.Settings.Default.psw))
+
+            SaveSpectraToFile($"{LocalDir}\\{SpectraFile}");
+
+            using (var sftp = new SftpClient(Properties.Resources.sftpHost, Properties.Resources.sftpUser, Properties.Resources.sftpPass))
             {
                 sftp.Connect();
                 try
                 {
-                    //TODO: server path not the same as local
-                    using (var file = File.Open(_spectraFile, FileMode.Open))
+                    using (var file = File.Open($"{RemoteDir}/{SpectraFile}.cnf", FileMode.Open))
                     {
-                        sftp.UploadFile(file, $"Spectra/{_spectraFile}");
+                        sftp.UploadFile(file, $"{RemoteDir}/{SpectraFile}.cnf");
                     }
 
                 }
+                //TODO: add special extinsions for connections problems and so on
                 catch (Exception ex)
                 {
 
@@ -92,9 +158,14 @@ namespace MeasurementsCore
         }
 
 
-        //void IMeasurement.SaveToDB()
-        //{ }
-        //void IMeasurement.Backup()
+        public void SaveToDB()
+        {
+
+        }
+        public void Backup()
+        {
+
+        }
         //{ }
         //void IMeasurement.Restore()
         //{ }

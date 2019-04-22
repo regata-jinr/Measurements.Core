@@ -10,8 +10,8 @@
         void CompleteMeasurement();
         void SaveSpectraToFile();
         //void Restore();
-        //void Backup();
-        //void SaveToDB();
+        void Backup();
+        void SaveToDB();
 
         //ToString
         //Dispose
