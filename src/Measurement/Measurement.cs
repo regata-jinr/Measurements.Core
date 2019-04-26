@@ -9,11 +9,18 @@ using System.Diagnostics;
 
 namespace MeasurementsCore
 {
+
+    //FIXME: few thoughts about design. In my case when application has started user choose detectors which he'd use.
+    //      It means, further we should keep connections with choosen detectors and change only certain properties like
+    //      sample info, height and so on. But in current design I fill all of this inforamtion via constructor, it 
+    //      means usage of new object of measurement for each real measurement, but in this case I should free memory including 
+    //      connections, displaying of detector status via mvcg. This bad logic. 
+
     /// <summary>
     /// Measurement class ia a wrapper for measurements process. 
     /// This class uses Detector, Sample, DataBase, FileStreamers so that control process of measurement.
     /// </summary>
-    public class Measurement : Detector, IMeasurement, IDisposable
+    public class Measurement : IMeasurement, IDisposable
     {
 
         private ProcessManager _mProcessManager;
@@ -22,22 +29,26 @@ namespace MeasurementsCore
         private string _localDir;
         private string _remoteDir;
         private string _mType;
+        private string _mOperatorName;
+        private float _mHeight;
+        private Detector _det;
+        
+       
 
-
-        public Measurement(string detectorName, Sample s, string type, float height, int duration, string operatorName, bool withSampleChanger = true, bool withDataBase = true) : base(detectorName)
+        public Measurement(string detectorName, string operatorName)
         {
-            CountToRealTime = duration;
-            FillSampleInfo(ref s);
-            Type = type;
+            _det = new Detector(detectorName);
+            //_det.CountToRealTime = duration;
+            //_det.FillInfo(ref s, type, operatorName, height);
+            //MType = type;
             OperatorName = operatorName;
-            Height = height;
+            //Height = height;
             _mProcessManager = new ProcessManager();
             _isShowed = false;
-            MType = type;
             SpectraFile = 0;
+            //FIXME: adding directories directly is bad idea just for debugging
             LocalDir = $"D:\\Spectra\\{DateTimeStart.Year}\\{DateTimeStart.Month.ToString("D2")}\\{MType}\\";
             RemoteDir = $"/Users/bdrum/Spectra/{DateTimeStart.Year}/{DateTimeStart.Month.ToString("D2")}/{MType}/";
-            StartAsync();
         }
 
         public string LocalDir
@@ -50,6 +61,26 @@ namespace MeasurementsCore
                 _localDir = value;
             }
         }
+
+
+        public string OperatorName
+        {
+            get { return _mOperatorName; }
+            set
+            {
+                _mOperatorName = value;
+            }
+        }
+
+        public float Height
+        {
+            get { return _mHeight; }
+            set
+            {
+                _mHeight = value;
+            }
+        }
+
 
         public string RemoteDir
         {
@@ -108,24 +139,24 @@ namespace MeasurementsCore
         public async void StartAsync()
         {
             DateTimeStart = DateTime.Now;
-            await Task.Run(() => AStart());
+            await Task.Run(() => _det.AStart());
         }
         public void Continue()
         {
-            AContinue();
+            _det.AContinue();
         }
         public void Stop()
         {
-            AStop();
+            _det.AStop();
         }
         public void Clear()
         {
-            AClear();
+            _det.AClear();
         }
 
         public void ShowDetectorInMvcg()
         {
-            _mProcessManager.ShowDetectorInMvcg(Name);
+            _mProcessManager.ShowDetectorInMvcg(_det.Name);
         }
 
         public void CompleteMeasurement()
@@ -135,7 +166,7 @@ namespace MeasurementsCore
         public void SaveSpectraToFile()
         {
 
-            SaveSpectraToFile($"{LocalDir}\\{SpectraFile}");
+            _det.Save($"{LocalDir}\\{SpectraFile}");
 
             using (var sftp = new SftpClient(Properties.Resources.sftpHost, Properties.Resources.sftpUser, Properties.Resources.sftpPass))
             {
@@ -154,7 +185,6 @@ namespace MeasurementsCore
 
                 }
             }
-
         }
 
 
@@ -172,7 +202,7 @@ namespace MeasurementsCore
 
         void IDisposable.Dispose()
         {
-            Dispose();
+            _det.Dispose();
         }
 
 

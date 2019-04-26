@@ -10,7 +10,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>MeasurementsCore</RootNamespace>
     <AssemblyName>MeasurementsCore</AssemblyName>
-    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <IsWebBootstrapper>false</IsWebBootstrapper>
@@ -30,6 +30,7 @@
     <BootstrapperEnabled>true</BootstrapperEnabled>
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -92,6 +93,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="src\Detector\IDetector.cs" />
     <Compile Include="src\Measurement\IMeasurement.cs" />
     <Compile Include="src\Measurement\Measurement.cs" />
     <Compile Include="src\Detector\Detector.cs" />
@@ -99,6 +101,8 @@
     <Compile Include="src\Measurement\ProcessManager.cs" />
     <Compile Include="src\Sample\Sample.cs" />
     <Compile Include="src\SampleChanger\SampleChanger.cs" />
+    <Compile Include="test\DetectorTest.cs" />
+    <Compile Include="test\MeasurementTest.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -168,7 +172,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resources\" />
-    <Folder Include="test\" />
   </ItemGroup>
   <ItemGroup>
     <Analyzer Include="packages\xunit.analyzers.0.10.0\analyzers\dotnet\cs\xunit.analyzers.dll" />
