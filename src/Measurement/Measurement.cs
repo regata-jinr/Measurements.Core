@@ -1,10 +1,6 @@
 ﻿using System;
 using System.IO;
-using Renci.SshNet;
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using System.Data;
-using System.Data.SqlClient;
 using System.Diagnostics;
 
 namespace MeasurementsCore
@@ -48,7 +44,6 @@ namespace MeasurementsCore
             SpectraFile = 0;
             //FIXME: adding directories directly is bad idea just for debugging
             LocalDir = $"D:\\Spectra\\{DateTimeStart.Year}\\{DateTimeStart.Month.ToString("D2")}\\{MType}\\";
-            RemoteDir = $"/Users/bdrum/Spectra/{DateTimeStart.Year}/{DateTimeStart.Month.ToString("D2")}/{MType}/";
         }
 
         public string LocalDir
@@ -81,29 +76,6 @@ namespace MeasurementsCore
             }
         }
 
-
-        public string RemoteDir
-        {
-            get { return _remoteDir; }
-            set
-            {
-                try
-                {
-                    using (var sftp = new SftpClient(Properties.Resources.sftpHost, Properties.Resources.sftpUser, Properties.Resources.sftpPass))
-                    {
-                        sftp.Connect();
-
-                        if (!sftp.Exists(value))
-                            sftp.CreateDirectory(value);
-                        _remoteDir = value;
-                    }
-                }
-                catch (Exception ex)
-                {
-
-                }
-            }
-        }
 
         //TODO: generate file number from last file in DB
         public int SpectraFile
@@ -168,23 +140,6 @@ namespace MeasurementsCore
 
             _det.Save($"{LocalDir}\\{SpectraFile}");
 
-            using (var sftp = new SftpClient(Properties.Resources.sftpHost, Properties.Resources.sftpUser, Properties.Resources.sftpPass))
-            {
-                sftp.Connect();
-                try
-                {
-                    using (var file = File.Open($"{RemoteDir}/{SpectraFile}.cnf", FileMode.Open))
-                    {
-                        sftp.UploadFile(file, $"{RemoteDir}/{SpectraFile}.cnf");
-                    }
-
-                }
-                //TODO: add special extinsions for connections problems and so on
-                catch (Exception ex)
-                {
-
-                }
-            }
         }
 
 

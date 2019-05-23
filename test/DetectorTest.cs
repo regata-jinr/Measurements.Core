@@ -1,10 +1,10 @@
 ﻿using Xunit;
-using System;
 
 
 namespace MeasurementsCore.test
 {
-    //todo: In such logic xuint create object DetectorTest for each method
+    //FIXME: In case of splitting StateTest fact to few methods xunit will call constructor for each method as a result duplicate log messages. How to avoid it?
+    //FIXME: some problem with D6. It works directly from CanberraDeviceAccess, but doesn't from my wrapper?!
     public class DetectorTest
     {
         IDetector _det1;
@@ -19,23 +19,27 @@ namespace MeasurementsCore.test
             _det6 = new Detector("D6");
         }
 
-      //  [Fact]
-      //public void NameTest()
-      //{
-      //    Assert.Equal("D1", _det1.Name);
-      //    Assert.NotEqual("D2", _det2.Name);
-      //    Assert.Equal("D5", _det5.Name);
-      //    Assert.Equal("D6", _det6.Name);
-      //}
-
         [Fact]
-      public void ConnectTest()
-      {
-          Assert.True(_det1.IsConnected);
-          Assert.False(_det2.IsConnected);
-          Assert.True(_det5.IsConnected);
-          Assert.True(_det6.IsConnected);
-      }
+        public void StateTest()
+        {
+            //names
+            Assert.Equal("D1", _det1.Name);
+            Assert.NotEqual("D2", _det2.Name);
+            Assert.Equal("D5", _det5.Name);
+            Assert.Equal("D6", _det6.Name);
+
+            //statuses
+            Assert.Equal(_det1.DetStatus, DetectorStatus.ready);
+            Assert.Equal(_det2.DetStatus, DetectorStatus.error);
+            Assert.Equal(_det5.DetStatus, DetectorStatus.ready);
+            Assert.Equal(_det6.DetStatus, DetectorStatus.ready);
+
+            //Connections
+            Assert.True(_det1.IsConnected);
+            Assert.False(_det2.IsConnected);
+            Assert.True(_det5.IsConnected);
+            Assert.True(_det6.IsConnected);
+        }
 
         //[Fact]
         //void CountToRealTimeTest()
