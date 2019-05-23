@@ -18,7 +18,7 @@ namespace MeasurementsCore
     ///  busy  - Detector is acquiring spectrum
     ///  error - Detector has porblems
     /// </summary>
-    public enum DetectorStatus { ready, off, busy, error }
+    public enum DetectorStatus { off, ready, busy, error }
 
     /// <summary>
     /// Detector is one of the main class, because detector is the main part of our experiment. It allows to manage real detector and has protection from crashes. You can start, stop and do any basics operations which you have with detector via mvcg.exe. This software based on dlls provided by [Genie2000] (https://www.mirion.com/products/genie-2000-basic-spectroscopy-software) for interactions with [HPGE](https://www.mirion.com/products/standard-high-purity-germanium-detectors) detectors also from [Mirion Tech.](https://www.mirion.com). Personally we are working with [Standard Electrode Coaxial Ge Detectors](https://www.mirion.com/products/sege-standard-electrode-coaxial-ge-detectors)
@@ -53,7 +53,7 @@ namespace MeasurementsCore
                 else
                 {
                     DetStatus = DetectorStatus.error;
-                    ErrorMessage = $"Detector with name '{value}' didn't define by the MID wizard. Status will change to 'error'.";
+                    ErrorMessage = $"Detector with name '{value}' wasn't find in the MID wizard list. Status will change to 'error'.";
                     GenerateWarnOrErr(NLog.LogLevel.Error, $"Detector({_name}). {ErrorMessage}");
                 }
             }
@@ -162,13 +162,13 @@ namespace MeasurementsCore
             try
             {
                 logger.Info($"Detector({_name}).Connect()::Starts connect to detector {_name}. Timeout value is {_timeOutLimitSeconds / 1000} sec.");
-               // ConnectInternal();
+                ConnectInternal();
                //FIXME: it's crash program.
-                var task = new Task(() => ConnectInternal());
-                if (!task.Wait(TimeSpan.FromMilliseconds(_timeOutLimitSeconds)))
-                    throw new TimeoutException("Connection timeout");
-
-                logger.Info($"Detector({_name}).Connect()::Connection to detector {_name} is successful");
+                //var task = new Task(() => ConnectInternal());
+                //if (!task.Wait(TimeSpan.FromMilliseconds(_timeOutLimitSeconds)))
+                //    throw new TimeoutException("Connection timeout");
+                if (_device.IsConnected)
+                    logger.Info($"Detector({_name}).Connect()::Connection to detector {_name} is successful");
 
             }
             catch (TimeoutException tex)
@@ -286,7 +286,6 @@ namespace MeasurementsCore
             try
             {
                 logger.Info($"Detector({_name}).Disconnect()::Disconnecting from the detector");
-                Save();
                 _device.Disconnect();
                 DetStatus = DetectorStatus.off;
                 ErrorMessage = "";
