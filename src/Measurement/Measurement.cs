@@ -6,7 +6,7 @@ using System.Diagnostics;
 namespace MeasurementsCore
 {
 
-    //FIXME: few thoughts about design. In my case when application has started user choose detectors which he'd use.
+    //FIXME: few thoughts about design: In my case when application has started user choose detectors which he'd use.
     //      It means, further we should keep connections with choosen detectors and change only certain properties like
     //      sample info, height and so on. But in current design I fill all of this inforamtion via constructor, it 
     //      means usage of new object of measurement for each real measurement, but in this case I should free memory including 

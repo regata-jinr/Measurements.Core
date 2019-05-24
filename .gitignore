@@ -270,3 +270,6 @@ __pycache__/
 *.pyc
 doxygen/*
 doxygen
+
+*.cnf
+*.CNF

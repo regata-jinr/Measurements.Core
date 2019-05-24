@@ -1,6 +1,6 @@
 ﻿using Xunit;
 
-namespace MeasurementsCore.test
+namespace MeasurementsCore.Tests
 {
     public class MeasurementTest
     {

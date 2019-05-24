@@ -12,14 +12,14 @@ namespace MeasurementsCore
         public char SampleSetIndex { get; set; } // j
         public int SampleNumber { get; set; } // 1
         public string ClientSampleId { get; set; } // a-01
-        public float Weight { get; set; }
+        public double Weight { get; set; }
         public string IrradiationOperator { get; set; }
         public DateTime IrradiationStartDateTime { get; set; }
         public DateTime IrradiationFinishDateTime { get; set; }
         public string Description { get; set; }
         public string SetKey { get { return $"{CountryCode}-{ClientId}-{Year}-{SampleSetId}-{SampleSetIndex}"; } }
 
-        public Sample(string countryCode, int clientId, int year, int sampleSetId, char sampleSetIndex, int sampleNumber, string clientSampleId, float weight, string irrOperator, DateTime irrStartDateTime, DateTime irrFinishDateTime, string description = "")
+        public Sample(string countryCode, int clientId, int year, int sampleSetId, char sampleSetIndex, int sampleNumber, string clientSampleId, double weight, string irrOperator, DateTime irrStartDateTime, DateTime irrFinishDateTime, string description = "")
         {
             CountryCode = countryCode;
             ClientId = clientId;

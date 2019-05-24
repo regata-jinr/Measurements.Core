@@ -65,6 +65,10 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Interop.CanberraDataAccessLib">
+      <HintPath>C:\GENIE2K\S560\VCSharp\VCSharp\bin\Release\Interop.CanberraDataAccessLib.dll</HintPath>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
+    </Reference>
     <Reference Include="Interop.CanberraDeviceAccessLib">
       <HintPath>C:\GENIE2K\S560\VCSharp\VCSharp\obj\Release\Interop.CanberraDeviceAccessLib.dll</HintPath>
       <EmbedInteropTypes>False</EmbedInteropTypes>

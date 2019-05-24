@@ -20,6 +20,6 @@
         void AContinue();
         void AStop();
         void AClear();
-        void FillInfo(ref Sample sample, string mType, string operatorName, float height);
+        void FillInfo(ref Sample sample, string mType, string operatorName, double height);
     }
 }

@@ -137,13 +137,13 @@ namespace MeasurementsCore
         {
             if ((int)AdviseMessageMasks.amAcquireDone == lParam)
             {
-                logger.Debug($"Detector({_name}).ProcessDeviceMessages({message},{wParam},{lParam})::From detector {_name} got message amAcquireDone. Status will change to 'ready'");
+                logger.Info($"Detector({_name}).ProcessDeviceMessages({message},{wParam},{lParam})::From detector {_name} got message amAcquireDone. Status will change to 'ready'");
                 DetStatus = DetectorStatus.ready;
             }
 
             if ((int)AdviseMessageMasks.amAcquireStart == lParam)
             {
-                logger.Debug($"Detector({_name}).ProcessDeviceMessages({message},{wParam},{lParam})::From detector {_name} got message amAcquireStart. Status will change to 'busy'");
+                logger.Info($"Detector({_name}).ProcessDeviceMessages({message},{wParam},{lParam})::From detector {_name} got message amAcquireStart. Status will change to 'busy'");
                 DetStatus = DetectorStatus.busy;
             }
 
@@ -401,18 +401,16 @@ namespace MeasurementsCore
         /// </summary>
         /// <param name="sample"></param>
         /// <param name="type"></param>
-        public void FillInfo(ref Sample sample, string mType, string operatorName, float height)
+        public void FillInfo(ref Sample sample, string mType, string operatorName, double height)
         {
             logger.Info($"Detector({_name}).FillSampleInfo()::Filling information about sample: {sample.ToString()}");
             _device.Param[ParamCodes.CAM_T_STITLE] = $"{sample.SampleSetIndex}-{sample.SampleNumber}";// title
-            //todo: dictionary for login - [last name] filling from db
             _device.Param[ParamCodes.CAM_T_SCOLLNAME] = operatorName; // operator's name
             DivideString(sample.Description);
             _device.Param[ParamCodes.CAM_T_SIDENT] = $"{sample.SetKey}"; // sample code
             _device.Param[ParamCodes.CAM_F_SQUANT] = sample.Weight; // weight
             _device.Param[ParamCodes.CAM_F_SQUANTERR] = 0; // err = 0
             _device.Param[ParamCodes.CAM_T_SUNITS] = "gram"; // units = gram
-            // type sample creation = irradiation by default
             _device.Param[ParamCodes.CAM_X_SDEPOSIT] = sample.IrradiationStartDateTime; // irr start date time
             _device.Param[ParamCodes.CAM_X_STIME] = sample.IrradiationFinishDateTime; // irr finish date time
             _device.Param[ParamCodes.CAM_F_SSYSERR] = 0; // Random sample error (%)
