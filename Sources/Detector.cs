@@ -6,6 +6,7 @@ using CanberraDeviceAccessLib;
 
 //TODO: set up db target https://knightcodes.com/.net/2016/05/25/logging-to-a-database-wth-nlog.html
 
+
 /// <summary>
 /// This namespace contains implementations of core interfaces or internal classes.
 /// </summary>
@@ -43,7 +44,7 @@ namespace MeasurementsCore
         private bool _disposed;
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         private NLog.Logger _nLogger;
-   
+
 
         public string Name
         {
@@ -100,6 +101,13 @@ namespace MeasurementsCore
         /// <param name="option">CanberraDeviceAccessLib.ConnectOptions {aReadWrite, aContinue, aNoVerifyLicense, aReadOnly, aTakeControl, aTakeOver}.By default ConnectOptions is ReadWrite.</param>
         public Detector(string name, ConnectOptions option = ConnectOptions.aReadWrite, int timeOutLimitSeconds = 5)
         {
+
+            #if DEBUG
+                NLog.LogManager.Configuration.Variables["buildConfiguration"] = "DEBUG";
+            #else
+                NLog.LogManager.Configuration.Variables["buildConfiguration"] = "RELEASE";
+            #endif
+
             _nLogger = logger.WithProperty("DetName", name);
             _nLogger.Info($"{name}, {option.ToString()}, {timeOutLimitSeconds})--Initialising of the detector.");
             _disposed = false;
@@ -170,7 +178,8 @@ namespace MeasurementsCore
             {
                 _nLogger.Info($")--Starts connecting to the detector.");
                 ConnectInternal();
-               //FIXME: it's crash program.
+                //FIXME: it's crash program.
+                //TODO: Figure out how to add to internal connection timeout exception.
                 //var task = new Task(() => ConnectInternal());
                 //if (!task.Wait(TimeSpan.FromMilliseconds(_timeOutLimitSeconds)))
                 //    throw new TimeoutException("Connection timeout");

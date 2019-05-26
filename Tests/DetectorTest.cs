@@ -1,6 +1,7 @@
 ﻿using Xunit;
 using CanberraDataAccessLib;
 
+
 namespace MeasurementsCore.Tests
 {
     //FIXME: In case of splitting StateTest to few methods xunit will call constructor for each method as a result duplicate log messages. How to avoid it?
@@ -9,7 +10,8 @@ namespace MeasurementsCore.Tests
     public class D1Test
     {
         Detector _det1;
-        string testDir = @"D:\GoogleDrive\Job\flnp\dev\Measurements\MeasurementsCore\test";
+        //TODO: set basedir
+        string testDir = $"{System.IO.Directory.GetCurrentDirectory()}";
         DataAccess f1;
 
         public D1Test()
@@ -87,7 +89,7 @@ namespace MeasurementsCore.Tests
     public class D2Test
     {
         Detector _det2;
-        string testDir = @"D:\GoogleDrive\Job\flnp\dev\Measurements\MeasurementsCore\test";
+
 
         public D2Test()
         {
@@ -113,7 +115,8 @@ namespace MeasurementsCore.Tests
     public class D5Test
     {
         Detector _det5;
-        string testDir = @"D:\GoogleDrive\Job\flnp\dev\Measurements\MeasurementsCore\test";
+        string testDir = $"{System.IO.Directory.GetCurrentDirectory()}";
+
         DataAccess f5;
 
         public D5Test()
@@ -198,7 +201,8 @@ namespace MeasurementsCore.Tests
     public class D6Test
     {
         Detector _det6;
-        string testDir = @"D:\GoogleDrive\Job\flnp\dev\Measurements\MeasurementsCore\test";
+        string testDir = $"{System.IO.Directory.GetCurrentDirectory()}";
+
         DataAccess f6;
 
         public D6Test()
@@ -285,7 +289,8 @@ namespace MeasurementsCore.Tests
     public class D7Test
     {
         Detector _det7;
-        string testDir = @"D:\GoogleDrive\Job\flnp\dev\Measurements\MeasurementsCore\test";
+        string testDir = $"{System.IO.Directory.GetCurrentDirectory()}";
+
         DataAccess f7;
 
         public D7Test()
