@@ -1,4 +1,6 @@
-﻿namespace MeasurementsCore
+﻿using System;
+
+namespace Measurements.Core
 {
     interface IDetector
     {
@@ -6,6 +8,7 @@
         int CountToRealTime { get; set; }
         int CountToLiveTime { get; set; }
         int CountNormal { get; set; }
+        void ConnectAsync();
         void Connect();
         DetectorStatus DetStatus { get; }
         bool IsHV { get; }
@@ -15,11 +18,14 @@
         void Save(string fileName = "");
         void Disconnect();
         void Reset();
-        void AOptions(CanberraDeviceAccessLib.AcquisitionModes opt, int param);
-        void AStart();
-        void AContinue();
-        void AStop();
-        void AClear();
+        void Options(CanberraDeviceAccessLib.AcquisitionModes opt, int param);
+        void Start();
+        void Continue();
+        void Stop();
+        void Clear();
         void FillInfo(ref Sample sample, string mType, string operatorName, double height);
+
+        event EventHandler DetectorChangedStatusEvent;
+        event EventHandler<DetectorEventsArgs> DetectorMessageEvent;
     }
 }

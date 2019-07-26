@@ -1,7 +1,6 @@
 ﻿using System;
-using System.Data;
 
-namespace MeasurementsCore
+namespace Measurements.Core
 {
     public struct  Sample
     {
@@ -17,7 +16,9 @@ namespace MeasurementsCore
         public DateTime IrradiationStartDateTime { get; set; }
         public DateTime IrradiationFinishDateTime { get; set; }
         public string Description { get; set; }
-        public string SetKey { get { return $"{CountryCode}-{ClientId}-{Year}-{SampleSetId}-{SampleSetIndex}"; } }
+        public string SetKey => $"{CountryCode}-{ClientId}-{Year}-{SampleSetId}-{SampleSetIndex}";
+        public override string ToString() => $"{SetKey}-{SampleNumber}";
+
 
         public Sample(string countryCode, int clientId, int year, int sampleSetId, char sampleSetIndex, int sampleNumber, string clientSampleId, double weight, string irrOperator, DateTime irrStartDateTime, DateTime irrFinishDateTime, string description = "")
         {
@@ -38,6 +39,5 @@ namespace MeasurementsCore
 
         //TODO: perhaps a good idea to add constructor for concrete data container (DataGridViewRow or SqlDataReader)
 
-        public override string ToString() {return $"{SetKey}-{SampleNumber}";}
     }
 }

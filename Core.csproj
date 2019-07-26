@@ -45,7 +45,7 @@
       <EmbedInteropTypes>False</EmbedInteropTypes>
     </Reference>
     <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
-      <HintPath>..\packages\NLog.4.6.3\lib\net45\NLog.dll</HintPath>
+      <HintPath>..\packages\NLog.4.6.6\lib\net45\NLog.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
@@ -74,19 +74,20 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Sources\Detector.cs" />
-    <Compile Include="Sources\IDetector.cs" />
-    <Compile Include="Sources\IMeasurement.cs" />
-    <Compile Include="Sources\Measurement.cs" />
-    <Compile Include="Sources\ProcessManager.cs" />
+    <Compile Include="Sources\Detector\Detector.cs" />
+    <Compile Include="Sources\Detector\IDetector.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Sources\Sample.cs" />
-    <Compile Include="Sources\SampleChanger.cs" />
+    <Compile Include="Sources\Measurement\IMeasurement.cs" />
+    <Compile Include="Sources\Measurement\Measurement.cs" />
+    <Compile Include="Sources\ProcessManager\ProcessManager.cs" />
+    <Compile Include="Sources\Sample\Sample.cs" />
+    <Compile Include="Sources\SampleChanger\SampleChanger.cs" />
     <Compile Include="Tests\DetectorTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="NLog.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <SubType>Designer</SubType>
     </Content>
     <None Include="NLog.xsd">
       <SubType>Designer</SubType>

@@ -1,16 +1,16 @@
 ﻿using System;
+using System.Threading.Tasks;
+using System.Threading;
 using System.Linq;
 using System.Collections.Generic;
 using CanberraDeviceAccessLib;
 
-
 //TODO: set up db target https://knightcodes.com/.net/2016/05/25/logging-to-a-database-wth-nlog.html
-
 
 /// <summary>
 /// This namespace contains implementations of core interfaces or internal classes.
 /// </summary>
-namespace MeasurementsCore
+namespace Measurements.Core
 {
     /// <summary>
     ///  Enumeration of possible detector's working statuses
@@ -55,7 +55,7 @@ namespace MeasurementsCore
                 if (detsList.Contains(value))
                 {
                     _name = value;
-                    _nLogger.Info($"{value})--Detector with name '{value}' was found in the MID wizard list and will be use.");
+                    _nLogger.Info($"{value})--Detector with name '{value}' was found in the MID wizard list and will be used.");
                 }
                 else
                 {
@@ -99,19 +99,13 @@ namespace MeasurementsCore
         /// <summary>Constructor of Detector class.</summary>
         /// <param name="name">Name of detector. Without path.</param>
         /// <param name="option">CanberraDeviceAccessLib.ConnectOptions {aReadWrite, aContinue, aNoVerifyLicense, aReadOnly, aTakeControl, aTakeOver}.By default ConnectOptions is ReadWrite.</param>
-        public Detector(string name, ConnectOptions option = ConnectOptions.aReadWrite, int timeOutLimitSeconds = 5)
+        public Detector(string name, ConnectOptions option = ConnectOptions.aReadWrite, int timeOutLimitSeconds = 10)
         {
-
-            #if DEBUG
-                NLog.LogManager.Configuration.Variables["buildConfiguration"] = "DEBUG";
-            #else
-                NLog.LogManager.Configuration.Variables["buildConfiguration"] = "RELEASE";
-            #endif
-
             _nLogger = logger.WithProperty("DetName", name);
-            _nLogger.Info($"{name}, {option.ToString()}, {timeOutLimitSeconds})--Initialising of the detector.");
+            _nLogger.Info($"{name}, {option.ToString()}, {timeOutLimitSeconds})--Initializing of the detector.");
             _disposed = false;
             _conOption = option;
+            DetStatus = DetectorStatus.off;
             ErrorMessage = "";
             _device = new DeviceAccessClass();
             Name = name;
@@ -123,6 +117,9 @@ namespace MeasurementsCore
             }
             _device.DeviceMessages += ProcessDeviceMessages;
             _timeOutLimitSeconds = timeOutLimitSeconds * 1000;
+            _countNormal = 0;
+            _countToLiveTime = 0;
+            _countToRealTime= 0;
             Connect();
         }
 
@@ -152,13 +149,13 @@ namespace MeasurementsCore
         {
             if ((int)AdviseMessageMasks.amAcquireDone == lParam)
             {
-                _nLogger.Info($"{message}, {wParam}, {lParam})--Have got message AcquireDone.");
+                _nLogger.Info($"{message}, {wParam}, {lParam})--Has got message AcquireDone.");
                 DetStatus = DetectorStatus.ready;
             }
 
             if ((int)AdviseMessageMasks.amAcquireStart == lParam)
             {
-                _nLogger.Info($"{message}, {wParam}, {lParam})--Have got message amAcquireStart.");
+                _nLogger.Info($"{message}, {wParam}, {lParam})--Has got message amAcquireStart.");
                 DetStatus = DetectorStatus.busy;
             }
 
@@ -166,8 +163,45 @@ namespace MeasurementsCore
             {
                 DetStatus = DetectorStatus.error;
                 ErrorMessage = $"{_device.Message((MessageCodes)lParam)}";
-                GenerateWarnOrErr(NLog.LogLevel.Error, $"{message}, {wParam}, {lParam})--Have got message amHardwareError. Error Message is [{ErrorMessage}]");
+                GenerateWarnOrErr(NLog.LogLevel.Error, $"{message}, {wParam}, {lParam})--Has got message amHardwareError. Error Message is [{ErrorMessage}]");
             }
+
+        }
+
+        private Task ConnectInternalTask(CancellationToken c)
+        {
+            _nLogger.Debug($")--Starts internal connection task to the detector");
+            var t = Task.Run(() => 
+            {
+                try
+                {
+                    _device.Connect(_name, _conOption);
+                    DetStatus = DetectorStatus.ready;
+                    c.ThrowIfCancellationRequested();
+
+                }
+                catch (Exception ex)
+                {
+                    HandleError(ex);
+                    if (ex.Message.Contains("278e2a")) DetStatus = DetectorStatus.busy;
+
+                }
+            });
+
+            return t;
+        }
+
+
+        public async void ConnectAsync()
+        {
+            _nLogger.Info($")--Starts async connecting to the detector.");
+
+            CancellationTokenSource cts = new CancellationTokenSource();
+            var ct = cts.Token;
+            cts.CancelAfter(_timeOutLimitSeconds);
+
+            await ConnectInternalTask(ct);
+            
 
         }
 
@@ -178,7 +212,6 @@ namespace MeasurementsCore
             {
                 _nLogger.Info($")--Starts connecting to the detector.");
                 ConnectInternal();
-                //FIXME: it's crash program.
                 //TODO: Figure out how to add to internal connection timeout exception.
                 //var task = new Task(() => ConnectInternal());
                 //if (!task.Wait(TimeSpan.FromMilliseconds(_timeOutLimitSeconds)))
@@ -210,14 +243,11 @@ namespace MeasurementsCore
 
                 _nLogger.Debug($")--Internal connection was successful");
             }
-            catch (System.Runtime.InteropServices.COMException ex)
-            {
-                if (ex.Message.Contains("278e2a")) DetStatus = DetectorStatus.busy;
-                HandleError(ex);
-            }
             catch (Exception ex)
             {
                 HandleError(ex);
+                if (ex.Message.Contains("278e2a")) DetStatus = DetectorStatus.busy;
+
             }
 
         }
@@ -258,7 +288,7 @@ namespace MeasurementsCore
         /// Recconects will trying to ressurect connection via detector. In case detector has status error or ready, it will do nothing. In case detector is off it will just call connect. In case status is busy, it will run recursively before 3 attempts with 5sec pausing.
         public void Reconnect()
         {
-            _nLogger.Info($")--Tries to reconnect to the detector.");
+            _nLogger.Info($")--Attempt to reconnect to the detector.");
             if (_device.IsConnected) { Connect(); return; }
             Disconnect();
             Connect();
@@ -273,24 +303,24 @@ namespace MeasurementsCore
             {
                 if (!_device.IsConnected || DetStatus == DetectorStatus.off)
                 {
-                    _nLogger.Warn($"{fileName})--Tries to save current acquiring session, but detector doesn't have connection.");
+                    _nLogger.Warn($"{fileName})--Attempt to save current acquiring session, but detector doesn't have connection.");
                     return;
                 }
                 if (string.IsNullOrEmpty(fileName))
                 {
-                    _nLogger.Info($"{fileName})--Tries to save current acquiring session to {NLog.LogManager.Configuration.Variables["basedir"]}\\Sessions.");
+                    _nLogger.Info($"{fileName})--Attempt to save current acquiring session to {NLog.LogManager.Configuration.Variables["basedir"]}\\Sessions.");
                     System.IO.Directory.CreateDirectory($"{NLog.LogManager.Configuration.Variables["basedir"]}\\Sessions");
                     _device.Save($"{NLog.LogManager.Configuration.Variables["basedir"]}\\Sessions\\{Name}-{DateTime.Now.ToString()}.cnf");
                 }
                 else
                 {
                     if (DetStatus == DetectorStatus.error)
-                        _nLogger.Warn($"{fileName})--Tries to save current session, but some error occured [{ErrorMessage}].");
+                        _nLogger.Warn($"{fileName})--Attempt to save current session, but some error occured [{ErrorMessage}].");
 
                     if (DetStatus == DetectorStatus.busy)
-                        _nLogger.Warn($"{fileName})--Tries to save current session, which still not finish.");
+                        _nLogger.Warn($"{fileName})--Attempt to save current session, which still not finish.");
                     if (DetStatus == DetectorStatus.ready)
-                        _nLogger.Info($"{fileName})--Tries to save session in file");
+                        _nLogger.Info($"{fileName})--Attempt to save session in file");
                     if (System.IO.Directory.Exists(System.IO.Path.GetDirectoryName(fileName))) _device.Save(fileName, true);
                     else
                     {
@@ -317,9 +347,8 @@ namespace MeasurementsCore
                 DetStatus = DetectorStatus.off;
                 ErrorMessage = "";
                 if (!_device.IsConnected)
-                    _nLogger.Info($")--Disconnecting is successful.");
+                    _nLogger.Info($")--Disconnecting was successful.");
                 else _nLogger.Warn($")--The detector still have connection.");
-
             }
             catch (Exception ex) { HandleError(ex); }
         }
@@ -332,15 +361,15 @@ namespace MeasurementsCore
             try
             {
                 //TODO: check that it do reseting in the meaning that I'm thinking about it!
-                _nLogger.Info($")--Tries to reset the detector");
+                _nLogger.Info($")--Attempt to reset the detector");
                 _device.SendCommand(DeviceCommands.aReset);
-                if (DetStatus == DetectorStatus.ready) _nLogger.Info($")--Resetting is successful");
+                if (DetStatus == DetectorStatus.ready) _nLogger.Info($")--Resetting was successful");
                 else GenerateWarnOrErr(NLog.LogLevel.Warn, $")--Reset command was passed, but status is {DetStatus}");
             }
             catch (Exception ex) { HandleError(ex); }
         }
 
-        public void AOptions(CanberraDeviceAccessLib.AcquisitionModes opt, int param)
+        public void Options(CanberraDeviceAccessLib.AcquisitionModes opt, int param)
         {
             _device.SpectroscopyAcquireSetup(opt, param);
 
@@ -348,14 +377,14 @@ namespace MeasurementsCore
 
 
         /// <summary>
-        ///  Starts acquiring with specified aCountToLiveTime, before this clear the device.
+        ///  Starts acquiring with specified aCountToLiveTime, before this the device will be cleared.
         /// </summary>
         /// <param name="time"></param>
-        public void AStart()
+        public void Start()
         {
             try
             {
-                _nLogger.Debug($")--Initialising of acquiring.");
+                _nLogger.Debug($")--Initializing of acquiring.");
                 _device.Clear();
 
                 if (DetStatus != DetectorStatus.ready)
@@ -370,7 +399,7 @@ namespace MeasurementsCore
         }
 
 
-        public void AContinue()
+        public void Continue()
         {
             if (DetStatus != DetectorStatus.ready)
             {
@@ -386,11 +415,11 @@ namespace MeasurementsCore
         /// <summary>
         /// Stops acquiring.
         /// </summary>
-        public void AStop()
+        public void Stop()
         {
             try
             {
-                _nLogger.Info($")--Tries to stop the acquiring");
+                _nLogger.Info($")--Attempt to stop the acquiring");
                 _device.AcquireStop();
                 if (DetStatus == DetectorStatus.ready) _nLogger.Info($")--Stop was successful. Detector ready to acquire again");
                 else GenerateWarnOrErr(NLog.LogLevel.Warn, $")--Stop command was passed, but status is {DetStatus}");
@@ -402,7 +431,7 @@ namespace MeasurementsCore
         /// <summary>
         /// Clears current acquiring status.
         /// </summary>
-        public void AClear()
+        public void Clear()
         {
             try
             {
