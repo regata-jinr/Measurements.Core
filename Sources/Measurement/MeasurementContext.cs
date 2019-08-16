@@ -7,20 +7,20 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace Measurements.Core
 {
-     public partial class MeasurementContext : DbContext, IMeasurement, IDisposable
+     public partial class MeasurementContext : DbContext, IDisposable
     {
-        public int Id { get; } // readonly
-        public int Duration { get; set; }
-        public string Type { get; set; }
-        public string DetectorName { get; set; } // readonly
-        public string FileName { get; set; }
-        public string Assistant { get; set; } // readonly
-        public int SampleId { get; } // readonly
-        public int ContainerNumber { get; set; }
-        public double Height { get; set; }
-        public DateTime FinishTime { get; set; }
-        public DateTime StartTime { get; set; }
+        public DbSet<Measurement> Measurements { get; set; }
 
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            optionsBuilder.UseSqlServer(@"Server=RUMLAB\REGATALOCAL;Database=NAA_DB_TEST;Trusted_Connection=True;");
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Measurement>()
+                .HasAlternateKey(c => c.FileSpectra);
+        }
 
         public void Dispose()
         {

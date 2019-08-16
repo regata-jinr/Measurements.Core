@@ -58,7 +58,7 @@ namespace Measurements.Core.Tests
             // let's wait while acquire will finish
             System.Threading.Thread.Sleep(4000);
 
-            d1.FillInfo(ref sd, "LLITest", "bdrum", 5.0);
+            d1.FillFileInfo(ref sd, "LLITest", "bdrum", 5.0);
             d1.Save($"{testDir}\\test_{d1.Name}.cnf");
 
             Assert.Equal(DetectorStatus.ready, d1.DetStatus);

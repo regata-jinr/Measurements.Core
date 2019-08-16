@@ -184,6 +184,7 @@
     <Compile Include="Sources\Sample\Sample.cs" />
     <Compile Include="Sources\SampleChanger\SampleChanger.cs" />
     <Compile Include="Tests\DetectorTest.cs" />
+    <Compile Include="Tests\MeasurementTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="NLog.config">

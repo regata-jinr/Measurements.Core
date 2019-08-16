@@ -4,7 +4,7 @@ namespace Measurements.Core
 {
     interface IDetector
     {
-        string Name { get; set; }
+        string Name { get; }
         int CountToRealTime { get; set; }
         int CountToLiveTime { get; set; }
         int CountNormal { get; set; }
@@ -15,7 +15,7 @@ namespace Measurements.Core
         bool IsConnected { get; }
         string ErrorMessage { get; }
         void Reconnect();
-        void Save(string fileName = "");
+        void Save();
         void Disconnect();
         void Reset();
         void Options(CanberraDeviceAccessLib.AcquisitionModes opt, int param);
@@ -23,7 +23,7 @@ namespace Measurements.Core
         void Continue();
         void Stop();
         void Clear();
-        void FillInfo(ref Sample sample, string mType, string operatorName, double height);
+        Measurement CurrentMeasurement { get; set; }
 
         event EventHandler DetectorChangedStatusEvent;
         event EventHandler<DetectorEventsArgs> DetectorMessageEvent;
