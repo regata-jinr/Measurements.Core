@@ -47,7 +47,7 @@ namespace Measurements.Core
         private NLog.Logger _nLogger;
         private string fileName;
         public Measurement CurrentMeasurement { get; set; }
-        public Sample CurrentSample { get; set; }
+        public IrradiationInfo CurrentSample { get; set; }
 
         public string Name
         {

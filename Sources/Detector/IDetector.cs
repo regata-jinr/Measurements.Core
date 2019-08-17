@@ -2,7 +2,7 @@
 
 namespace Measurements.Core
 {
-    interface IDetector
+    public interface IDetector
     {
         string Name { get; }
         int CountToRealTime { get; set; }

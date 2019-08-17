@@ -350,7 +350,7 @@ namespace Measurements.Core
             CleanUp(true);
             GC.SuppressFinalize(this);
         }
-
+        //TODO: in this moment detector should fill measurement info, but no irradiation, it means that here it should has already filled measurements
         /// <summary>
         /// Fill the sample information
         /// </summary>
@@ -358,20 +358,20 @@ namespace Measurements.Core
         /// <param name="type"></param>
         public void FillFileInfo()
         {
-            _nLogger.Info($")--Filling information about sample: {CurrentSample.ToString()}");
-            _device.Param[ParamCodes.CAM_T_STITLE] = $"{CurrentSample.SampleSetIndex}-{CurrentSample.SampleNumber}";// title
-            _device.Param[ParamCodes.CAM_T_SCOLLNAME] = operatorName; // operator's name
-            DivideString(CurrentSample.Description);
-            _device.Param[ParamCodes.CAM_T_SIDENT] = $"{CurrentSample.SetKey}"; // sample code
-            _device.Param[ParamCodes.CAM_F_SQUANT] = CurrentSample.Weight; // weight
+            _nLogger.Info($")--Filling information about sample: {CurrentMeasurement.ToString()}");
+            _device.Param[ParamCodes.CAM_T_STITLE] = $"{CurrentMeasurement.SetIndex}-{CurrentMeasurement.SampleNumber}";// title
+            _device.Param[ParamCodes.CAM_T_SCOLLNAME] = CurrentMeasurement.Assistant; // operator's name
+            DivideString(CurrentSample.Note);
+            _device.Param[ParamCodes.CAM_T_SIDENT] = $"{CurrentMeasurement.SetKey}"; // sample code
+            _device.Param[ParamCodes.CAM_F_SQUANT] = CurrentMeasurement.Weight; // weight
             _device.Param[ParamCodes.CAM_F_SQUANTERR] = 0; // err = 0
             _device.Param[ParamCodes.CAM_T_SUNITS] = "gram"; // units = gram
-            _device.Param[ParamCodes.CAM_X_SDEPOSIT] = CurrentSample.IrradiationStartDateTime; // irr start date time
-            _device.Param[ParamCodes.CAM_X_STIME] = CurrentSample.IrradiationFinishDateTime; // irr finish date time
+            _device.Param[ParamCodes.CAM_X_SDEPOSIT] = CurrentMeasurement.IrradiationDateTimeStart; // irr start date time
+            _device.Param[ParamCodes.CAM_X_STIME] = CurrentMeasurement.IrradiationDateTimeFinish; // irr finish date time
             _device.Param[ParamCodes.CAM_F_SSYSERR] = 0; // Random sample error (%)
             _device.Param[ParamCodes.CAM_F_SSYSTERR] = 0; // Non-random sample error (%)
-            _device.Param[ParamCodes.CAM_T_STYPE] = mType;
-            _device.Param[ParamCodes.CAM_T_SGEOMTRY] = height.ToString();
+            _device.Param[ParamCodes.CAM_T_STYPE] = CurrentMeasurement.Type;
+            _device.Param[ParamCodes.CAM_T_SGEOMTRY] = CurrentMeasurement.Height.ToString();
         }
 
         private void DivideString(string iStr)

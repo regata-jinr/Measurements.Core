@@ -44,5 +44,12 @@ namespace Measurements.Core
         public string SetKey => $"{CountryCode}-{ClientNumber}-{Year}-{SetNumber}-{SetIndex}";
         public override string ToString() => $"{SetKey}-{SampleNumber}";
 
+        [NotMapped]
+        public double Weight { get; set; }
+        [NotMapped]
+        public DateTime IrradiationDateTimeFinish { get; set; }
+        [NotMapped]
+        public DateTime IrradiationDateTimeStart { get; set; }
+
     }
 }
