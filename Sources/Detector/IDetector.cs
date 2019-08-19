@@ -10,7 +10,7 @@ namespace Measurements.Core
         int CountNormal { get; set; }
         void ConnectAsync();
         void Connect();
-        DetectorStatus DetStatus { get; }
+        DetectorStatus Status { get; }
         bool IsHV { get; }
         bool IsConnected { get; }
         string ErrorMessage { get; }
@@ -26,6 +26,5 @@ namespace Measurements.Core
         Measurement CurrentMeasurement { get; set; }
 
         event EventHandler DetectorChangedStatusEvent;
-        event EventHandler<DetectorEventsArgs> DetectorMessageEvent;
     }
 }

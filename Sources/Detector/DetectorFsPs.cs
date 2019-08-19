@@ -39,13 +39,13 @@ namespace Measurements.Core
         private int _countToLiveTime;
         private int _countNormal;
         private bool isDisposed;
-        private DetectorStatus _detStatus;
+        private DetectorStatus _status;
         private ConnectOptions _conOption;
         public event EventHandler DetectorChangedStatusEvent;
-        public event EventHandler<DetectorEventsArgs> DetectorMessageEvent;
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         private NLog.Logger _nLogger;
         private string fileName;
+
         public Measurement CurrentMeasurement { get; set; }
         public IrradiationInfo CurrentSample { get; set; }
 
@@ -63,9 +63,9 @@ namespace Measurements.Core
                 else
                 {
 
-                    DetStatus = DetectorStatus.error;
+                    Status = DetectorStatus.error;
                     ErrorMessage = $"{value})--Detector with name '{value}' wasn't find in the MID wizard list. Status will change to 'error'.";
-                    GenerateWarnOrErr(NLog.LogLevel.Error, $"Detector({_name}). {ErrorMessage}");
+                    Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Detector({_name}). {ErrorMessage}", Level = NLog.LogLevel.Error });
                 }
             }
         }
@@ -101,16 +101,16 @@ namespace Measurements.Core
 
         /// <summary> Returns status of detector. {ready, off, busy, error}. </summary>
         /// <seealso cref="Enum Status"/>
-        public DetectorStatus DetStatus
+        public DetectorStatus Status
         {
-            get { return _detStatus; }
+            get { return _status; }
 
             private set
             {
-                if (_detStatus != value)
+                if (_status != value)
                 {
-                    _nLogger.Info($"value)--The detector status changed from {_detStatus } to {value}");
-                    _detStatus = value;
+                    _nLogger.Info($"value)--The detector status changed from {_status} to {value}");
+                    _status = value;
                     DetectorChangedStatusEvent?.Invoke(this, EventArgs.Empty);
                 }
             }
@@ -132,10 +132,6 @@ namespace Measurements.Core
         public string ErrorMessage { get; private set; }
 
     }
-    public class DetectorEventsArgs : EventArgs
-    {
-        public string level;
-        public string text;
-    }
+   
 }
 

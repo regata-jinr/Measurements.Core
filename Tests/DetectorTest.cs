@@ -31,7 +31,7 @@ namespace Measurements.Core.Tests
         [Fact]
         public void Statuses()
         {
-            Assert.Equal(DetectorStatus.ready, d1.DetStatus);
+            Assert.Equal(DetectorStatus.ready, d1.Status);
         }
 
         [Fact]
@@ -46,7 +46,7 @@ namespace Measurements.Core.Tests
             d1.CountToRealTime = 3;
             d1.Start();
             System.Threading.Thread.Sleep(1000);
-            Assert.Equal(DetectorStatus.busy, d1.DetStatus);
+            Assert.Equal(DetectorStatus.busy, d1.Status);
             System.Threading.Thread.Sleep(4000);
         }
         //TODO change this test
@@ -94,7 +94,7 @@ namespace Measurements.Core.Tests
             d1.Disconnect();
 
             Assert.False(d1.IsConnected);
-            Assert.Equal(DetectorStatus.off, d1.DetStatus);
+            Assert.Equal(DetectorStatus.off, d1.Status);
 
             d1.Connect();
 

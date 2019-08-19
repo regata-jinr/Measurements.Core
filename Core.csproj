@@ -178,13 +178,13 @@
     <Compile Include="Sources\Detector\DetectorFsPs.cs" />
     <Compile Include="Sources\Detector\IDetector.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Sources\Handlers\ExceptionHandler.cs" />
     <Compile Include="Sources\Measurement\IMeasurement.cs" />
     <Compile Include="Sources\Measurement\MeasurementContext.cs" />
     <Compile Include="Sources\Measurement\MeasurementModel.cs" />
     <Compile Include="Sources\IrradiationInfo\IrradiationInfo.cs" />
     <Compile Include="Sources\SampleChanger\SampleChanger.cs" />
-    <Compile Include="Sources\SessionController\ISessionController.cs" />
-    <Compile Include="Sources\SessionController\SessionController.cs" />
+    <Compile Include="Sources\SessionController\SessionControllerSingleton.cs" />
     <Compile Include="Sources\Session\ISession.cs" />
     <Compile Include="Sources\Session\Session.cs" />
     <Compile Include="Tests\DetectorTest.cs" />
