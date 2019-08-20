@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Measurements.Core
 {
+    //TODO: add docs
+    //TODO: add tests
+
     class Session : ISession, IDisposable
     {
         public string Type { get; set; }
@@ -30,16 +32,22 @@ namespace Measurements.Core
 
         }
         public void Stop()
-        { }
+        {
+
+        }
         //if connection closed save locally to json check if json exists
         public void Save()
         {
 
         }
         private void SaveLocally()
-        { }
+        {
+
+        }
         private void SaveRemotely()
-        { }
+        {
+
+        }
         public void Continue()
         { }
         public void Clear()
@@ -62,15 +70,15 @@ namespace Measurements.Core
             }
             catch (ArgumentNullException)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(null, new Handlers.ExceptionEventsArgs { Message = $")Детектор '{dName}' не найден в списке доступных детекторов для панели управления сессиями. Либо он уже используется либо он не доступен.", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(null, new Handlers.ExceptionEventsArgs { Message = $"Детектор '{dName}' не найден в списке доступных детекторов для панели управления сессиями. Либо он уже используется либо он не доступен.", Level = NLog.LogLevel.Error });
             }
             catch (InvalidOperationException)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(null, new Handlers.ExceptionEventsArgs { Message = $")Все детекторы уже заняты в других сессиях или не доступны по причине проблем с оборудованием. Проверьте соединения с детекторами вручную.", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(null, new Handlers.ExceptionEventsArgs { Message = $"Все детекторы уже заняты в других сессиях или не доступны по причине проблем с оборудованием. Проверьте соединения с детекторами вручную.", Level = NLog.LogLevel.Error });
             }
             catch (Exception ex)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(null, new Handlers.ExceptionEventsArgs { Message = $"){ex.Message}", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(null, new Handlers.ExceptionEventsArgs { Message = $"{ex.Message}", Level = NLog.LogLevel.Error });
             }
         }
         public void DetachDetector(string dName)
@@ -90,19 +98,19 @@ namespace Measurements.Core
                     _managedDetectors.Remove(det);
                 }
                 else
-                    throw new ArgumentNullException(dName);
+                    throw new ArgumentNullException();
             }
             catch (ArgumentNullException)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(null, new Handlers.ExceptionEventsArgs { Message = $")Детектор '{dName}' не найден в списке доступных для сессии детекторов. Скорее всего он не был добавлен.", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(null, new Handlers.ExceptionEventsArgs { Message = $"Детектор '{dName}' не найден в списке доступных для сессии детекторов. Скорее всего он не был добавлен.", Level = NLog.LogLevel.Error });
             }
             catch (InvalidOperationException)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(null, new Handlers.ExceptionEventsArgs { Message = $")Все детекторы уже заняты в других сессиях или не доступны по причине проблем с оборудованием. Проверьте соединения с детекторами вручную.", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(null, new Handlers.ExceptionEventsArgs { Message = $"Детектор с заданным именем '{dName}' отсутствует в списке детекторов сессии.", Level = NLog.LogLevel.Error });
             }
             catch (Exception ex)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(null, new Handlers.ExceptionEventsArgs { Message = $"){ex.Message}", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(null, new Handlers.ExceptionEventsArgs { Message = $"{ex.Message}", Level = NLog.LogLevel.Error });
             }
         }
 
@@ -116,6 +124,7 @@ namespace Measurements.Core
             SessionControllerSingleton.ManagedSessions.Remove(this);
             foreach (var d in _managedDetectors)
                 d.Dispose();
+            _managedDetectors.Clear();
         }
     }
 }

@@ -7,9 +7,9 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace Measurements.Core
 {
-     public partial class MeasurementContext : DbContext, IDisposable
+     public partial class MeasurementInfoContext : DbContext
     {
-        public DbSet<Measurement> Measurements { get; set; }
+        public DbSet<MeasurementInfo> Measurements { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -18,18 +18,8 @@ namespace Measurements.Core
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Measurement>()
+            modelBuilder.Entity<MeasurementInfo>()
                 .HasAlternateKey(c => c.FileSpectra);
-        }
-
-        public void Dispose()
-        {
-        }
-
-
-        MeasurementContext()
-        {
-
         }
     }
 }

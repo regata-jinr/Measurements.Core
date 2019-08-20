@@ -1,10 +1,10 @@
 ﻿//Only fields and properties of Detector class
 
-
 using System;
 using System.Linq;
 using System.Collections.Generic;
 using CanberraDeviceAccessLib;
+using AutoMapper;
 
 //TODO: set up db target to logger https://knightcodes.com/.net/2016/05/25/logging-to-a-database-wth-nlog.html
 
@@ -33,21 +33,30 @@ namespace Measurements.Core
     public partial class Detector : IDetector, IDisposable
     {
         private DeviceAccessClass _device;
-        private string _name;
-        private int _timeOutLimitSeconds;
-        private int _countToRealTime;
-        private int _countToLiveTime;
-        private int _countNormal;
-        private bool isDisposed;
-        private DetectorStatus _status;
-        private ConnectOptions _conOption;
-        public event EventHandler DetectorChangedStatusEvent;
-        private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
-        private NLog.Logger _nLogger;
-        private string fileName;
-
-        public Measurement CurrentMeasurement { get; set; }
-        public IrradiationInfo CurrentSample { get; set; }
+        private string            _name;
+        private int               _timeOutLimitSeconds;
+        private int               _countToRealTime;
+        private int               _countToLiveTime;
+        private int               _countNormal;
+        private bool              isDisposed;
+        private DetectorStatus    _status;
+        private ConnectOptions    _conOption;
+        public event              EventHandler DetectorChangedStatusEvent;
+        private static            NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        private NLog.Logger       _nLogger;
+        public MeasurementInfo    CurrentMeasurement { get; private set; }
+        private IrradiationInfo   _currentSample;
+        public IrradiationInfo    CurrentSample
+        {
+            get { return _currentSample; }
+            set
+            {
+                _currentSample = value;
+                var configuration = new MapperConfiguration(cfg => cfg.AddMaps("MCore"));
+                var mapper = new Mapper(configuration);
+                CurrentMeasurement = mapper.Map<MeasurementInfo>(_currentSample);
+            }
+        }
 
         public string Name
         {
@@ -62,13 +71,13 @@ namespace Measurements.Core
                 }
                 else
                 {
-
                     Status = DetectorStatus.error;
                     ErrorMessage = $"{value})--Detector with name '{value}' wasn't find in the MID wizard list. Status will change to 'error'.";
                     Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Detector({_name}). {ErrorMessage}", Level = NLog.LogLevel.Error });
                 }
             }
         }
+
         public int CountToRealTime
         {
             get { return _countToRealTime; }

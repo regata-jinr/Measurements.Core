@@ -23,8 +23,8 @@ namespace Measurements.Core
         public int? Position { get; set; }
         public int? Channel { get; set; }
         public int? LoadNumber { get; set; }
-        public int? Rehandler { get; set; }
-        public int? Assistant { get; set; }
+        public string Rehandler { get; set; }
+        public string Assistant { get; set; }
         public string Note { get; set; }
 
         [NotMapped]

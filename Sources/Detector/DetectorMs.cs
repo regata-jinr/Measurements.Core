@@ -28,6 +28,9 @@ namespace Measurements.Core
                 ErrorMessage = "";
 
                 _device = new DeviceAccessClass();
+                _currentSample = new IrradiationInfo();
+                CurrentMeasurement = new MeasurementInfo();
+                
                 Name = name;
                
                 _device.DeviceMessages += ProcessDeviceMessages;
@@ -71,6 +74,7 @@ namespace Measurements.Core
             {
                 _nLogger.Info($"{message}, {wParam}, {lParam})--Has got message AcquireDone.");
                 Status = DetectorStatus.ready;
+                CurrentMeasurement.DateTimeStart = DateTime.Now;
             }
 
             if ((int)AdviseMessageMasks.amAcquireStart == lParam)
@@ -187,37 +191,41 @@ namespace Measurements.Core
         {
             try
             {
+                    
                 if (!_device.IsConnected || Status == DetectorStatus.off)
                 {
-                    _nLogger.Warn($"{fileName})--Attempt to save current acquiring session, but detector doesn't have connection.");
+                    _nLogger.Warn($"{ CurrentMeasurement.FileSpectra})--Attempt to save current acquiring session, but detector doesn't have connection.");
                     return;
                 }
-                if (string.IsNullOrEmpty(fileName))
+                if (string.IsNullOrEmpty(CurrentMeasurement.FileSpectra))
+                    GenerateSpectraFileName();
+                //TODO: rewrite this: 
+                if (string.IsNullOrEmpty( CurrentMeasurement.FileSpectra))
                 {
-                    _nLogger.Info($"{fileName})--Attempt to save current acquiring session to {NLog.LogManager.Configuration.Variables["basedir"]}\\Sessions.");
+                    _nLogger.Info($"{ CurrentMeasurement.FileSpectra})--Attempt to save current acquiring session to {NLog.LogManager.Configuration.Variables["basedir"]}\\Sessions.");
                     System.IO.Directory.CreateDirectory($"{NLog.LogManager.Configuration.Variables["basedir"]}\\Sessions");
                     _device.Save($"{NLog.LogManager.Configuration.Variables["basedir"]}\\Sessions\\{Name}-{DateTime.Now.ToString()}.cnf");
                 }
                 else
                 {
                     if (Status == DetectorStatus.error)
-                        _nLogger.Warn($"{fileName})--Attempt to save current session, but some error occured [{ErrorMessage}].");
+                        _nLogger.Warn($"{ CurrentMeasurement.FileSpectra})--Attempt to save current session, but some error occured [{ErrorMessage}].");
 
                     if (Status == DetectorStatus.busy)
-                        _nLogger.Warn($"{fileName})--Attempt to save current session, which still not finish.");
+                        _nLogger.Warn($"{ CurrentMeasurement.FileSpectra})--Attempt to save current session, which still not finish.");
                     if (Status == DetectorStatus.ready)
-                        _nLogger.Info($"{fileName})--Attempt to save session in file");
-                    if (System.IO.Directory.Exists(System.IO.Path.GetDirectoryName(fileName))) _device.Save(fileName, true);
+                        _nLogger.Info($"{ CurrentMeasurement.FileSpectra})--Attempt to save session in file");
+                    if (System.IO.Directory.Exists(System.IO.Path.GetDirectoryName( CurrentMeasurement.FileSpectra))) _device.Save( CurrentMeasurement.FileSpectra, true);
                     else
                     {
-                        Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{fileName})--Such directory doesn't exist. File will be save to C:\\GENIE2K\\CAMFILES\\", Level = NLog.LogLevel.Warn });
+                        Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{ CurrentMeasurement.FileSpectra})--Such directory doesn't exist. File will be save to C:\\GENIE2K\\CAMFILES\\", Level = NLog.LogLevel.Warn });
 
-                        _device.Save($"C:\\GENIE2K\\CAMFILES\\{System.IO.Path.GetFileName(fileName)}", true);
+                        _device.Save($"C:\\GENIE2K\\CAMFILES\\{System.IO.Path.GetFileName(CurrentMeasurement.FileSpectra)}", true);
                     }
                 }
-                if (System.IO.File.Exists(fileName))
-                    _nLogger.Info($"{fileName})--Saving was successful.");
-                else _nLogger.Error($"{fileName})--After saving file doesn't exist!");
+                if (System.IO.File.Exists( CurrentMeasurement.FileSpectra))
+                    _nLogger.Info($"{ CurrentMeasurement.FileSpectra})--Saving was successful.");
+                else _nLogger.Error($"{ CurrentMeasurement.FileSpectra})--After saving file doesn't exist!");
             }
             catch (Exception ex) { HandleError(ex); }
         }
@@ -282,6 +290,7 @@ namespace Measurements.Core
                 }
                 _device.AcquireStart(); // already async
                 _nLogger.Info($")--Acquiring in process...");
+                CurrentMeasurement.DateTimeStart = DateTime.Now;
             }
             catch (Exception ex) { HandleError(ex); }
         }
@@ -374,11 +383,11 @@ namespace Measurements.Core
             _device.Param[ParamCodes.CAM_T_SCOLLNAME] = CurrentMeasurement.Assistant; // operator's name
             DivideString(CurrentSample.Note);
             _device.Param[ParamCodes.CAM_T_SIDENT] = $"{CurrentMeasurement.SetKey}"; // sample code
-            _device.Param[ParamCodes.CAM_F_SQUANT] = CurrentMeasurement.Weight; // weight
+            _device.Param[ParamCodes.CAM_F_SQUANT] = CurrentSample.Weight; // weight
             _device.Param[ParamCodes.CAM_F_SQUANTERR] = 0; // err = 0
             _device.Param[ParamCodes.CAM_T_SUNITS] = "gram"; // units = gram
-            _device.Param[ParamCodes.CAM_X_SDEPOSIT] = CurrentMeasurement.IrradiationDateTimeStart; // irr start date time
-            _device.Param[ParamCodes.CAM_X_STIME] = CurrentMeasurement.IrradiationDateTimeFinish; // irr finish date time
+            _device.Param[ParamCodes.CAM_X_SDEPOSIT] = CurrentSample.DateTimeStart; // irr start date time
+            _device.Param[ParamCodes.CAM_X_STIME] = CurrentSample.DateTimeFinish; // irr finish date time
             _device.Param[ParamCodes.CAM_F_SSYSERR] = 0; // Random sample error (%)
             _device.Param[ParamCodes.CAM_F_SSYSTERR] = 0; // Non-random sample error (%)
             _device.Param[ParamCodes.CAM_T_STYPE] = CurrentMeasurement.Type;
@@ -423,10 +432,26 @@ namespace Measurements.Core
         {
             Status = DetectorStatus.error;
             ErrorMessage = ex.Message;
-           
         }
 
-       
+        public void SetHeightToCurrentMeasurement(int height)
+        {
+            if (CurrentMeasurement != null)
+                CurrentMeasurement.Height = height;
+        }
+
+       public void SetTypeToCurrentMeasurement(string type)
+        {
+            if (CurrentMeasurement != null)
+                CurrentMeasurement.Type = type;
+        }
+
+        private void GenerateSpectraFileName()
+        {
+            //TODO: how to generate file names?
+            // DetectorNumber+type+number?
+            CurrentMeasurement.FileSpectra = "";
+        }
 
     }
    

@@ -1,22 +1,21 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using System.Data.SqlClient;
-using System.Threading.Tasks;
 using CanberraDeviceAccessLib;
 using System;
+using System.Linq;
 
 namespace Measurements.Core
 {
-    // TODO: change id in measurements and irradiations table to login (int ==> varchar(15?))
-    // TODO: deny to create few SessionController class that means deny to run two apps
+    //TODO: add docs
+    //TODO: add tests
     static class SessionControllerSingleton
     {
 
-        //TODO: <how to incapsulate this>
+        //TODO: <incapsulate this>
         public static SqlConnectionStringBuilder ConnectionStringBuilder { get; set; }
         public static List<Session> ManagedSessions { get; set; }
         public static List<Detector> AvailableDetectors { get; set; }
-        //TODO: </how to incapsulate this>
+        //TODO: </incapsulate this>
 
         static SessionControllerSingleton()
         {

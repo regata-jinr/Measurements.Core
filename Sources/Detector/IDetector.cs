@@ -23,7 +23,8 @@ namespace Measurements.Core
         void Continue();
         void Stop();
         void Clear();
-        Measurement CurrentMeasurement { get; set; }
+        MeasurementInfo CurrentMeasurement { get; }
+        IrradiationInfo CurrentSample { get; set; }
 
         event EventHandler DetectorChangedStatusEvent;
     }
