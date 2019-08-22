@@ -1,23 +1,40 @@
 ﻿using Xunit;
 using CanberraDataAccessLib;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Xunit.Abstractions;
+using Xunit.Sdk;
 
 namespace Measurements.Core.Tests
 {
-    //TODO: add stress-test!
-    public class D1 : Detector
+   //TODO: add stress-test!
+   //TODO: add correct sequence for tests
+    public class Detectors
     {
-        public D1() : base("D1") { }
+        public Detector d1;
+        //public Detector d5;
+        //public Detector d6;
+        //public Detector d7;
+
+        public Detectors()
+        {
+            d1 = new Detector("D1");
+            //d5 = new Detector("D5");
+            //d6 = new Detector("D6");
+            //d7 = new Detector("D7");
+        }
     }
 
-    public class D1Test : IClassFixture<D1>
+    public class DetectorsTest : IClassFixture<Detectors>
     {
-        D1 d1;
+        public Detectors _detectors;
         DataAccess f1;
-        string testDir = $"{System.IO.Directory.GetCurrentDirectory()}";
+        string testDir = @"C:\GENIE2K\CAMFILES";
 
-        public D1Test(D1 d1)
+        public DetectorsTest(Detectors dets)
         {
-            this.d1 = d1;
+            _detectors = dets;
             f1 = new DataAccess();
             System.Threading.Thread.Sleep(1000);
         }
@@ -25,80 +42,99 @@ namespace Measurements.Core.Tests
         [Fact]
         public void Names()
         {
-            Assert.Equal("D1", d1.Name);
+            Assert.Equal("D1", _detectors.d1.Name);
         }
 
         [Fact]
         public void Statuses()
         {
-            Assert.Equal(DetectorStatus.ready, d1.Status);
+            Assert.Equal(DetectorStatus.ready, _detectors.d1.Status);
         }
 
         [Fact]
         public void Connections()
         {
-            Assert.True(d1.IsConnected);
+            Assert.True(_detectors.d1.IsConnected);
         }
 
         [Fact]
         public void Acquiring()
         {
-            d1.CountToRealTime = 3;
-            d1.Start();
+            _detectors.d1.CountToRealTime = 3;
+            _detectors.d1.Start();
             System.Threading.Thread.Sleep(1000);
-            Assert.Equal(DetectorStatus.busy, d1.Status);
+            Assert.Equal(DetectorStatus.busy, _detectors.d1.Status);
             System.Threading.Thread.Sleep(4000);
         }
-        //TODO change this test
+
         [Fact]
-        public void FillingInformation()
+        public void Save()
         {
-            Assert.True(false);
-            //var sd = new Measurement() { sd."RO", 2, 19, 12, 'b', 2, "b-2", 0.2, "bdrum", System.DateTime.Now, System.DateTime.Now.AddDays(1), "test2" }
+            var sd = new IrradiationInfo()
+            {
+                CountryCode = "RO",
+                ClientNumber = "2",
+                Year = "19",
+                SetNumber = "12",
+                SetIndex = "b",
+                SampleNumber = "2",
+                Weight = 0.2,
+                Assistant = "bdrum",
+                Note = "test2",
+                DateTimeStart = DateTime.Now,
+                DateTimeFinish = DateTime.Now.AddSeconds(3)
+            };
 
-            //// let's wait while acquire will finish
-            //System.Threading.Thread.Sleep(4000);
+            _detectors.d1.CurrentSample = sd;
+            _detectors.d1.CurrentMeasurement.Height = 10;
+            _detectors.d1.CurrentMeasurement.Type = "SLI";
+            _detectors.d1.CurrentMeasurement.FileSpectra = "testD1.cnf";
 
-            //d1.FillFileInfo(ref sd, "LLITest", "bdrum", 5.0);
-            //d1.Save($"{testDir}\\test_{d1.Name}.cnf");
+            // let's wait while acquire will finish
+            System.Threading.Thread.Sleep(4000);
 
-            //Assert.Equal(DetectorStatus.ready, d1.DetStatus);
+            _detectors.d1.Save();
 
-            //System.Threading.Thread.Sleep(1000);
+            Assert.Equal(DetectorStatus.ready, _detectors.d1.Status);
 
-            //f1.Open($"{testDir}\\test_{d1.Name}.cnf");
+            System.Threading.Thread.Sleep(1000);
 
-            //Assert.Equal($"{sd.SampleSetIndex}-{sd.SampleNumber}", f1.Param[ParamCodes.CAM_T_STITLE].ToString()); // title
-            //Assert.Equal(sd.IrradiationOperator, f1.Param[ParamCodes.CAM_T_SCOLLNAME].ToString()); // operator's name
-            //Assert.Equal(sd.Description, f1.Param[ParamCodes.CAM_T_SDESC1].ToString());
-            //Assert.Equal(sd.SetKey, f1.Param[ParamCodes.CAM_T_SIDENT].ToString()); // sd code
-            //Assert.Equal(sd.Weight.ToString(), f1.Param[ParamCodes.CAM_F_SQUANT].ToString()); // weight
-            //Assert.Equal("0", f1.Param[ParamCodes.CAM_F_SQUANTERR].ToString()); // err, 0
-            //Assert.Equal("gram", f1.Param[ParamCodes.CAM_T_SUNITS].ToString()); // units, gram
-            //Assert.Equal(sd.IrradiationStartDateTime.ToString(), f1.Param[ParamCodes.CAM_X_SDEPOSIT].ToString()); // irr start date time
-            //Assert.Equal(sd.IrradiationFinishDateTime.ToString(), f1.Param[ParamCodes.CAM_X_STIME].ToString()); // irr finish date time
-            //Assert.Equal("0", f1.Param[ParamCodes.CAM_F_SSYSERR].ToString()); // Random sd error (%)
-            //Assert.Equal("0", f1.Param[ParamCodes.CAM_F_SSYSTERR].ToString()); // Non-random sd error 
-            //Assert.Equal("LLITest", f1.Param[ParamCodes.CAM_T_STYPE].ToString());
-            //Assert.Equal("5", f1.Param[ParamCodes.CAM_T_SGEOMTRY].ToString());
-            //Assert.Equal("3", f1.Param[ParamCodes.CAM_X_PREAL].ToString());
+            f1.Open($"{testDir}\\test{_detectors.d1.Name}.cnf");
 
-            //f1.Close();
+            Assert.Equal($"{_detectors.d1.CurrentSample.SampleKey}", f1.Param[ParamCodes.CAM_T_STITLE].ToString()); // title
+            Assert.Equal(_detectors.d1.CurrentSample.Assistant, f1.Param[ParamCodes.CAM_T_SCOLLNAME].ToString()); // operator's name
+            Assert.Equal(_detectors.d1.CurrentSample.Note, f1.Param[ParamCodes.CAM_T_SDESC1].ToString());
+            Assert.Equal(_detectors.d1.CurrentSample.SetKey, f1.Param[ParamCodes.CAM_T_SIDENT].ToString()); // sd code
+            Assert.Equal(_detectors.d1.CurrentSample.Weight.ToString(), f1.Param[ParamCodes.CAM_F_SQUANT].ToString()); // weight
+            Assert.Equal("0", f1.Param[ParamCodes.CAM_F_SQUANTERR].ToString()); // err, 0
+            Assert.Equal("gram", f1.Param[ParamCodes.CAM_T_SUNITS].ToString()); // units, gram
+            Assert.Equal(_detectors.d1.CurrentSample.DateTimeStart.ToString(), f1.Param[ParamCodes.CAM_X_SDEPOSIT].ToString()); // irr start date time
+            Assert.Equal(_detectors.d1.CurrentSample.DateTimeFinish.ToString(), f1.Param[ParamCodes.CAM_X_STIME].ToString()); // irr finish date time
+            Assert.Equal("0", f1.Param[ParamCodes.CAM_F_SSYSERR].ToString()); // Random sd error (%)
+            Assert.Equal("0", f1.Param[ParamCodes.CAM_F_SSYSTERR].ToString()); // Non-random sd error 
+            Assert.Equal(_detectors.d1.CurrentMeasurement.Type, f1.Param[ParamCodes.CAM_T_STYPE].ToString());
+            Assert.Equal(_detectors.d1.CurrentMeasurement.Height.ToString(), f1.Param[ParamCodes.CAM_T_SGEOMTRY].ToString());
+
+            f1.Close();
         }
 
         [Fact]
         public void Disconnections()
         {
+            System.Threading.Thread.Sleep(5000);
+
+            Assert.True(_detectors.d1.IsConnected);
+            _detectors.d1.Disconnect();
+
             System.Threading.Thread.Sleep(2000);
 
-            d1.Disconnect();
+            Assert.False(_detectors.d1.IsConnected);
+            Assert.Equal(DetectorStatus.off, _detectors.d1.Status);
 
-            Assert.False(d1.IsConnected);
-            Assert.Equal(DetectorStatus.off, d1.Status);
-
-            d1.Connect();
+            _detectors.d1.Connect();
 
         }
     }
+
 }
 

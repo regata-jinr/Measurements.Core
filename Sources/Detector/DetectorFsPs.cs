@@ -32,27 +32,31 @@ namespace Measurements.Core
     //TODO: save logs to db
     public partial class Detector : IDetector, IDisposable
     {
-        private DeviceAccessClass _device;
-        private string            _name;
-        private int               _timeOutLimitSeconds;
-        private int               _countToRealTime;
-        private int               _countToLiveTime;
-        private int               _countNormal;
-        private bool              isDisposed;
-        private DetectorStatus    _status;
-        private ConnectOptions    _conOption;
-        public event              EventHandler DetectorChangedStatusEvent;
-        private static            NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
-        private NLog.Logger       _nLogger;
-        public MeasurementInfo    CurrentMeasurement { get; private set; }
-        private IrradiationInfo   _currentSample;
+        private DeviceAccessClass  _device;
+        private string             _name;
+        private int                _timeOutLimitSeconds;
+        private int                _countToRealTime;
+        private int                _countToLiveTime;
+        private int                _countNormal;
+        private bool               _isDisposed;
+        private DetectorStatus     _status;
+        private ConnectOptions     _conOption;
+        private static NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
+        private NLog.Logger        _nLogger;
+        private IrradiationInfo    _currentSample;
+        private const string       _baseDir = @"C:\GENIE2K\CAMFILES";
+
+        public MeasurementInfo     CurrentMeasurement { get; private set; }
+        public event EventHandler  StatusChanged;
+        public event EventHandler  AcquiringStatusChanged;
+
         public IrradiationInfo    CurrentSample
         {
             get { return _currentSample; }
             set
             {
                 _currentSample = value;
-                var configuration = new MapperConfiguration(cfg => cfg.AddMaps("MCore"));
+                var configuration = new MapperConfiguration(cfg => cfg.AddMaps("MeasurementsCore"));
                 var mapper = new Mapper(configuration);
                 CurrentMeasurement = mapper.Map<MeasurementInfo>(_currentSample);
             }
@@ -120,7 +124,7 @@ namespace Measurements.Core
                 {
                     _nLogger.Info($"value)--The detector status changed from {_status} to {value}");
                     _status = value;
-                    DetectorChangedStatusEvent?.Invoke(this, EventArgs.Empty);
+                    StatusChanged?.Invoke(this, EventArgs.Empty);
                 }
             }
         }

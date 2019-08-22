@@ -6,8 +6,9 @@ using System.Linq;
 
 namespace Measurements.Core
 {
-    //TODO: add docs
-    //TODO: add tests
+    //TODO:  add docs
+    //TODO:  add tests
+    //FIXME: adding costura for merging dlls
     static class SessionControllerSingleton
     {
 

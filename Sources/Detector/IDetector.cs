@@ -18,7 +18,6 @@ namespace Measurements.Core
         void Save();
         void Disconnect();
         void Reset();
-        void Options(CanberraDeviceAccessLib.AcquisitionModes opt, int param);
         void Start();
         void Continue();
         void Stop();
@@ -26,6 +25,7 @@ namespace Measurements.Core
         MeasurementInfo CurrentMeasurement { get; }
         IrradiationInfo CurrentSample { get; set; }
 
-        event EventHandler DetectorChangedStatusEvent;
+        event EventHandler StatusChanged;
+        event EventHandler AcquiringStatusChanged;
     }
 }

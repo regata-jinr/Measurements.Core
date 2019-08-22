@@ -2,6 +2,7 @@
 // Basic descriptions see in DetectorFsPs.cs file
 
 using System;
+using System.IO;
 using System.Threading.Tasks;
 using System.Threading;
 using System.Linq;
@@ -20,19 +21,21 @@ namespace Measurements.Core
         {
             try
             {
-                _nLogger = logger.WithProperty("DetName", name);
+                _nLogger = _logger.WithProperty("DetName", name);
                 _nLogger.Info($"{name}, {option.ToString()}, {timeOutLimitSeconds})--Initializing of the detector.");
                 _conOption = option;
-                isDisposed = false;
+                _isDisposed = false;
                 Status = DetectorStatus.off;
                 ErrorMessage = "";
 
-                _device = new DeviceAccessClass();
-                _currentSample = new IrradiationInfo();
+                if (!Directory.Exists(_baseDir))
+                    Directory.CreateDirectory(_baseDir);
+
+                _device            = new DeviceAccessClass();
+                _currentSample     = new IrradiationInfo();
                 CurrentMeasurement = new MeasurementInfo();
                 
                 Name = name;
-               
                 _device.DeviceMessages += ProcessDeviceMessages;
                 _timeOutLimitSeconds = timeOutLimitSeconds * 1000;
                 _countToRealTime = 0;
@@ -70,6 +73,7 @@ namespace Measurements.Core
         /// <param name="lParam">The second parameter of information associated with the message</param>
         private void ProcessDeviceMessages(int message, int wParam, int lParam)
         {
+            //TODO: wrap to try-catch-finally
             if ((int)AdviseMessageMasks.amAcquireDone == lParam)
             {
                 _nLogger.Info($"{message}, {wParam}, {lParam})--Has got message AcquireDone.");
@@ -89,6 +93,9 @@ namespace Measurements.Core
                 ErrorMessage = $"{_device.Message((MessageCodes)lParam)}";
                 Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{message}, {wParam}, {lParam})--Has got message amHardwareError. Error Message is [{ErrorMessage}]", Level = NLog.LogLevel.Error });
             }
+
+            //TODO: realise how to pass parameters to called function in event
+            AcquiringStatusChanged?.Invoke(this, EventArgs.Empty);
         }
 
         private Task ConnectInternalTask(CancellationToken c)
@@ -105,7 +112,7 @@ namespace Measurements.Core
                 }
                 catch (Exception ex)
                 {
-                    HandleError(ex);
+                    Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{ex.Message}", Level = NLog.LogLevel.Error });
                     if (ex.Message.Contains("278e2a")) Status = DetectorStatus.busy;
 
                 }
@@ -142,13 +149,13 @@ namespace Measurements.Core
                     _nLogger.Info($")--Connection to the detector was successful");
 
             }
-            catch (TimeoutException tex)
+            catch (TimeoutException)
             {
-                HandleError(tex);
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Connection timeout.", Level = NLog.LogLevel.Warn });
             }
             catch (Exception ex)
             {
-                HandleError(ex);
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{ex.Message}", Level = NLog.LogLevel.Error });
             }
 
         }
@@ -167,7 +174,7 @@ namespace Measurements.Core
             }
             catch (Exception ex)
             {
-                HandleError(ex);
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{ex.Message}", Level = NLog.LogLevel.Error });
                 if (ex.Message.Contains("278e2a")) Status = DetectorStatus.busy;
 
             }
@@ -189,45 +196,31 @@ namespace Measurements.Core
         /// </summary>
         public void Save()
         {
+            _nLogger.Info($"Starts saving of current session to file.");
             try
             {
-                    
                 if (!_device.IsConnected || Status == DetectorStatus.off)
-                {
-                    _nLogger.Warn($"{ CurrentMeasurement.FileSpectra})--Attempt to save current acquiring session, but detector doesn't have connection.");
-                    return;
-                }
+                    throw new InvalidOperationException();
+
                 if (string.IsNullOrEmpty(CurrentMeasurement.FileSpectra))
                     GenerateSpectraFileName();
-                //TODO: rewrite this: 
-                if (string.IsNullOrEmpty( CurrentMeasurement.FileSpectra))
-                {
-                    _nLogger.Info($"{ CurrentMeasurement.FileSpectra})--Attempt to save current acquiring session to {NLog.LogManager.Configuration.Variables["basedir"]}\\Sessions.");
-                    System.IO.Directory.CreateDirectory($"{NLog.LogManager.Configuration.Variables["basedir"]}\\Sessions");
-                    _device.Save($"{NLog.LogManager.Configuration.Variables["basedir"]}\\Sessions\\{Name}-{DateTime.Now.ToString()}.cnf");
-                }
-                else
-                {
-                    if (Status == DetectorStatus.error)
-                        _nLogger.Warn($"{ CurrentMeasurement.FileSpectra})--Attempt to save current session, but some error occured [{ErrorMessage}].");
 
-                    if (Status == DetectorStatus.busy)
-                        _nLogger.Warn($"{ CurrentMeasurement.FileSpectra})--Attempt to save current session, which still not finish.");
-                    if (Status == DetectorStatus.ready)
-                        _nLogger.Info($"{ CurrentMeasurement.FileSpectra})--Attempt to save session in file");
-                    if (System.IO.Directory.Exists(System.IO.Path.GetDirectoryName( CurrentMeasurement.FileSpectra))) _device.Save( CurrentMeasurement.FileSpectra, true);
-                    else
-                    {
-                        Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{ CurrentMeasurement.FileSpectra})--Such directory doesn't exist. File will be save to C:\\GENIE2K\\CAMFILES\\", Level = NLog.LogLevel.Warn });
+                FillFileInfo();
 
-                        _device.Save($"C:\\GENIE2K\\CAMFILES\\{System.IO.Path.GetFileName(CurrentMeasurement.FileSpectra)}", true);
-                    }
-                }
-                if (System.IO.File.Exists( CurrentMeasurement.FileSpectra))
-                    _nLogger.Info($"{ CurrentMeasurement.FileSpectra})--Saving was successful.");
-                else _nLogger.Error($"{ CurrentMeasurement.FileSpectra})--After saving file doesn't exist!");
+                _device.Save($"{_baseDir}\\{CurrentMeasurement.FileSpectra}", true);
+
+                if (File.Exists($"{_baseDir}\\{CurrentMeasurement.FileSpectra}"))
+                    _nLogger.Info($"File '{_baseDir}\\{CurrentMeasurement.FileSpectra}' saved");
+                else _nLogger.Error($"{ CurrentMeasurement.FileSpectra})--Some problems during saving. File doesn't exist.");
             }
-            catch (Exception ex) { HandleError(ex); }
+            catch (InvalidOperationException)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Detector has connection problem", Level = NLog.LogLevel.Error });
+            }
+            catch (Exception ex)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{ex.Message}", Level = NLog.LogLevel.Error });
+            }
         }
 
         /// <summary>
@@ -238,13 +231,16 @@ namespace Measurements.Core
             try
             {
                 _nLogger.Info($")--Disconnecting from the detector.");
-                if (!_device.IsConnected)
+                if (_device.IsConnected)
                     _device.Disconnect();
                 _nLogger.Info($")--Disconnecting was successful.");
                 Status = DetectorStatus.off;
                 ErrorMessage = "";
             }
-            catch (Exception ex) { HandleError(ex); }
+            catch (Exception ex)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{ex.Message}", Level = NLog.LogLevel.Error });
+            }
         }
 
         /// <summary>
@@ -263,7 +259,11 @@ namespace Measurements.Core
                 else
                     Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $")--Reset command was passed, but status is {Status}", Level = NLog.LogLevel.Warn });
             }
-            catch (Exception ex) { HandleError(ex); }
+            catch (Exception ex) 
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{ex.Message}", Level = NLog.LogLevel.Error });
+            }
+
         }
 
         public void Options(CanberraDeviceAccessLib.AcquisitionModes opt, int param)
@@ -292,8 +292,12 @@ namespace Measurements.Core
                 _nLogger.Info($")--Acquiring in process...");
                 CurrentMeasurement.DateTimeStart = DateTime.Now;
             }
-            catch (Exception ex) { HandleError(ex); }
-        }
+            catch (Exception ex) 
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{ex.Message}", Level = NLog.LogLevel.Error });
+            }
+
+}
 
 
         public void Continue()
@@ -325,7 +329,11 @@ namespace Measurements.Core
                     Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $")--Stop command was passed, but status is {Status}", Level = NLog.LogLevel.Warn });
                 //Save();
             }
-            catch (Exception ex) { HandleError(ex); }
+            catch (Exception ex) 
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{ex.Message}", Level = NLog.LogLevel.Error });
+            }
+
         }
 
         /// <summary>
@@ -338,7 +346,10 @@ namespace Measurements.Core
                 _nLogger.Info($")--Clearing the detector");
                 _device.Clear();
             }
-            catch (Exception ex) { HandleError(ex); }
+            catch (Exception ex) 
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{ex.Message}", Level = NLog.LogLevel.Error });
+            }
         }
 
 
@@ -346,7 +357,7 @@ namespace Measurements.Core
         {
             _nLogger.Info($")--Cleaning of the detector {Name}");
 
-            if (!isDisposed)
+            if (!_isDisposed)
             {
                 if (isDisposing)
                 {
@@ -354,7 +365,7 @@ namespace Measurements.Core
                 }
                 Disconnect();
             }
-            isDisposed = true;
+            _isDisposed = true;
         }
 
         ~Detector()
@@ -376,10 +387,10 @@ namespace Measurements.Core
         /// </summary>
         /// <param name="sample"></param>
         /// <param name="type"></param>
-        public void FillFileInfo()
+        private void FillFileInfo()
         {
             _nLogger.Info($")--Filling information about sample: {CurrentMeasurement.ToString()}");
-            _device.Param[ParamCodes.CAM_T_STITLE] = $"{CurrentMeasurement.SetIndex}-{CurrentMeasurement.SampleNumber}";// title
+            _device.Param[ParamCodes.CAM_T_STITLE] = $"{CurrentSample.SampleKey}";// title
             _device.Param[ParamCodes.CAM_T_SCOLLNAME] = CurrentMeasurement.Assistant; // operator's name
             DivideString(CurrentSample.Note);
             _device.Param[ParamCodes.CAM_T_SIDENT] = $"{CurrentMeasurement.SetKey}"; // sample code
@@ -426,24 +437,6 @@ namespace Measurements.Core
                     _device.Param[ParamCodes.CAM_T_SDESC4] = iStr.Substring(198, 65);
                     break;
             }
-        }
-
-        private void HandleError(Exception ex)
-        {
-            Status = DetectorStatus.error;
-            ErrorMessage = ex.Message;
-        }
-
-        public void SetHeightToCurrentMeasurement(int height)
-        {
-            if (CurrentMeasurement != null)
-                CurrentMeasurement.Height = height;
-        }
-
-       public void SetTypeToCurrentMeasurement(string type)
-        {
-            if (CurrentMeasurement != null)
-                CurrentMeasurement.Type = type;
         }
 
         private void GenerateSpectraFileName()
