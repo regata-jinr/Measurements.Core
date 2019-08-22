@@ -1,4 +1,5 @@
 ﻿using System;
+using CanberraDeviceAccessLib;
 
 namespace Measurements.Core
 {
@@ -20,8 +21,10 @@ namespace Measurements.Core
         void Reset();
         void Start();
         void Continue();
+        void Pause();
         void Stop();
         void Clear();
+        string GetParameterValue(ParamCodes parCode);
         MeasurementInfo CurrentMeasurement { get; }
         IrradiationInfo CurrentSample { get; set; }
 

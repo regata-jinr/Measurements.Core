@@ -1,10 +1,6 @@
 ﻿using Xunit;
 using CanberraDataAccessLib;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using Xunit.Abstractions;
-using Xunit.Sdk;
 
 namespace Measurements.Core.Tests
 {
@@ -58,18 +54,47 @@ namespace Measurements.Core.Tests
         }
 
         [Fact]
-        public void Acquiring()
+        public void StartPauseContinueClear()
+        {
+            _detectors.d1.CountToRealTime = 5;
+            _detectors.d1.Start();
+            System.Threading.Thread.Sleep(2000);
+            Assert.Equal(DetectorStatus.busy, _detectors.d1.Status);
+            _detectors.d1.Pause();
+            Assert.Equal(DetectorStatus.ready, _detectors.d1.Status);
+            Assert.NotEqual(0, Double.Parse(_detectors.d1.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_EREAL)),2);
+            double prev = Double.Parse(_detectors.d1.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_EREAL));
+            _detectors.d1.Continue();
+            System.Threading.Thread.Sleep(2000);
+            Assert.NotEqual(prev, Double.Parse(_detectors.d1.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_EREAL)),2);
+            _detectors.d1.Pause();
+            _detectors.d1.Clear();
+            System.Threading.Thread.Sleep(1000);
+            Assert.Equal(0, Double.Parse(_detectors.d1.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_EREAL)),2);
+        }
+
+       [Fact]
+        public void StartStopContinue()
         {
             _detectors.d1.CountToRealTime = 3;
             _detectors.d1.Start();
-            System.Threading.Thread.Sleep(1000);
+            System.Threading.Thread.Sleep(2000);
             Assert.Equal(DetectorStatus.busy, _detectors.d1.Status);
-            System.Threading.Thread.Sleep(4000);
+            Assert.NotEqual(0, Double.Parse(_detectors.d1.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_EREAL)),2);
+            _detectors.d1.Stop();
+            Assert.Equal(DetectorStatus.ready, _detectors.d1.Status);
+            Assert.Equal(0,Double.Parse(_detectors.d1.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_EREAL)),2);
+            _detectors.d1.Continue();
+            System.Threading.Thread.Sleep(1000);
+            Assert.NotEqual(0, Double.Parse(_detectors.d1.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_EREAL)),2);
         }
 
         [Fact]
         public void Save()
         {
+            System.IO.File.Delete($"{testDir}\\test{_detectors.d1.Name}.cnf");
+            Assert.False(System.IO.File.Exists($"{testDir}\\test{_detectors.d1.Name}.cnf"));
+
             var sd = new IrradiationInfo()
             {
                 CountryCode = "RO",
@@ -78,7 +103,7 @@ namespace Measurements.Core.Tests
                 SetNumber = "12",
                 SetIndex = "b",
                 SampleNumber = "2",
-                Weight = 0.2,
+                Weight = 0.2m,
                 Assistant = "bdrum",
                 Note = "test2",
                 DateTimeStart = DateTime.Now,
@@ -98,6 +123,7 @@ namespace Measurements.Core.Tests
             Assert.Equal(DetectorStatus.ready, _detectors.d1.Status);
 
             System.Threading.Thread.Sleep(1000);
+            Assert.True(System.IO.File.Exists($"{testDir}\\test{_detectors.d1.Name}.cnf"));
 
             f1.Open($"{testDir}\\test{_detectors.d1.Name}.cnf");
 
@@ -121,7 +147,7 @@ namespace Measurements.Core.Tests
         [Fact]
         public void Disconnections()
         {
-            System.Threading.Thread.Sleep(5000);
+            System.Threading.Thread.Sleep(2000);
 
             Assert.True(_detectors.d1.IsConnected);
             _detectors.d1.Disconnect();

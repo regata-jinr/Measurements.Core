@@ -197,6 +197,7 @@
     <Compile Include="Sources\Session\ISession.cs" />
     <Compile Include="Sources\Session\Session.cs" />
     <Compile Include="Tests\DetectorTest.cs" />
+    <Compile Include="Tests\InfoesTest.cs" />
     <Compile Include="Tests\SessionTest.cs" />
   </ItemGroup>
   <ItemGroup>

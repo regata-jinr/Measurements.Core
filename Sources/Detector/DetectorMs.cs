@@ -203,7 +203,7 @@ namespace Measurements.Core
                     throw new InvalidOperationException();
 
                 if (string.IsNullOrEmpty(CurrentMeasurement.FileSpectra))
-                    GenerateSpectraFileName();
+                    throw new ArgumentNullException();
 
                 FillFileInfo();
 
@@ -212,6 +212,10 @@ namespace Measurements.Core
                 if (File.Exists($"{_baseDir}\\{CurrentMeasurement.FileSpectra}"))
                     _nLogger.Info($"File '{_baseDir}\\{CurrentMeasurement.FileSpectra}' saved");
                 else _nLogger.Error($"{ CurrentMeasurement.FileSpectra})--Some problems during saving. File doesn't exist.");
+            }
+            catch (ArgumentNullException)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Input name of file spectra is empty. It should generated automatically. Something wrong in the sequence of actions.", Level = NLog.LogLevel.Error });
             }
             catch (InvalidOperationException)
             {
@@ -314,20 +318,41 @@ namespace Measurements.Core
 
 
         /// <summary>
-        /// Stops acquiring.
+        /// Set acquiring on pause.
+        /// </summary>
+        public void Pause()
+        {
+            try
+            {
+                if (Status == DetectorStatus.ready)
+                    return;
+
+                _nLogger.Info($")--Attempt to set pause for the acquiring");
+                _device.AcquirePause();
+                Status = DetectorStatus.ready;
+                _nLogger.Info($")--Paused was successful. Detector ready to continue acquire process");
+            }
+            catch (Exception ex) 
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{ex.Message}", Level = NLog.LogLevel.Error });
+            }
+
+        }
+
+       /// <summary>
+        /// Stops acquiring. Means pause and clear.
         /// </summary>
         public void Stop()
         {
             try
             {
+                if (Status == DetectorStatus.ready)
+                    return;
+
                 _nLogger.Info($")--Attempt to stop the acquiring");
                 _device.AcquireStop();
-
-                if (Status == DetectorStatus.ready)
-                    _nLogger.Info($")--Stop was successful. Detector ready to acquire again");
-                else
-                    Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $")--Stop command was passed, but status is {Status}", Level = NLog.LogLevel.Warn });
-                //Save();
+                Status = DetectorStatus.ready;
+                _nLogger.Info($")--Stop was successful. Detector ready to acquire again");
             }
             catch (Exception ex) 
             {
@@ -381,7 +406,13 @@ namespace Measurements.Core
             CleanUp(true);
             GC.SuppressFinalize(this);
         }
-        //TODO: in this moment detector should fill measurement info, but no irradiation, it means that here it should has already filled measurements
+
+
+        public string GetParameterValue(ParamCodes parCode)
+        {
+            return _device.Param[parCode].ToString();
+        }
+
         /// <summary>
         /// Fill the sample information
         /// </summary>
@@ -403,6 +434,7 @@ namespace Measurements.Core
             _device.Param[ParamCodes.CAM_F_SSYSTERR] = 0; // Non-random sample error (%)
             _device.Param[ParamCodes.CAM_T_STYPE] = CurrentMeasurement.Type;
             _device.Param[ParamCodes.CAM_T_SGEOMTRY] = CurrentMeasurement.Height.ToString();
+            _nLogger.Info($")--Filling information was complete");
         }
 
         private void DivideString(string iStr)
@@ -437,13 +469,6 @@ namespace Measurements.Core
                     _device.Param[ParamCodes.CAM_T_SDESC4] = iStr.Substring(198, 65);
                     break;
             }
-        }
-
-        private void GenerateSpectraFileName()
-        {
-            //TODO: how to generate file names?
-            // DetectorNumber+type+number?
-            CurrentMeasurement.FileSpectra = "";
         }
 
     }
