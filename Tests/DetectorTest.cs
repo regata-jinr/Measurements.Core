@@ -1,6 +1,7 @@
 ﻿using Xunit;
 using CanberraDataAccessLib;
 using System;
+using Xunit.Abstractions;
 
 namespace Measurements.Core.Tests
 {
@@ -24,15 +25,23 @@ namespace Measurements.Core.Tests
 
     public class DetectorsTest : IClassFixture<Detectors>
     {
+        private readonly ITestOutputHelper output;
         public Detectors _detectors;
         DataAccess f1;
         string testDir = @"C:\GENIE2K\CAMFILES";
 
-        public DetectorsTest(Detectors dets)
+        public DetectorsTest(Detectors dets, ITestOutputHelper output)
         {
             _detectors = dets;
             f1 = new DataAccess();
             System.Threading.Thread.Sleep(1000);
+            this.output = output;
+        }
+
+        [Fact]
+        public void Logs()
+        {
+            Assert.True(System.IO.File.Exists($"{System.IO.Directory.GetCurrentDirectory()}\\MeasurementsLogs\\{DateTime.Now.ToString("yyyy-MM-dd")}.log"));
         }
 
         [Fact]

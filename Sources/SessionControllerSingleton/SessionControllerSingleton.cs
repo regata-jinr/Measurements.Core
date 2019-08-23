@@ -2,13 +2,15 @@
 using System.Data.SqlClient;
 using CanberraDeviceAccessLib;
 using System;
-using System.Linq;
 
 namespace Measurements.Core
 {
     //TODO:  add docs
     //TODO:  add tests
-    //FIXME: adding costura for merging dlls
+    //TODO:  move logger from detector to here
+    //TODO:  deny running of appliaction in case it already running
+    //FIXME: adding costura for merging dlls, but pay attention that it will break tests.
+    //       find out how to exclude test. exclude assemblies with xunit didn't help
     static class SessionControllerSingleton
     {
 

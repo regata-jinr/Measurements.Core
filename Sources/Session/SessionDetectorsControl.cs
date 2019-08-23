@@ -2,42 +2,29 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 
 namespace Measurements.Core
 {
-    //TODO: add docs
-    //TODO: add tests
-
-    class Session : ISession, IDisposable
+    partial class Session : ISession, IDisposable
     {
-        public string Type { get; set; }
-        public CanberraDeviceAccessLib.AcquisitionModes CountMode { get; set; }
-        public int Counts { get; set; }
-        public void FillIrradiationList(DateTime date)
-        {
-
-        }
-        public List<IrradiationInfo> CurrentSamples { get; } //linq from dbcontext
-        public Dictionary<string, List<IrradiationInfo>> SpreadedSamples { get; }
-        private List<Detector> _managedDetectors;
-
-        public Session()
-        {
-            _managedDetectors = new List<Detector>();
-        }
-
         //for each detector task run (or await) start measure queue
         public void Start()
         {
-
+            foreach (var d in _managedDetectors)
+                d.Start();
         }
         public void Stop()
         {
+            foreach (var d in _managedDetectors)
+                d.Stop();
 
         }
         //if connection closed save locally to json check if json exists
         public void Save()
         {
+            foreach (var d in _managedDetectors)
+                d.Save();
 
         }
         private void SaveLocally()
@@ -49,10 +36,22 @@ namespace Measurements.Core
 
         }
         public void Continue()
-        { }
+        {
+            foreach (var d in _managedDetectors)
+                d.Continue();
+        }
+        public void Pause()
+        {
+            foreach (var d in _managedDetectors)
+                d.Pause();
+        }
         public void Clear()
-        { }
-        public void AttachDetector(string dName)
+        {
+            foreach (var d in _managedDetectors)
+                d.Clear();
+        }
+
+       public void AttachDetector(string dName)
         {
             try
             {
@@ -113,18 +112,5 @@ namespace Measurements.Core
                 Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{ex.Message}", Level = NLog.LogLevel.Error });
             }
         }
-
-        public void SpreadSamplesToDetectors(string option)
-        {
-
-        }
-
-        public void Dispose()
-        {
-            SessionControllerSingleton.ManagedSessions.Remove(this);
-            foreach (var d in _managedDetectors)
-                d.Dispose();
-            _managedDetectors.Clear();
-        }
-    }
+   }
 }

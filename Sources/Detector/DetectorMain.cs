@@ -11,6 +11,7 @@ using CanberraDeviceAccessLib;
 
 namespace Measurements.Core
 {
+    //TODO: add implicit interface implementation
     public partial class Detector : IDetector, IDisposable
     {
         /// <summary>Constructor of Detector class.</summary>

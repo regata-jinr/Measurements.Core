@@ -183,8 +183,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Sources\Detector\DetectorMs.cs" />
-    <Compile Include="Sources\Detector\DetectorFsPs.cs" />
+    <Compile Include="Sources\Detector\DetectorMain.cs" />
+    <Compile Include="Sources\Detector\DetectorFields.cs" />
     <Compile Include="Sources\Detector\IDetector.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Sources\Handlers\ExceptionHandler.cs" />
@@ -195,7 +195,10 @@
     <Compile Include="Sources\SampleChanger\SampleChanger.cs" />
     <Compile Include="Sources\SessionControllerSingleton\SessionControllerSingleton.cs" />
     <Compile Include="Sources\Session\ISession.cs" />
-    <Compile Include="Sources\Session\Session.cs" />
+    <Compile Include="Sources\Session\SessionMain.cs" />
+    <Compile Include="Sources\Session\SessionLists.cs" />
+    <Compile Include="Sources\Session\SessionSamplesMoves.cs" />
+    <Compile Include="Sources\Session\SessionDetectorsControl.cs" />
     <Compile Include="Tests\DetectorTest.cs" />
     <Compile Include="Tests\InfoesTest.cs" />
     <Compile Include="Tests\SessionTest.cs" />
