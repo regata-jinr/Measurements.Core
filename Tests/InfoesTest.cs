@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using System;
 using Xunit;
+using System.Data.SqlClient;
 
 namespace Measurements.Core.Tests
 {
@@ -9,27 +10,66 @@ namespace Measurements.Core.Tests
         [Fact]
         public void GetValues()
         {
+            int id = -1;
+            var ni = new IrradiationInfo();
+            using (var sqw = new SqlConnection(@"Server=RUMLAB\REGATALOCAL;Database=NAA_DB_TEST;Trusted_Connection=True;"))
+            {
+                sqw.Open();
+                using (var sqm = new SqlCommand($"select max(Id) from Irradiations", sqw))
+                {
+                    Random r = new Random();
+                    id = r.Next(1, (int)sqm.ExecuteScalar());
+                }
+                using (var sqc = new SqlCommand($"select * from Irradiations where Id={id}", sqw))
+                {
+                    using (var sqr = sqc.ExecuteReader())
+                    {
+                        sqr.Read();
+                        ni.Id             = (int)sqr.GetValue(0);
+                        ni.CountryCode    = (string)sqr.GetValue(1);
+                        ni.ClientNumber   = (string)sqr.GetValue(2);
+                        ni.Year           = (string)sqr.GetValue(3);
+                        ni.SetNumber      = (string)sqr.GetValue(4);
+                        ni.SetIndex       = (string)sqr.GetValue(5);
+                        ni.SampleNumber   = (string)sqr.GetValue(6);
+                        ni.Type           = (string)sqr.GetValue(7);
+                        ni.Weight         = (decimal)sqr.GetValue(8);
+                        ni.DateTimeStart  = (DateTime)sqr.GetValue(9);
+                        ni.Duration       = (int)sqr.GetValue(10);
+                        ni.DateTimeFinish = (DateTime)sqr.GetValue(11);
+                        ni.Container      = (short)sqr.GetValue(12);
+                        ni.Position       = (short)sqr.GetValue(13);
+                        ni.Channel        = (short)sqr.GetValue(14);
+                        ni.LoadNumber     = (int)sqr.GetValue(15);
+                        ni.Rehandler      = (string)sqr.GetValue(16);
+                        ni.Assistant      = (string)sqr.GetValue(17);
+                        if (!DBNull.Value.Equals(sqr.GetValue(18)))
+                            ni.Note = (string)sqr.GetValue(18);
+                    }
+                }
+            }
+
             var ic = new IrradiationInfoContext();
-            var i = ic.Irradiations.Where(qi => qi.Id == 17640).FirstOrDefault();
-            Assert.Equal(17640, i.Id);
-            Assert.Equal("GE", i.CountryCode);
-            Assert.Equal("02", i.ClientNumber);
-            Assert.Equal("14", i.Year);
-            Assert.Equal("32", i.SetNumber);
-            Assert.Equal("f", i.SetIndex);
-            Assert.Equal("13", i.SampleNumber);
-            Assert.Equal("LLI-1", i.Type);
-            Assert.Equal(0.2903, (Double)i.Weight, 4);
-            Assert.Equal(DateTime.Parse("2014 - 11 - 27 09:19:00.000"), i.DateTimeStart);
-            Assert.Equal(345420, i.Duration);
-            Assert.Equal(DateTime.Parse("2014 - 12 - 01 09:16:00.000"), i.DateTimeFinish);
-            Assert.Equal(4, (int)i.Container);
-            Assert.Equal(3, (int)i.Position);
-            Assert.Equal(1, (int)i.Channel);
-            Assert.Equal(68, i.LoadNumber);
-            Assert.Equal("gundorina", i.Rehandler);
-            Assert.Equal("vergel", i.Assistant);
-            Assert.Null(i.Note);
+            var i = ic.Irradiations.Where(qi => qi.Id == id).FirstOrDefault();
+            Assert.Equal(ni.Id, i.Id);
+            Assert.Equal(ni.CountryCode, i.CountryCode);
+            Assert.Equal(ni.ClientNumber, i.ClientNumber);
+            Assert.Equal(ni.Year, i.Year);
+            Assert.Equal(ni.SetNumber, i.SetNumber);
+            Assert.Equal(ni.SetIndex, i.SetIndex);
+            Assert.Equal(ni.SampleNumber,  i.SampleNumber);
+            Assert.Equal(ni.Type, i.Type);
+            Assert.Equal((double)ni.Weight, (double)i.Weight, 4);
+            Assert.Equal(ni.DateTimeStart, i.DateTimeStart);
+            Assert.Equal(ni.Duration, i.Duration);
+            Assert.Equal(ni.DateTimeFinish, i.DateTimeFinish);
+            Assert.Equal(ni.Container, i.Container);
+            Assert.Equal(ni.Position, i.Position);
+            Assert.Equal(ni.Channel, i.Channel);
+            Assert.Equal(ni.LoadNumber, i.LoadNumber);
+            Assert.Equal(ni.Rehandler, i.Rehandler);
+            Assert.Equal(ni.Assistant, i.Assistant);
+            Assert.Equal(ni.Note, i.Note);
         }
     }
   public class MeasurementInfoTest
@@ -37,25 +77,66 @@ namespace Measurements.Core.Tests
         [Fact]
         public void GetValues()
         {
+            int id = -1;
+            var mi = new MeasurementInfo();
+            using (var sqw = new SqlConnection(@"Server=RUMLAB\REGATALOCAL;Database=NAA_DB_TEST;Trusted_Connection=True;"))
+            {
+                sqw.Open();
+                using (var sqm = new SqlCommand($"select max(Id) from Measurements", sqw))
+                {
+                    Random r = new Random();
+                    id = r.Next(1, (int)sqm.ExecuteScalar());
+                }
+                using (var sqc = new SqlCommand($"select * from Measurements where Id={id}", sqw))
+                {
+                    using (var sqr = sqc.ExecuteReader())
+                    {
+                        sqr.Read();
+                        mi.Id = (int)sqr.GetValue(0);
+                        mi.IrradiationId = (int)sqr.GetValue(1);
+                        mi.CountryCode = (string)sqr.GetValue(2);
+                        mi.ClientNumber = (string)sqr.GetValue(3);
+                        mi.Year = (string)sqr.GetValue(4);
+                        mi.SetNumber = (string)sqr.GetValue(5);
+                        mi.SetIndex = (string)sqr.GetValue(6);
+                        mi.SampleNumber = (string)sqr.GetValue(7);
+                        mi.Type = (string)sqr.GetValue(8);
+                        mi.DateTimeStart = (DateTime)sqr.GetValue(9);
+                        if (!DBNull.Value.Equals(sqr.GetValue(10)))
+                            mi.Duration = (int)sqr.GetValue(10);
+                        if (!DBNull.Value.Equals(sqr.GetValue(11)))
+                            mi.DateTimeFinish = (DateTime)sqr.GetValue(11);
+                        if (!DBNull.Value.Equals(sqr.GetValue(12)))
+                            mi.Height = (short)sqr.GetValue(12);
+                        mi.FileSpectra = (string)sqr.GetValue(13);
+                        mi.Detector = (string)sqr.GetValue(14);
+                        if (!DBNull.Value.Equals(sqr.GetValue(15)))
+                            mi.Assistant = (string)sqr.GetValue(15);
+                        if (!DBNull.Value.Equals(sqr.GetValue(16)))
+                            mi.Note = (string)sqr.GetValue(16);
+                    }
+                }
+            }
+
             var mc = new MeasurementInfoContext();
-            var m = mc.Measurements.Where(qm => qm.IrradiationId == 17640).FirstOrDefault();
-            Assert.Equal(17640, m.Id);
-            Assert.Equal(17640, m.IrradiationId);
-            Assert.Equal("GE", m.CountryCode);
-            Assert.Equal("02", m.ClientNumber);
-            Assert.Equal("14", m.Year);
-            Assert.Equal("32", m.SetNumber);
-            Assert.Equal("f", m.SetIndex);
-            Assert.Equal("13", m.SampleNumber);
-            Assert.Equal("LLI-1", m.Type);
-            Assert.Equal(DateTime.Parse("2014-12-05 00:00:00.000"), m.DateTimeStart);
-            Assert.Null(m.Duration);
-            //Assert.Null(m.DateTimeFinish);
-            Assert.Null(m.Height);
-            Assert.Equal("1102512", m.FileSpectra);
-            Assert.Equal("D1", m.Detector);
-            Assert.Null(m.Assistant);
-            Assert.Null(m.Note);
+            var m = mc.Measurements.Where(qm => qm.Id == id).FirstOrDefault();
+            Assert.Equal(mi.Id, m.Id);
+            Assert.Equal(mi.IrradiationId, m.IrradiationId);
+            Assert.Equal(mi.CountryCode, m.CountryCode);
+            Assert.Equal(mi.ClientNumber, m.ClientNumber);
+            Assert.Equal(mi.Year, m.Year);
+            Assert.Equal(mi.SetNumber, m.SetNumber);
+            Assert.Equal(mi.SetIndex, m.SetIndex);
+            Assert.Equal(mi.SampleNumber, m.SampleNumber);
+            Assert.Equal(mi.Type, m.Type);
+            Assert.Equal(mi.DateTimeStart, m.DateTimeStart);
+            Assert.Equal(mi.Duration, m.Duration);
+            Assert.Equal(mi.DateTimeFinish, m.DateTimeFinish);
+            Assert.Equal(mi.Height, m.Height);
+            Assert.Equal(mi.FileSpectra, m.FileSpectra);
+            Assert.Equal(mi.Detector, m.Detector);
+            Assert.Equal(mi.Assistant, m.Assistant);
+            Assert.Equal(mi.Note, m.Note);
         }
    }
 }

@@ -114,9 +114,9 @@ namespace Measurements.Core.Tests
             _detectors.d1.CurrentMeasurement.Height = 10;
             _detectors.d1.CurrentMeasurement.Type = "SLI";
             _detectors.d1.CurrentMeasurement.FileSpectra = "testD1.cnf";
+            _detectors.d1.CountToRealTime = 3;
 
-            // let's wait while acquire will finish
-            System.Threading.Thread.Sleep(4000);
+            System.Threading.Thread.Sleep(2000);
 
             _detectors.d1.Save();
 
@@ -134,8 +134,8 @@ namespace Measurements.Core.Tests
             Assert.Equal(_detectors.d1.CurrentSample.Weight.ToString(), f1.Param[ParamCodes.CAM_F_SQUANT].ToString()); // weight
             Assert.Equal("0", f1.Param[ParamCodes.CAM_F_SQUANTERR].ToString()); // err, 0
             Assert.Equal("gram", f1.Param[ParamCodes.CAM_T_SUNITS].ToString()); // units, gram
-            Assert.Equal(_detectors.d1.CurrentSample.DateTimeStart.ToString(), f1.Param[ParamCodes.CAM_X_SDEPOSIT].ToString()); // irr start date time
-            Assert.Equal(_detectors.d1.CurrentSample.DateTimeFinish.ToString(), f1.Param[ParamCodes.CAM_X_STIME].ToString()); // irr finish date time
+            Assert.Equal(_detectors.d1.CurrentSample.DateTimeStart.ToString().Replace(" ", ""), f1.Param[ParamCodes.CAM_X_SDEPOSIT].ToString().Replace(" ", "")); // irr start date time
+            Assert.Equal(_detectors.d1.CurrentSample.DateTimeFinish.ToString().Replace(" ", ""), f1.Param[ParamCodes.CAM_X_STIME].ToString().Replace(" ", "")); // irr finish date time
             Assert.Equal("0", f1.Param[ParamCodes.CAM_F_SSYSERR].ToString()); // Random sd error (%)
             Assert.Equal("0", f1.Param[ParamCodes.CAM_F_SSYSTERR].ToString()); // Non-random sd error 
             Assert.Equal(_detectors.d1.CurrentMeasurement.Type, f1.Param[ParamCodes.CAM_T_STYPE].ToString());

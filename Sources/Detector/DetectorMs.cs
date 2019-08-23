@@ -420,22 +420,29 @@ namespace Measurements.Core
         /// <param name="type"></param>
         private void FillFileInfo()
         {
-            _nLogger.Info($")--Filling information about sample: {CurrentMeasurement.ToString()}");
-            _device.Param[ParamCodes.CAM_T_STITLE] = $"{CurrentSample.SampleKey}";// title
-            _device.Param[ParamCodes.CAM_T_SCOLLNAME] = CurrentMeasurement.Assistant; // operator's name
-            DivideString(CurrentSample.Note);
-            _device.Param[ParamCodes.CAM_T_SIDENT] = $"{CurrentMeasurement.SetKey}"; // sample code
-            _device.Param[ParamCodes.CAM_F_SQUANT] = CurrentSample.Weight; // weight
-            _device.Param[ParamCodes.CAM_F_SQUANTERR] = 0; // err = 0
-            _device.Param[ParamCodes.CAM_T_SUNITS] = "gram"; // units = gram
-            _device.Param[ParamCodes.CAM_X_SDEPOSIT] = CurrentSample.DateTimeStart; // irr start date time
-            _device.Param[ParamCodes.CAM_X_STIME] = CurrentSample.DateTimeFinish; // irr finish date time
-            _device.Param[ParamCodes.CAM_F_SSYSERR] = 0; // Random sample error (%)
-            _device.Param[ParamCodes.CAM_F_SSYSTERR] = 0; // Non-random sample error (%)
-            _device.Param[ParamCodes.CAM_T_STYPE] = CurrentMeasurement.Type;
-            _device.Param[ParamCodes.CAM_T_SGEOMTRY] = CurrentMeasurement.Height.ToString();
-            _nLogger.Info($")--Filling information was complete");
-        }
+            try
+            {
+                _nLogger.Info($")--Filling information about sample: {CurrentMeasurement.ToString()}");
+                _device.Param[ParamCodes.CAM_T_STITLE] = $"{CurrentSample.SampleKey}";// title
+                _device.Param[ParamCodes.CAM_T_SCOLLNAME] = CurrentMeasurement.Assistant; // operator's name
+                DivideString(CurrentSample.Note); //filling description field in file
+                _device.Param[ParamCodes.CAM_T_SIDENT] = $"{CurrentMeasurement.SetKey}"; // sample code
+                _device.Param[ParamCodes.CAM_F_SQUANT] = (double)CurrentSample.Weight; // weight
+                _device.Param[ParamCodes.CAM_F_SQUANTERR] = 0; // err = 0
+                _device.Param[ParamCodes.CAM_T_SUNITS] = "gram"; // units = gram
+                _device.Param[ParamCodes.CAM_X_SDEPOSIT] = CurrentSample.DateTimeStart; // irr start date time
+                _device.Param[ParamCodes.CAM_X_STIME] = CurrentSample.DateTimeFinish; // irr finish date time
+                _device.Param[ParamCodes.CAM_F_SSYSERR] = 0; // Random sample error (%)
+                _device.Param[ParamCodes.CAM_F_SSYSTERR] = 0; // Non-random sample error (%)
+                _device.Param[ParamCodes.CAM_T_STYPE] = CurrentMeasurement.Type;
+                _device.Param[ParamCodes.CAM_T_SGEOMTRY] = CurrentMeasurement.Height.ToString();
+                _nLogger.Info($")--Filling information was complete");
+            }
+            catch (Exception ex)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{ex.Message}", Level = NLog.LogLevel.Error });
+            }
+       }
 
         private void DivideString(string iStr)
         {
