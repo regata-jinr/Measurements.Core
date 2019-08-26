@@ -8,19 +8,27 @@ namespace Measurements.Core
 {
     partial class Session : ISession, IDisposable
     {
-        void ISession.NextSample()
+       public void NextSample()
         {
-
+            foreach (var d in _managedDetectors)
+            {
+                int currentIndex = SpreadedSamples[d.Name].IndexOf(d.CurrentSample);
+                d.CurrentSample = SpreadedSamples[d.Name][++currentIndex];
+            }
         }
 
-        void ISession.MakeSampleCurrent(IrradiationInfo ii)
+        public void MakeSampleCurrentOnDetector(ref IrradiationInfo ii, ref Detector det)
         {
-
+            det.CurrentSample = ii;
         }
 
-       void ISession.PrevSample()
+       public void PrevSample()
         {
-
+            foreach (var d in _managedDetectors)
+            {
+                int currentIndex = SpreadedSamples[d.Name].IndexOf(d.CurrentSample);
+                d.CurrentSample = SpreadedSamples[d.Name][--currentIndex];
+            }
         }
     }
 }

@@ -2,7 +2,7 @@
 
 namespace Measurements.Core
 {
-     public class MeasurementInfoContext : DbContext
+    public class MeasurementInfoContext : DbContext
     {
         public DbSet<MeasurementInfo> Measurements { get; set; }
 

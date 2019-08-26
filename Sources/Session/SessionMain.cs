@@ -62,6 +62,7 @@ namespace Measurements.Core
                         d.Dispose();
                 }
 
+                //FIXME: actually dispose already do the disconnect.
                 foreach (var d in _managedDetectors)
                     d.Disconnect();
 

@@ -19,7 +19,7 @@ namespace Measurements.Core
         void Save();
         void Disconnect();
         void Reset();
-        void Start();
+        void Start(int duration, decimal height, string note);
         void Continue();
         void Pause();
         void Stop();

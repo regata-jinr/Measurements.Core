@@ -32,7 +32,7 @@ namespace Measurements.Core
         public string     SampleNumber   { get; set; }
         [Required]
         public string     Type           { get; set; }
-        public short?     Height         { get; set; }
+        public decimal?   Height         { get; set; }
         [Ignore]
         public DateTime?  DateTimeStart  { get; set; }
         public int?       Duration       { get; set; }

@@ -1,4 +1,4 @@
-# Software core for control of measurements process
+# Software core for control of the measurements process
 
 This is the core of basic [regata](http://regata.jinr.ru/) software.
 <br>

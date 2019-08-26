@@ -281,10 +281,15 @@ namespace Measurements.Core
         ///  Starts acquiring with specified aCountToLiveTime, before this the device will be cleared.
         /// </summary>
         /// <param name="time"></param>
-        public void Start()
+        public void Start(int duration=5, decimal height=2.5m, string note = "")
         {
             try
             {
+                CurrentMeasurement.Height = height;
+                CurrentMeasurement.Duration = duration;
+                CurrentMeasurement.Detector = Name;
+                CurrentMeasurement.Note = note;
+                CurrentMeasurement.Assistant = SessionControllerSingleton.ConnectionStringBuilder.UserID;
                 _nLogger.Debug($")--Initializing of acquiring.");
                 _device.Clear();
 

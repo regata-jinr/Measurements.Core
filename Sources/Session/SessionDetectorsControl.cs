@@ -11,8 +11,8 @@ namespace Measurements.Core
         //for each detector task run (or await) start measure queue
         public void Start()
         {
-            foreach (var d in _managedDetectors)
-                d.Start();
+                foreach (var d in _managedDetectors)
+                    d.Start();
         }
         public void Stop()
         {
@@ -27,15 +27,8 @@ namespace Measurements.Core
                 d.Save();
 
         }
-        private void SaveLocally()
-        {
 
-        }
-        private void SaveRemotely()
-        {
-
-        }
-        public void Continue()
+       public void Continue()
         {
             foreach (var d in _managedDetectors)
                 d.Continue();
@@ -63,6 +56,7 @@ namespace Measurements.Core
                 {
                     _managedDetectors.Add(det);
                     SessionControllerSingleton.AvailableDetectors.Remove(det);
+                    det.AcquiringStatusChanged += ProcessAcquiringMessage;
                 }
                 else
                     throw new ArgumentNullException(dName);
@@ -111,6 +105,75 @@ namespace Measurements.Core
             {
                 Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{ex.Message}", Level = NLog.LogLevel.Error });
             }
+        }
+
+        private void ProcessAcquiringMessage(object o, EventArgs args)
+        {
+            try
+            {
+                if (o is Detector)
+                {
+                    var d = (Detector) o;
+                    if (d.Status == DetectorStatus.ready)
+                    {
+                        Save();
+                        NextSample();
+                    }
+                }
+                else
+                    throw new ArgumentException("Object has a wrong type");
+            }
+            catch (ArgumentException ar)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{ar.Message}", Level = NLog.LogLevel.Error });
+            }
+            catch (Exception ex)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{ex.Message}", Level = NLog.LogLevel.Error });
+            }
+        }
+
+        //TODO: move to Detector class
+        private string GenerateFileSpectraName(string detName)
+        {
+            var typeDict = new Dictionary<string, string> { {"SLI", "0"}, {"LLI-1", "1"}, {"LLI-2", "2"} };
+            int maxNumber = 0;
+            try
+            {
+                maxNumber = _measurementInfoContext.Measurements.Where(m =>
+                                                                       (
+                                                                            m.FileSpectra.Length == 7 &&
+                                                                            m.Type == Type &&
+                                                                            IsNumber(m.FileSpectra) &&
+                                                                            m.FileSpectra.Substring(0, 1) == detName.Substring(1, 1)
+                                                                        )
+                                                                       ).
+                                                                 Select(m => new
+                                                                 {
+                                                                     FileNumber = int.Parse(m.FileSpectra.Substring(3, 4))
+                                                                 }
+                                                                       ).
+                                                                 Max(m => m.FileNumber);
+            }
+            catch (System.Data.SqlClient.SqlException sqle)
+            {
+                //TODO: search files in D drive
+            }
+            catch (Microsoft.EntityFrameworkCore.DbUpdateException dbe) // for duplications
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{dbe.InnerException.Message}", Level = NLog.LogLevel.Error });
+            }
+            catch (Exception ex)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{ex.Message}", Level = NLog.LogLevel.Error });
+            }
+            return $"{detName[1]}{typeDict[Type]}{maxNumber}";
+        }
+
+        private bool IsNumber(string str)
+        {
+            int a = 0;
+            return int.TryParse(str, out a);
         }
    }
 }

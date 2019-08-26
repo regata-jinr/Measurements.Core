@@ -10,7 +10,7 @@ namespace Measurements.Core
         void   Start(); //for each detector task run (or await) start measure queue
         void   NextSample();
         void   PrevSample();
-        void   MakeSampleCurrent(IrradiationInfo ii);
+        void   MakeSampleCurrentOnDetector(ref IrradiationInfo ii, ref Detector det);
         void   Pause();
         void   Stop(); //Pause and Clear
         void   Save(); //if connection closed save locally to json
@@ -18,7 +18,7 @@ namespace Measurements.Core
         void   Clear();
         void   AttachDetector(string dName);
         void   DetachDetector(string dName);
-        void   SpreadSamplesToDetectors(string option);
+        void   SpreadSamplesToDetectors();
         void   SetIrradiationsList(DateTime date);
 
         event EventHandler SessionComplete;

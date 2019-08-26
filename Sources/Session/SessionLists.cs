@@ -37,7 +37,7 @@ namespace Measurements.Core
             }
         }
 
-        public void SpreadSamplesToDetectors(string option)
+        public void SpreadSamplesToDetectors()
         {
             try
             {
@@ -64,6 +64,10 @@ namespace Measurements.Core
                         i = 1;
                 }
 
+                foreach (var d in _managedDetectors)
+                {
+                    d.CurrentSample = SpreadedSamples[d.Name][0];
+                }
             }
             catch (ArgumentOutOfRangeException ae)
             {
@@ -74,5 +78,15 @@ namespace Measurements.Core
                 Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{e.Message}", Level = NLog.LogLevel.Error });
             }
         }
+
+        private void SaveLocally()
+        {
+
+        }
+        private void SaveRemotely()
+        {
+
+        }
+ 
     }
 }
