@@ -11,7 +11,9 @@ namespace Measurements.Core
 
     partial class Session : ISession, IDisposable
     {
+        public string Name { get; private set; }
         public string Type { get; set; }
+        public decimal Height { get; set; }
         public event EventHandler SessionComplete;
         public event EventHandler MeasurementDone;
         public CanberraDeviceAccessLib.AcquisitionModes CountMode { get; set; }
@@ -26,9 +28,11 @@ namespace Measurements.Core
         public Dictionary<string, List<IrradiationInfo>> SpreadedSamples { get; }
         private List<Detector> _managedDetectors;
         private bool _isDisposed = false;
-
+        private Dictionary<string, CanberraDeviceAccessLib.AcquisitionModes> _countModeDict;
+             
         public Session()
         {
+            Name = "Untitled session";
             _irradiationInfoContext = new IrradiationInfoContext();
             _measurementInfoContext = new MeasurementInfoContext();
             IrradiationList = new List<IrradiationInfo>();
@@ -37,6 +41,46 @@ namespace Measurements.Core
             CurrentSample = new IrradiationInfo();
             _managedDetectors = new List<Detector>();
             SpreadedSamples = new Dictionary<string, List<IrradiationInfo>>();
+            _countModeDict = new Dictionary<string, CanberraDeviceAccessLib.AcquisitionModes>
+                                 {
+                                          { "aCountToLiveTime", CanberraDeviceAccessLib.AcquisitionModes.aCountToLiveTime },
+                                          { "aCountToRealTime", CanberraDeviceAccessLib.AcquisitionModes.aCountToRealTime },
+                                          { "aCountNormal", CanberraDeviceAccessLib.AcquisitionModes.aCountNormal }
+                                 };
+        }
+
+        public Session(SessionInfo session) : this()
+        {
+            Name = session.Name;
+            Type = session.Type;
+            Counts = session.Duration;
+            Height = session.Height;
+            CountMode = _countModeDict[session.CountMode];
+
+            _managedDetectors.AddRange(SessionControllerSingleton.AvailableDetectors.Where(d => session.DetectorsNames.Split(',').Contains(d.Name)).ToList());
+
+        }
+
+        public void SaveSession(string nameOfSession, bool isBasic=false, string note = "")
+        {
+            Name = nameOfSession;
+            var sessionContext = new SessionInfoContext();
+
+            string assistant = null;
+            if (!isBasic) assistant = SessionControllerSingleton.ConnectionStringBuilder.UserID;
+
+            sessionContext.Add(new SessionInfo
+                                              {
+                                                   CountMode      = this.CountMode.ToString(),
+                                                   Duration       = this.Counts,
+                                                   Height         = this.Height,
+                                                   Name           = this.Name,
+                                                   Type           = this.Type,
+                                                   Assistant      = assistant,
+                                                   Note           = note,
+                                                   DetectorsNames = string.Join(",", _managedDetectors.Select(n => n.Name).ToArray())
+                                               }
+            );
         }
 
         ~Session()

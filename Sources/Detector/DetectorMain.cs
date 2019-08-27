@@ -22,7 +22,7 @@ namespace Measurements.Core
         {
             try
             {
-                _nLogger = _logger.WithProperty("DetName", name);
+                _nLogger = SessionControllerSingleton.logger.WithProperty("DetName", name);
                 _nLogger.Info($"{name}, {option.ToString()}, {timeOutLimitSeconds})--Initializing of the detector.");
                 _conOption = option;
                 _isDisposed = false;

@@ -195,6 +195,8 @@
     <Compile Include="Sources\SampleChanger\SampleChanger.cs" />
     <Compile Include="Sources\SessionControllerSingleton\SessionControllerSingleton.cs" />
     <Compile Include="Sources\Session\ISession.cs" />
+    <Compile Include="Sources\Session\SessionInfo.cs" />
+    <Compile Include="Sources\Session\SessionInfoContext.cs" />
     <Compile Include="Sources\Session\SessionMain.cs" />
     <Compile Include="Sources\Session\SessionLists.cs" />
     <Compile Include="Sources\Session\SessionSamplesMoves.cs" />

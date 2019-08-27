@@ -13,7 +13,8 @@ namespace Measurements.Core
         void   MakeSampleCurrentOnDetector(ref IrradiationInfo ii, ref Detector det);
         void   Pause();
         void   Stop(); //Pause and Clear
-        void   Save(); //if connection closed save locally to json
+        void   SaveSpectraFiles(); //if connection closed save locally to json
+        void   SaveSession(string nameOfSession, bool isBasic = false, string note = "");
         void   Continue();
         void   Clear();
         void   AttachDetector(string dName);

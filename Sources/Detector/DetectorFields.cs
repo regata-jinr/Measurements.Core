@@ -41,7 +41,6 @@ namespace Measurements.Core
         private bool               _isDisposed;
         private DetectorStatus     _status;
         private ConnectOptions     _conOption;
-        private static NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
         private NLog.Logger        _nLogger;
         private IrradiationInfo    _currentSample;
         private const string       _baseDir = @"C:\GENIE2K\CAMFILES";

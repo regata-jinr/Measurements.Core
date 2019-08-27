@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using AutoMapper;
+using System.IO;
 
 namespace Measurements.Core
 {
@@ -11,8 +10,11 @@ namespace Measurements.Core
         //for each detector task run (or await) start measure queue
         public void Start()
         {
-                foreach (var d in _managedDetectors)
-                    d.Start();
+
+            foreach (var d in _managedDetectors)
+            {
+                d.Start();
+            }
         }
         public void Stop()
         {
@@ -21,7 +23,7 @@ namespace Measurements.Core
 
         }
         //if connection closed save locally to json check if json exists
-        public void Save()
+        public void SaveSpectraFiles()
         {
             foreach (var d in _managedDetectors)
                 d.Save();
@@ -116,7 +118,8 @@ namespace Measurements.Core
                     var d = (Detector) o;
                     if (d.Status == DetectorStatus.ready)
                     {
-                        Save();
+                        d.CurrentMeasurement.FileSpectra = GenerateFileSpectraName(d.Name);
+                        SaveSpectraFiles();
                         NextSample();
                     }
                 }
@@ -133,7 +136,6 @@ namespace Measurements.Core
             }
         }
 
-        //TODO: move to Detector class
         private string GenerateFileSpectraName(string detName)
         {
             var typeDict = new Dictionary<string, string> { {"SLI", "0"}, {"LLI-1", "1"}, {"LLI-2", "2"} };
@@ -154,12 +156,35 @@ namespace Measurements.Core
                                                                  }
                                                                        ).
                                                                  Max(m => m.FileNumber);
+
+                return $"{detName.Substring(1,1)}{typeDict[Type]}{maxNumber}";
             }
             catch (System.Data.SqlClient.SqlException sqle)
             {
-                //TODO: search files in D drive
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{sqle.InnerException.Message}{Environment.NewLine}Program will try to generate new file name from existing spectra file in 'D:\\Spectra'", Level = NLog.LogLevel.Warn });
+
+                if (!Directory.Exists(@"D:\Spectra"))
+                    throw new Exception("Spectra Directory doesn't exist");
+
+                var dir = new DirectoryInfo(@"D:\Spectra");
+                var files = dir.GetFiles("*.cnf", SearchOption.AllDirectories).Where(f => f.CreationTime >= DateTime.Now.AddDays(-30)).ToList();
+
+                maxNumber = files.Where(f => 
+                                            f.Name.Length == 7 &&
+                                            f.Name.Substring(1,1) == typeDict[Type] &&
+                                            IsNumber(f.Name) &&
+                                            f.Name.Substring(0,1) == detName.Substring(1,1)
+                                       ).
+                                  Select(f => new
+                                                {
+                                                    FileNumber = int.Parse(f.Name.Substring(3,4))
+                                                }
+                                        ).
+                                  Max(f => f.FileNumber);
+
+                return $"{detName.Substring(1,1)}{typeDict[Type]}{maxNumber}";
             }
-            catch (Microsoft.EntityFrameworkCore.DbUpdateException dbe) // for duplications
+            catch (Microsoft.EntityFrameworkCore.DbUpdateException dbe) // for duplicates
             {
                 Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{dbe.InnerException.Message}", Level = NLog.LogLevel.Error });
             }
