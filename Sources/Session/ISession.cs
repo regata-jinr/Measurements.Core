@@ -6,7 +6,6 @@ namespace Measurements.Core
 {
     public interface ISession
     {
-        string Type { get; set; }
         void   Start(); //for each detector task run (or await) start measure queue
         void   NextSample();
         void   PrevSample();
@@ -26,6 +25,10 @@ namespace Measurements.Core
         event EventHandler MeasurementDone;
         AcquisitionModes CountMode { get; set; }
         int Counts { get; set; }
+        string Type { get; set; }
+        string Name { get; }
+        decimal Height { get; set; }
+        string Note { get; set; }
         List<IrradiationInfo> IrradiationList { get; } //linq from dbcontext
         List<MeasurementInfo> MeasurementList { get; } //linq from dbcontext
         Dictionary<string, List<IrradiationInfo>> SpreadedSamples { get; }

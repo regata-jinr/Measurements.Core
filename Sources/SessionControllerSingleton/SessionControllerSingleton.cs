@@ -2,83 +2,186 @@
 using System.Data.SqlClient;
 using CanberraDeviceAccessLib;
 using System;
+using System.Linq;
 
 namespace Measurements.Core
 {
     //TODO:  add docs
     //TODO:  add tests
-    //TODO:  move logger from detector to here
+    //TODO:  improve readability of logs
     //TODO:  deny running of appliaction in case it already running
     //FIXME: adding costura for merging dlls, but pay attention that it will break tests.
     //       find out how to exclude test. exclude assemblies with xunit didn't help
     static class SessionControllerSingleton
     {
 
+        public static NLog.Logger                logger = NLog.LogManager.GetCurrentClassLogger();
+
         //TODO: <incapsulate this>
-        public static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
-        public static SqlConnectionStringBuilder ConnectionStringBuilder { get; set; }
-        public static List<Session> ManagedSessions { get; set; }
-        public static List<Detector> AvailableDetectors { get; set; }
+        private static SqlConnectionStringBuilder _connectionStringBuilder; 
+        public static SqlConnectionStringBuilder ConnectionStringBuilder
+        {
+            get { return _connectionStringBuilder; }
+        }
+
+        public static void InitializeDBConnection(string connectionString)
+        {
+            _connectionStringBuilder.ConnectionString = connectionString;
+            TestDBConnection();
+        }
+        public static List<Session>              ManagedSessions         { get; private set; }
+        public static List<Detector>             AvailableDetectors      { get; private set; }
         //TODO: </incapsulate this>
 
-        static SessionControllerSingleton()
+        public static bool TestDBConnection()
         {
-            logger.Info("Inititalisation of Session Controller instance has began");
-            ConnectionStringBuilder = new SqlConnectionStringBuilder(/*put known part of con. string here*/);
-            AvailableDetectors = new List<Detector>();
+            CheckSessionControllerInitialisation();
+
+            bool isConnected = false;
+            var sqlCon = new SqlConnection(ConnectionStringBuilder.ConnectionString);
             try
             {
                 logger.Info("Test connection with database:");
-                var sqlCon = new SqlConnection(ConnectionStringBuilder.ConnectionString);
                 sqlCon.Open();
-                sqlCon.Close();
-                logger.Info("Connection successful");
 
-                ManagedSessions = new List<Session>();
+                isConnected = true;
+
+                sqlCon.Dispose();
+                logger.Info("Connection successful");
+            }
+
+            catch (SqlException sqlex)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(null, new Handlers.ExceptionEventsArgs { Message = $"{sqlex.Message}{Environment.NewLine}Program will work in the local mode", Level = NLog.LogLevel.Warn });
+                sqlCon.Dispose();
+            }
+
+            return isConnected;
+        }
+
+        private static void CheckSessionControllerInitialisation()
+        {
+            if (string.IsNullOrEmpty(_connectionStringBuilder.ConnectionString))
+                throw new ArgumentNullException("First of all call InitializeDBConnection method!");
+        }
+
+        private static void AddDetectorToList(string name)
+        {
+            Detector d = null;
+            try
+            {
+                    d = new Detector(name);
+                    if (d.IsConnected)
+                        AvailableDetectors.Add(d);
+ 
+            }
+            catch (Exception ex)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(null, new Handlers.ExceptionEventsArgs { Message = ex.Message, Level = NLog.LogLevel.Error });
+                d?.Dispose(); 
+            }
+        }
+
+        private static void DetectorsInititalisation()
+        {
+            try
+            {
+                logger.Info("Initialization of detectors:");
 
                 var _device = new DeviceAccessClass();
                 var detNames = (IEnumerable<object>)_device.ListSpectroscopyDevices;
 
-                logger.Info("Initialisation of detectors:");
                 foreach (var n in detNames)
-                {
-                    var d = new Detector(n.ToString());
-                    if (d.IsConnected)
-                        AvailableDetectors.Add(d);
-                }
-                logger.Info("Creation of session controller instance has done");
+                    AddDetectorToList(n.ToString());
+
             }
             catch (Exception ex)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(null, new Handlers.ExceptionEventsArgs { Message = $"){ex.Message}", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(null, new Handlers.ExceptionEventsArgs { Message = ex.Message, Level = NLog.LogLevel.Error });
+
             }
         }
 
-
-        public static ISession Create(string sName)
+        static SessionControllerSingleton()
         {
-            logger.Info("Creating of the new session intance");
+            logger.Info("Inititalization of Session Controller instance has began");
+
+            _isDisposed = false;
+            _connectionStringBuilder = new SqlConnectionStringBuilder(); 
+            AvailableDetectors = new List<Detector>();
+            ManagedSessions    = new List<Session>();
+
+            DetectorsInititalisation();
+
+            logger.Info("Creation of session controller instance has done");
+        }
+
+
+        public static ISession Create()
+        {
+            CheckSessionControllerInitialisation();
+
+            logger.Info("Creating of the new session instance");
             var session = new Session();
             ManagedSessions.Add(session);
             return session;
         }
 
-        //todo: add table to db and implement this:
         public static ISession Load(string sName)
         {
             
+            CheckSessionControllerInitialisation();
+
             logger.Info("Loading session parameters from DB");
             try
             {
-                throw new Exception();
+                var sessionContext = new SessionInfoContext();
+
+                var sessionInfo = sessionContext.Sessions.Where(s => s.Name == sName && (s.Assistant == null || s.Assistant == ConnectionStringBuilder.UserID)).FirstOrDefault();
+
+                if (sessionInfo == null)
+                    throw new ArgumentNullException("Such session doesn't exist. Check the name or create the new one");
+
+                var session = new Session(sessionInfo);
+                ManagedSessions.Add(session);
+
+                return session;
+
             }
-            catch
+            catch (ArgumentException arg)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(null, new Handlers.ExceptionEventsArgs { Message = $"Функция пока не доступна", Level = NLog.LogLevel.Warn });
+                Handlers.ExceptionHandler.ExceptionNotify(null, new Handlers.ExceptionEventsArgs { Message = arg.Message, Level = NLog.LogLevel.Warn });
+            }
+            catch (Exception ex)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(null, new Handlers.ExceptionEventsArgs { Message = ex.Message, Level = NLog.LogLevel.Error });
             }
             return null;
         }
-       
-    }
-}
 
+        private static bool _isDisposed;
+
+        public static void Dispose()
+        {
+            CleanUp(true);
+        }
+
+        private static void CleanUp(bool isDisposing)
+        {
+
+            if (!_isDisposed)
+            {
+                if (isDisposing)
+                {
+                    ManagedSessions.Clear();
+                    foreach (var d in AvailableDetectors)
+                        d.Dispose();
+                    AvailableDetectors.Clear();
+                }
+            }
+            _isDisposed = true;
+        }
+
+
+    } // class SessionControllerSingleton
+} // namespace

@@ -13,6 +13,7 @@ namespace Measurements.Core
     {
         public string Name { get; private set; }
         public string Type { get; set; }
+        public string Note { get; set; }
         public decimal Height { get; set; }
         public event EventHandler SessionComplete;
         public event EventHandler MeasurementDone;
@@ -29,6 +30,7 @@ namespace Measurements.Core
         private List<Detector> _managedDetectors;
         private bool _isDisposed = false;
         private Dictionary<string, CanberraDeviceAccessLib.AcquisitionModes> _countModeDict;
+
              
         public Session()
         {
@@ -56,13 +58,18 @@ namespace Measurements.Core
             Counts = session.Duration;
             Height = session.Height;
             CountMode = _countModeDict[session.CountMode];
+            Note = session.Note;
 
-            _managedDetectors.AddRange(SessionControllerSingleton.AvailableDetectors.Where(d => session.DetectorsNames.Split(',').Contains(d.Name)).ToList());
+            foreach (var dName in session.DetectorsNames.Split(','))
+            {
+                AttachDetector(dName);                
+            }
 
         }
 
         public void SaveSession(string nameOfSession, bool isBasic=false, string note = "")
         {
+            //TODO: add try catch for warning in case of some data is missed.
             Name = nameOfSession;
             var sessionContext = new SessionInfoContext();
 

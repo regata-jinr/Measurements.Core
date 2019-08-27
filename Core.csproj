@@ -203,6 +203,7 @@
     <Compile Include="Sources\Session\SessionDetectorsControl.cs" />
     <Compile Include="Tests\DetectorTest.cs" />
     <Compile Include="Tests\InfoesTest.cs" />
+    <Compile Include="Tests\SessionControllerSingletonTest.cs" />
     <Compile Include="Tests\SessionTest.cs" />
   </ItemGroup>
   <ItemGroup>
