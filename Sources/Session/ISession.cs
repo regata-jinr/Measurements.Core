@@ -16,6 +16,7 @@ namespace Measurements.Core
         void   SaveSession(string nameOfSession, bool isBasic = false, string note = "");
         void   Continue();
         void   Clear();
+        void   Dispose();
         void   AttachDetector(string dName);
         void   DetachDetector(string dName);
         void   SpreadSamplesToDetectors();
@@ -29,8 +30,8 @@ namespace Measurements.Core
         string Name { get; }
         decimal Height { get; set; }
         string Note { get; set; }
-        List<IrradiationInfo> IrradiationList { get; } //linq from dbcontext
-        List<MeasurementInfo> MeasurementList { get; } //linq from dbcontext
+        List<IrradiationInfo> IrradiationList { get; }
+        List<MeasurementInfo> MeasurementList { get; }
         Dictionary<string, List<IrradiationInfo>> SpreadedSamples { get; }
         IrradiationInfo CurrentSample { get; }
         MeasurementInfo CurrentMeasurement { get; } 

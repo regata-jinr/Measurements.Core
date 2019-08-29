@@ -6,32 +6,32 @@ using System.Linq;
 
 namespace Measurements.Core
 {
-    //TODO:  add docs
-    //TODO:  add tests
-    //TODO:  improve readability of logs
-    //TODO:  deny running of appliaction in case it already running
-    //FIXME: adding costura for merging dlls, but pay attention that it will break tests.
-    //       find out how to exclude test. exclude assemblies with xunit didn't help
+    // TODO:  add docs
+    // TODO:  add tests
+    // TODO:  add functional tests in order to check working sequence, 
+    //        such test should simulate program working in general manner and more (for clearify logs) 
+    // TODO:  improve readability of logs
+    // TODO:  deny running of appliaction in case it already running
+    // FIXME: adding costura for merging dlls, but pay attention that it will break tests.
+    //        find out how to exclude test. exclude assemblies with xunit didn't help
+
     static class SessionControllerSingleton
     {
 
-        public static NLog.Logger                logger = NLog.LogManager.GetCurrentClassLogger();
+        public static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        public static List<Session>              ManagedSessions         { get; private set; }
+        public static List<Detector>             AvailableDetectors      { get; private set; }
 
-        //TODO: <incapsulate this>
         private static SqlConnectionStringBuilder _connectionStringBuilder; 
         public static SqlConnectionStringBuilder ConnectionStringBuilder
         {
             get { return _connectionStringBuilder; }
         }
-
         public static void InitializeDBConnectionString(string connectionString)
         {
             _connectionStringBuilder.ConnectionString = connectionString;
             TestDBConnection();
         }
-        public static List<Session>              ManagedSessions         { get; private set; }
-        public static List<Detector>             AvailableDetectors      { get; private set; }
-        //TODO: </incapsulate this>
 
         public static bool TestDBConnection()
         {
@@ -98,7 +98,6 @@ namespace Measurements.Core
             catch (Exception ex)
             {
                 Handlers.ExceptionHandler.ExceptionNotify(null, new Handlers.ExceptionEventsArgs { Message = ex.Message, Level = NLog.LogLevel.Error });
-
             }
         }
 
@@ -129,7 +128,6 @@ namespace Measurements.Core
 
         public static ISession Load(string sName)
         {
-            
             CheckSessionControllerInitialisation();
 
             logger.Info("Loading session parameters from DB");
@@ -146,7 +144,6 @@ namespace Measurements.Core
                 ManagedSessions.Add(session);
 
                 return session;
-
             }
             catch (ArgumentException arg)
             {
@@ -157,6 +154,11 @@ namespace Measurements.Core
                 Handlers.ExceptionHandler.ExceptionNotify(null, new Handlers.ExceptionEventsArgs { Message = ex.Message, Level = NLog.LogLevel.Error });
             }
             return null;
+        }
+
+        public static void CloseSession(ISession session)
+        {
+            session.Dispose();
         }
 
         private static bool _isDisposed;
@@ -181,7 +183,6 @@ namespace Measurements.Core
             }
             _isDisposed = true;
         }
-
 
     } // class SessionControllerSingleton
 } // namespace

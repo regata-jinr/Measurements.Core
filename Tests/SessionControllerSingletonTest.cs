@@ -66,5 +66,27 @@ namespace Measurements.Core.Tests
 
             SessionControllerSingleton.Dispose();
         }
+
+        [Fact]
+        public void SessionClose()
+        {
+            SessionControllerSingleton.InitializeDBConnectionString(@"Server=RUMLAB\REGATALOCAL;Database=NAA_DB_TEST;Trusted_Connection=True;");
+            SessionControllerSingleton.ConnectionStringBuilder.UserID = "bdrum";
+
+            var iSession = SessionControllerSingleton.Load("bdrum-test");
+
+            Assert.Single<Session>(SessionControllerSingleton.ManagedSessions);
+            Assert.False(SessionControllerSingleton.AvailableDetectors.Where(d => d.Name == "D1" || d.Name == "D5").Any());
+            Assert.True(SessionControllerSingleton.AvailableDetectors.Where(d => d.Name == "D6").Any());
+
+            iSession.Dispose();
+
+            Assert.Empty(SessionControllerSingleton.ManagedSessions);
+            Assert.True(SessionControllerSingleton.AvailableDetectors.Where(d => d.Name == "D1" || d.Name == "D5").Any());
+            Assert.True(SessionControllerSingleton.AvailableDetectors.Where(d => d.Name == "D6").Any());
+
+            SessionControllerSingleton.Dispose();
+        }
+ 
     }
 }

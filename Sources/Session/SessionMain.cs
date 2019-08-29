@@ -90,32 +90,24 @@ namespace Measurements.Core
 
         ~Session()
         {
-            CleanUp(false);
+            CleanUp();
         }
 
         public void Dispose()
         {
-            CleanUp(true);
+            CleanUp();
             GC.SuppressFinalize(this);
         }
 
-        private void CleanUp(bool isDisposing)
+        private void CleanUp()
         {
 
             if (!_isDisposed)
             {
-                if (isDisposing)
-                {
-                    SessionControllerSingleton.ManagedSessions.Remove(this);
-                    foreach (var d in _managedDetectors)
-                        d.Dispose();
-                }
-
-                //FIXME: actually dispose already do the disconnect.
                 foreach (var d in _managedDetectors)
-                    d.Disconnect();
-
+                        SessionControllerSingleton.AvailableDetectors.Add(d);
                 _managedDetectors.Clear();
+                SessionControllerSingleton.ManagedSessions.Remove(this);
             }
             _isDisposed = true;
         }

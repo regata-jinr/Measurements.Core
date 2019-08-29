@@ -143,19 +143,19 @@ namespace Measurements.Core
             try
             {
                 maxNumber = _infoContext.Measurements.Where(m =>
-                                                                       (
-                                                                            m.FileSpectra.Length == 7 &&
-                                                                            m.Type == Type &&
-                                                                            IsNumber(m.FileSpectra) &&
-                                                                            m.FileSpectra.Substring(0, 1) == detName.Substring(1, 1)
-                                                                        )
-                                                                       ).
-                                                                 Select(m => new
+                                                            (
+                                                                m.FileSpectra.Length == 7 &&
+                                                                m.Type == Type &&
+                                                                IsNumber(m.FileSpectra) &&
+                                                                m.FileSpectra.Substring(0, 1) == detName.Substring(1, 1)
+                                                            )
+                                                            ).
+                                                       Select(m => new
                                                                  {
                                                                      FileNumber = int.Parse(m.FileSpectra.Substring(3, 4))
                                                                  }
                                                                        ).
-                                                                 Max(m => m.FileNumber);
+                                                       Max(m => m.FileNumber);
 
                 return $"{detName.Substring(1,1)}{typeDict[Type]}{maxNumber}";
             }
