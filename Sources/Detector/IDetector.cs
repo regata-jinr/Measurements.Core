@@ -15,11 +15,13 @@ namespace Measurements.Core
         bool IsHV { get; }
         bool IsConnected { get; }
         string ErrorMessage { get; }
+        void Options(CanberraDeviceAccessLib.AcquisitionModes opt, int param);
         void Reconnect();
         void Save();
         void Disconnect();
         void Reset();
-        void Start(int duration, decimal height, string note);
+        void Start();
+        void Dispose();
         void Continue();
         void Pause();
         void Stop();

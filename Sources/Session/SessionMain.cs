@@ -6,19 +6,68 @@ using AutoMapper;
 
 namespace Measurements.Core
 {
-    //TODO: add docs
+    //TODO: rethinking data delivery via events from detector. Session should distinguish error, done, so on not only based on status.
     //TODO: add tests
+    //TODO: add docs
 
     partial class Session : ISession, IDisposable
     {
         public string Name { get; private set; }
-        public string Type { get; set; }
+        private string _type;
+        public string Type
+        {
+            get { return _type; }
+            set
+            {
+                _type = value;
+                // TODO: perhaps here is better to use view with data has already agregated
+                IrradiationDateList = _infoContext.Irradiations.Where(i => i.Type == Type).Select(i => i.DateTimeStart).Distinct().ToList();
+            }
+        }
+        public List<DateTime> IrradiationDateList { get; private set; }
+        private DateTime _currentIrradiationDate;
+        public DateTime CurrentIrradiationDate { get { return _currentIrradiationDate; }
+            set
+            {
+                _currentIrradiationDate = value;
+                SetIrradiationsList(_currentIrradiationDate); 
+            }
+        }
         public string Note { get; set; }
-        public decimal Height { get; set; }
+        private decimal _height;
+        public decimal Height
+        {
+            get { return _height; }
+            set
+            {
+                foreach (var m in MeasurementList)
+                    m.Height = value;
+            }
+        }
         public event EventHandler SessionComplete;
         public event EventHandler MeasurementDone;
-        public CanberraDeviceAccessLib.AcquisitionModes CountMode { get; set; }
-        public int Counts { get; set; }
+        private CanberraDeviceAccessLib.AcquisitionModes _countMode;
+        public CanberraDeviceAccessLib.AcquisitionModes CountMode
+        {
+            get { return _countMode; }
+            set
+            {
+                _countMode = value;
+                foreach (var d in _managedDetectors)
+                    d.Options(value, Counts);
+            }
+        }
+        private int _counts;
+        public int Counts
+        {
+            get { return _counts; }
+            set
+            {
+                _counts = value;
+                foreach (var d in _managedDetectors)
+                    d.Options(CountMode, value);
+            }
+        }
         private InfoContext _infoContext;
         
         public IrradiationInfo CurrentSample { get; private set; }
@@ -27,26 +76,31 @@ namespace Measurements.Core
         public List<MeasurementInfo> MeasurementList { get; private set; }
         public Dictionary<string, List<IrradiationInfo>> SpreadedSamples { get; }
         private List<Detector> _managedDetectors;
+        public List<Detector> ManagedDetectors { get; }
         private bool _isDisposed = false;
         private Dictionary<string, CanberraDeviceAccessLib.AcquisitionModes> _countModeDict;
 
              
         public Session()
         {
-            Name = "Untitled session";
-            _infoContext = new InfoContext();
-            IrradiationList = new List<IrradiationInfo>();
-            MeasurementList = new List<MeasurementInfo>();
-            CurrentMeasurement = new MeasurementInfo();
-            CurrentSample = new IrradiationInfo();
-            _managedDetectors = new List<Detector>();
-            SpreadedSamples = new Dictionary<string, List<IrradiationInfo>>();
-            _countModeDict = new Dictionary<string, CanberraDeviceAccessLib.AcquisitionModes>
-                                 {
-                                          { "aCountToLiveTime", CanberraDeviceAccessLib.AcquisitionModes.aCountToLiveTime },
-                                          { "aCountToRealTime", CanberraDeviceAccessLib.AcquisitionModes.aCountToRealTime },
-                                          { "aCountNormal", CanberraDeviceAccessLib.AcquisitionModes.aCountNormal }
-                                 };
+            Name                   = "Untitled session";
+            _height                = 2.5m;
+            _infoContext           = new InfoContext();
+            IrradiationDateList    = new List<DateTime>();
+            IrradiationList        = new List<IrradiationInfo>();
+            MeasurementList        = new List<MeasurementInfo>();
+            CurrentMeasurement     = new MeasurementInfo();
+            CurrentSample          = new IrradiationInfo();
+            _managedDetectors      = new List<Detector>();
+            SpreadedSamples        = new Dictionary<string, List<IrradiationInfo>>();
+            CountMode              = CanberraDeviceAccessLib.AcquisitionModes.aCountToRealTime;
+            _countModeDict         = new Dictionary<string, CanberraDeviceAccessLib.AcquisitionModes>
+                                        {
+                                            { "aCountToLiveTime", CanberraDeviceAccessLib.AcquisitionModes.aCountToLiveTime },
+                                            { "aCountToRealTime", CanberraDeviceAccessLib.AcquisitionModes.aCountToRealTime },
+                                            { "aCountNormal", CanberraDeviceAccessLib.AcquisitionModes.aCountNormal }
+                                        };
+            
         }
 
         public Session(SessionInfo session) : this()
@@ -111,5 +165,6 @@ namespace Measurements.Core
             }
             _isDisposed = true;
         }
+
     }
 }

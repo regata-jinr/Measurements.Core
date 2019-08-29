@@ -8,39 +8,35 @@ namespace Measurements.Core
     partial class Session : ISession, IDisposable
     {
         //for each detector task run (or await) start measure queue
-        public void Start()
+        public void StartMeasurements()
         {
-
             foreach (var d in _managedDetectors)
-            {
                 d.Start();
-            }
         }
-        public void Stop()
+        public void StopMeasurements()
         {
             foreach (var d in _managedDetectors)
                 d.Stop();
 
         }
-        //if connection closed save locally to json check if json exists
-        public void SaveSpectraFiles()
-        {
-            foreach (var d in _managedDetectors)
-                d.Save();
 
+        public void SaveSpectra(ref Detector d)
+        {
+                d.CurrentMeasurement.FileSpectra = GenerateFileSpectraName(d.Name);
+                d.Save();
         }
 
-       public void Continue()
+       public void ContinueMeasurements()
         {
             foreach (var d in _managedDetectors)
                 d.Continue();
         }
-        public void Pause()
+        public void PauseMeasurements()
         {
             foreach (var d in _managedDetectors)
                 d.Pause();
         }
-        public void Clear()
+        public void ClearMeasurements()
         {
             foreach (var d in _managedDetectors)
                 d.Clear();
@@ -118,9 +114,9 @@ namespace Measurements.Core
                     var d = (Detector) o;
                     if (d.Status == DetectorStatus.ready)
                     {
-                        d.CurrentMeasurement.FileSpectra = GenerateFileSpectraName(d.Name);
-                        SaveSpectraFiles();
-                        NextSample();
+                        SaveSpectra(ref d);
+                        NextSample(ref d);
+                        d.Start();
                     }
                 }
                 else

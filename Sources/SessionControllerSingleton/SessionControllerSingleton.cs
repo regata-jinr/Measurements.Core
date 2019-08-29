@@ -7,7 +7,6 @@ using System.Linq;
 namespace Measurements.Core
 {
     // TODO:  add docs
-    // TODO:  add tests
     // TODO:  add functional tests in order to check working sequence, 
     //        such test should simulate program working in general manner and more (for clearify logs) 
     // TODO:  improve readability of logs

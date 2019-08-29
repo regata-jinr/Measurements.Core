@@ -155,7 +155,6 @@ namespace Measurements.Core.Tests
         [Fact]
         public void GetValues()
         {
-            int id = -1;
             var si = new SessionInfo();
             using (var sqw = new SqlConnection(@"Server=RUMLAB\REGATALOCAL;Database=NAA_DB_TEST;Trusted_Connection=True;"))
             {

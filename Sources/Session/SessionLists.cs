@@ -8,7 +8,7 @@ namespace Measurements.Core
 {
     partial class Session : ISession, IDisposable
     {
-        public void SetIrradiationsList(DateTime date)
+        private void SetIrradiationsList(DateTime date)
         {
             try
             {

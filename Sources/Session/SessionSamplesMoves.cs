@@ -8,13 +8,13 @@ namespace Measurements.Core
 {
     partial class Session : ISession, IDisposable
     {
-       public void NextSample()
+       public void NextSample(ref Detector d)
         {
-            foreach (var d in _managedDetectors)
-            {
                 int currentIndex = SpreadedSamples[d.Name].IndexOf(d.CurrentSample);
-                d.CurrentSample = SpreadedSamples[d.Name][++currentIndex];
-            }
+                if (SpreadedSamples[d.Name].Count - 1 != currentIndex)
+                    d.CurrentSample = SpreadedSamples[d.Name][++currentIndex];
+                // TODO: else notify that this detector done and check are all detectors is done?
+                    
         }
 
         public void MakeSampleCurrentOnDetector(ref IrradiationInfo ii, ref Detector det)
@@ -22,13 +22,10 @@ namespace Measurements.Core
             det.CurrentSample = ii;
         }
 
-       public void PrevSample()
+       public void PrevSample(ref Detector d)
         {
-            foreach (var d in _managedDetectors)
-            {
                 int currentIndex = SpreadedSamples[d.Name].IndexOf(d.CurrentSample);
                 d.CurrentSample = SpreadedSamples[d.Name][--currentIndex];
-            }
         }
     }
 }
