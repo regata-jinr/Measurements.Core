@@ -19,8 +19,7 @@ namespace Measurements.Core
         public event EventHandler MeasurementDone;
         public CanberraDeviceAccessLib.AcquisitionModes CountMode { get; set; }
         public int Counts { get; set; }
-        private IrradiationInfoContext _irradiationInfoContext;
-        private MeasurementInfoContext _measurementInfoContext;
+        private InfoContext _infoContext;
         
         public IrradiationInfo CurrentSample { get; private set; }
         public MeasurementInfo CurrentMeasurement { get; private set; } 
@@ -35,8 +34,7 @@ namespace Measurements.Core
         public Session()
         {
             Name = "Untitled session";
-            _irradiationInfoContext = new IrradiationInfoContext();
-            _measurementInfoContext = new MeasurementInfoContext();
+            _infoContext = new InfoContext();
             IrradiationList = new List<IrradiationInfo>();
             MeasurementList = new List<MeasurementInfo>();
             CurrentMeasurement = new MeasurementInfo();
@@ -71,7 +69,7 @@ namespace Measurements.Core
         {
             //TODO: add try catch for warning in case of some data is missed.
             Name = nameOfSession;
-            var sessionContext = new SessionInfoContext();
+            var sessionContext = new InfoContext();
 
             string assistant = null;
             if (!isBasic) assistant = SessionControllerSingleton.ConnectionStringBuilder.UserID;

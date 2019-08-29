@@ -15,7 +15,7 @@ namespace Measurements.Core
                 if (string.IsNullOrEmpty(Type))
                     throw new ArgumentNullException("Before choosing date of irradiations you should choose type of irradiations");
 
-                IrradiationList.AddRange(_irradiationInfoContext.Irradiations.Where(i => i.DateTimeStart.ToString("dd.MM.yyyy") == date.ToString("dd.MM.yyyy") && i.Type == Type).ToList());
+                IrradiationList.AddRange(_infoContext.Irradiations.Where(i => i.DateTimeStart.ToString("dd.MM.yyyy") == date.ToString("dd.MM.yyyy") && i.Type == Type).ToList());
 
                 var configuration = new MapperConfiguration(cfg => cfg.AddMaps("MeasurementsCore"));
                 var mapper = new Mapper(configuration);

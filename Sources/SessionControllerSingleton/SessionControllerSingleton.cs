@@ -24,7 +24,7 @@ namespace Measurements.Core
             get { return _connectionStringBuilder; }
         }
 
-        public static void InitializeDBConnection(string connectionString)
+        public static void InitializeDBConnectionString(string connectionString)
         {
             _connectionStringBuilder.ConnectionString = connectionString;
             TestDBConnection();
@@ -135,7 +135,7 @@ namespace Measurements.Core
             logger.Info("Loading session parameters from DB");
             try
             {
-                var sessionContext = new SessionInfoContext();
+                var sessionContext = new InfoContext();
 
                 var sessionInfo = sessionContext.Sessions.Where(s => s.Name == sName && (s.Assistant == null || s.Assistant == ConnectionStringBuilder.UserID)).FirstOrDefault();
 

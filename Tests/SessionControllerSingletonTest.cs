@@ -19,20 +19,19 @@ namespace Measurements.Core.Tests
         [Fact]
         public void AvailableDetectors()
         {
-            SessionControllerSingleton.InitializeDBConnection(@"Server=RUMLAB\REGATALOCAL;Database=NAA_DB_TEST;Trusted_Connection=True;");
+            SessionControllerSingleton.InitializeDBConnectionString(@"Server=RUMLAB\REGATALOCAL;Database=NAA_DB_TEST;Trusted_Connection=True;");
             var _device = new DeviceAccessClass();
             var detNames = (IEnumerable<object>)_device.ListSpectroscopyDevices;
 
             Assert.True(SessionControllerSingleton.AvailableDetectors.Select(n => n.Name).SequenceEqual(detNames.Select(o => o.ToString())));
 
             SessionControllerSingleton.Dispose();
-
         }
 
         [Fact]
         public void SessionCreate()
         {
-            SessionControllerSingleton.InitializeDBConnection(@"Server=RUMLAB\REGATALOCAL;Database=NAA_DB_TEST;Trusted_Connection=True;");
+            SessionControllerSingleton.InitializeDBConnectionString(@"Server=RUMLAB\REGATALOCAL;Database=NAA_DB_TEST;Trusted_Connection=True;");
 
             var iSession = SessionControllerSingleton.Create();
             iSession.AttachDetector("D1");
@@ -43,13 +42,12 @@ namespace Measurements.Core.Tests
             Assert.True(SessionControllerSingleton.AvailableDetectors.Where(d => d.Name == "D5").Any());
 
             SessionControllerSingleton.Dispose();
-
         }
 
         [Fact]
         public void SessionLoad()
         {
-            SessionControllerSingleton.InitializeDBConnection(@"Server=RUMLAB\REGATALOCAL;Database=NAA_DB_TEST;Trusted_Connection=True;");
+            SessionControllerSingleton.InitializeDBConnectionString(@"Server=RUMLAB\REGATALOCAL;Database=NAA_DB_TEST;Trusted_Connection=True;");
             SessionControllerSingleton.ConnectionStringBuilder.UserID = "bdrum";
 
             var iSession = SessionControllerSingleton.Load("bdrum-test");
@@ -68,6 +66,5 @@ namespace Measurements.Core.Tests
 
             SessionControllerSingleton.Dispose();
         }
-
     }
 }

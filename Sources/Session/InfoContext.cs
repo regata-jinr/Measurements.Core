@@ -2,9 +2,11 @@
 
 namespace Measurements.Core
 {
-    public class MeasurementInfoContext : DbContext
-    {
+    class InfoContext : DbContext
+ {
+        public DbSet<IrradiationInfo> Irradiations { get; set; }
         public DbSet<MeasurementInfo> Measurements { get; set; }
+        public DbSet<SessionInfo> Sessions { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -15,6 +17,9 @@ namespace Measurements.Core
         {
             modelBuilder.Entity<MeasurementInfo>()
                 .HasAlternateKey(c => c.FileSpectra);
+
+            modelBuilder.Entity<SessionInfo>()
+                    .HasAlternateKey(c => c.Name);
         }
     }
 }

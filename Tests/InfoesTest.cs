@@ -50,8 +50,8 @@ namespace Measurements.Core.Tests
                 }
             }
 
-            SessionControllerSingleton.InitializeDBConnection(@"Server=RUMLAB\REGATALOCAL;Database=NAA_DB_TEST;Trusted_Connection=True;");
-            var ic = new IrradiationInfoContext();
+            SessionControllerSingleton.InitializeDBConnectionString(@"Server=RUMLAB\REGATALOCAL;Database=NAA_DB_TEST;Trusted_Connection=True;");
+            var ic = new InfoContext();
             var i = ic.Irradiations.Where(qi => qi.Id == id).FirstOrDefault();
 
             Assert.Equal(ni.Id,              i.Id);
@@ -127,8 +127,8 @@ namespace Measurements.Core.Tests
                 }
             }
 
-            SessionControllerSingleton.InitializeDBConnection(@"Server=RUMLAB\REGATALOCAL;Database=NAA_DB_TEST;Trusted_Connection=True;");
-            var mc = new MeasurementInfoContext();
+            SessionControllerSingleton.InitializeDBConnectionString(@"Server=RUMLAB\REGATALOCAL;Database=NAA_DB_TEST;Trusted_Connection=True;");
+            var mc = new InfoContext();
             var m = mc.Measurements.Where(qm => qm.Id == id).FirstOrDefault();
 
             Assert.Equal(mi.Id,              m.Id);
@@ -177,9 +177,9 @@ namespace Measurements.Core.Tests
                 }
             }
 
-            SessionControllerSingleton.InitializeDBConnection(@"Server=RUMLAB\REGATALOCAL;Database=NAA_DB_TEST;Trusted_Connection=True;");
+            SessionControllerSingleton.InitializeDBConnectionString(@"Server=RUMLAB\REGATALOCAL;Database=NAA_DB_TEST;Trusted_Connection=True;");
 
-            var sc = new SessionInfoContext();
+            var sc = new InfoContext();
             var s = sc.Sessions.Where(s1 => s1.Name == "bdrum-test").FirstOrDefault();
             Assert.Equal(si.Name,           s.Name);
             Assert.Equal(si.DetectorsNames, s.DetectorsNames);

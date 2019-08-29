@@ -142,7 +142,7 @@ namespace Measurements.Core
             int maxNumber = 0;
             try
             {
-                maxNumber = _measurementInfoContext.Measurements.Where(m =>
+                maxNumber = _infoContext.Measurements.Where(m =>
                                                                        (
                                                                             m.FileSpectra.Length == 7 &&
                                                                             m.Type == Type &&
