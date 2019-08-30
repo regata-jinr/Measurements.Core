@@ -53,7 +53,7 @@ namespace Measurements.Core
             set
             {
                 _countMode = value;
-                foreach (var d in _managedDetectors)
+                foreach (var d in ManagedDetectors)
                     d.Options(value, Counts);
             }
         }
@@ -64,7 +64,7 @@ namespace Measurements.Core
             set
             {
                 _counts = value;
-                foreach (var d in _managedDetectors)
+                foreach (var d in ManagedDetectors)
                     d.Options(CountMode, value);
             }
         }
@@ -75,8 +75,8 @@ namespace Measurements.Core
         public List<IrradiationInfo> IrradiationList { get; private set; }
         public List<MeasurementInfo> MeasurementList { get; private set; }
         public Dictionary<string, List<IrradiationInfo>> SpreadedSamples { get; }
-        private List<Detector> _managedDetectors;
-        public List<Detector> ManagedDetectors { get; }
+        //private List<IDetector> _managedDetectors;
+        public List<IDetector> ManagedDetectors { get; }
         private bool _isDisposed = false;
         private Dictionary<string, CanberraDeviceAccessLib.AcquisitionModes> _countModeDict;
 
@@ -91,7 +91,7 @@ namespace Measurements.Core
             MeasurementList        = new List<MeasurementInfo>();
             CurrentMeasurement     = new MeasurementInfo();
             CurrentSample          = new IrradiationInfo();
-            _managedDetectors      = new List<Detector>();
+            ManagedDetectors       = new List<IDetector>();
             SpreadedSamples        = new Dictionary<string, List<IrradiationInfo>>();
             CountMode              = CanberraDeviceAccessLib.AcquisitionModes.aCountToRealTime;
             _countModeDict         = new Dictionary<string, CanberraDeviceAccessLib.AcquisitionModes>
@@ -137,7 +137,7 @@ namespace Measurements.Core
                                                    Type           = this.Type,
                                                    Assistant      = assistant,
                                                    Note           = note,
-                                                   DetectorsNames = string.Join(",", _managedDetectors.Select(n => n.Name).ToArray())
+                                                   DetectorsNames = string.Join(",", ManagedDetectors.Select(n => n.Name).ToArray())
                                                }
             );
         }
@@ -158,9 +158,9 @@ namespace Measurements.Core
 
             if (!_isDisposed)
             {
-                foreach (var d in _managedDetectors)
+                foreach (var d in ManagedDetectors)
                         SessionControllerSingleton.AvailableDetectors.Add(d);
-                _managedDetectors.Clear();
+                ManagedDetectors.Clear();
                 SessionControllerSingleton.ManagedSessions.Remove(this);
             }
             _isDisposed = true;

@@ -42,16 +42,16 @@ namespace Measurements.Core
             try
             {
                 int CountOfContainers = IrradiationList.Select(ir => ir.Container).Max().Value;
-                int CountOfDetectors = _managedDetectors.Count();
+                int CountOfDetectors = ManagedDetectors.Count();
                 int i = 1;
 
-                if (_managedDetectors.Count == 0)
+                if (ManagedDetectors.Count == 0)
                     throw new ArgumentOutOfRangeException("Session has hot managed any detector");
 
                 if (SpreadedSamples.Count != 0)
                     SpreadedSamples.Clear();
 
-                foreach (var d in _managedDetectors)
+                foreach (var d in ManagedDetectors)
                 {
                     SpreadedSamples.Add(d.Name, new List<IrradiationInfo>());
                 }
@@ -64,7 +64,7 @@ namespace Measurements.Core
                         i = 1;
                 }
 
-                foreach (var d in _managedDetectors)
+                foreach (var d in ManagedDetectors)
                 {
                     d.CurrentSample = SpreadedSamples[d.Name][0];
                 }

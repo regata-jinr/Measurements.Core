@@ -7,12 +7,12 @@ namespace Measurements.Core
     public interface ISession
     {
         void   StartMeasurements();
-        void   NextSample(ref Detector d);
-        void   PrevSample(ref Detector d);
-        void   MakeSampleCurrentOnDetector(ref IrradiationInfo ii, ref Detector det);
+        void   NextSample(ref IDetector d);
+        void   PrevSample(ref IDetector d);
+        void   MakeSampleCurrentOnDetector(ref IrradiationInfo ii, ref IDetector det);
         void   PauseMeasurements();
         void   StopMeasurements(); //Pause and Clear
-        void   SaveSpectra(ref Detector d); //if connection closed save locally to json
+        void   SaveSpectra(ref IDetector d); //if connection closed save locally to json
         void   SaveSession(string nameOfSession, bool isBasic = false, string note = "");
         void   ContinueMeasurements();
         void   ClearMeasurements();
@@ -34,7 +34,7 @@ namespace Measurements.Core
         List<DateTime>        IrradiationDateList    { get; }
         List<IrradiationInfo> IrradiationList        { get; }
         List<MeasurementInfo> MeasurementList        { get; }
-        List<Detector>        ManagedDetectors       { get; }
+        List<IDetector>        ManagedDetectors       { get; }
         IrradiationInfo       CurrentSample          { get; }
         MeasurementInfo       CurrentMeasurement     { get; } 
 

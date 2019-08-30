@@ -10,17 +10,17 @@ namespace Measurements.Core
         //for each detector task run (or await) start measure queue
         public void StartMeasurements()
         {
-            foreach (var d in _managedDetectors)
+            foreach (var d in ManagedDetectors)
                 d.Start();
         }
         public void StopMeasurements()
         {
-            foreach (var d in _managedDetectors)
+            foreach (var d in ManagedDetectors)
                 d.Stop();
 
         }
 
-        public void SaveSpectra(ref Detector d)
+        public void SaveSpectra(ref IDetector d)
         {
                 d.CurrentMeasurement.FileSpectra = GenerateFileSpectraName(d.Name);
                 d.Save();
@@ -28,17 +28,17 @@ namespace Measurements.Core
 
        public void ContinueMeasurements()
         {
-            foreach (var d in _managedDetectors)
+            foreach (var d in ManagedDetectors)
                 d.Continue();
         }
         public void PauseMeasurements()
         {
-            foreach (var d in _managedDetectors)
+            foreach (var d in ManagedDetectors)
                 d.Pause();
         }
         public void ClearMeasurements()
         {
-            foreach (var d in _managedDetectors)
+            foreach (var d in ManagedDetectors)
                 d.Clear();
         }
 
@@ -52,7 +52,7 @@ namespace Measurements.Core
                 var det = SessionControllerSingleton.AvailableDetectors.Find(d => d.Name == dName);
                 if (det != null)
                 {
-                    _managedDetectors.Add(det);
+                    ManagedDetectors.Add(det);
                     SessionControllerSingleton.AvailableDetectors.Remove(det);
                     det.AcquiringStatusChanged += ProcessAcquiringMessage;
                 }
@@ -76,17 +76,17 @@ namespace Measurements.Core
         {
             try
             {
-                if (_managedDetectors == null && _managedDetectors.Count == 0)
+                if (ManagedDetectors == null && ManagedDetectors.Count == 0)
                 throw new InvalidOperationException();
 
                 // todo: check should i disconnect detector before removing?
 
-                var det = _managedDetectors.Find(d => d.Name == dName);
+                var det = ManagedDetectors.Find(d => d.Name == dName);
                 if (det != null)
                 {
                     det.Dispose(); //?
                     SessionControllerSingleton.AvailableDetectors.Add(det);
-                    _managedDetectors.Remove(det);
+                    ManagedDetectors.Remove(det);
                 }
                 else
                     throw new ArgumentNullException();
@@ -111,7 +111,7 @@ namespace Measurements.Core
             {
                 if (o is Detector)
                 {
-                    var d = (Detector) o;
+                    IDetector d = (Detector) o;
                     if (d.Status == DetectorStatus.ready)
                     {
                         SaveSpectra(ref d);

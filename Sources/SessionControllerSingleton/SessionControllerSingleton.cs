@@ -18,8 +18,8 @@ namespace Measurements.Core
     {
 
         public static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
-        public static List<Session>              ManagedSessions         { get; private set; }
-        public static List<Detector>             AvailableDetectors      { get; private set; }
+        public static List<ISession>              ManagedSessions         { get; private set; }
+        public static List<IDetector>             AvailableDetectors      { get; private set; }
 
         private static SqlConnectionStringBuilder _connectionStringBuilder; 
         public static SqlConnectionStringBuilder ConnectionStringBuilder
@@ -66,7 +66,7 @@ namespace Measurements.Core
 
         private static void AddDetectorToList(string name)
         {
-            Detector d = null;
+            IDetector d = null;
             try
             {
                     d = new Detector(name);
@@ -106,8 +106,8 @@ namespace Measurements.Core
 
             _isDisposed = false;
             _connectionStringBuilder = new SqlConnectionStringBuilder(); 
-            AvailableDetectors = new List<Detector>();
-            ManagedSessions    = new List<Session>();
+            AvailableDetectors = new List<IDetector>();
+            ManagedSessions    = new List<ISession>();
 
             DetectorsInititalisation();
 
@@ -120,7 +120,7 @@ namespace Measurements.Core
             CheckSessionControllerInitialisation();
 
             logger.Info("Creating of the new session instance");
-            var session = new Session();
+            ISession session = new Session();
             ManagedSessions.Add(session);
             return session;
         }
@@ -139,7 +139,7 @@ namespace Measurements.Core
                 if (sessionInfo == null)
                     throw new ArgumentNullException("Such session doesn't exist. Check the name or create the new one");
 
-                var session = new Session(sessionInfo);
+                ISession session = new Session(sessionInfo);
                 ManagedSessions.Add(session);
 
                 return session;

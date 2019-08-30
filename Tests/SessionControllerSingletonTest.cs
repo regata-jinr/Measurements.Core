@@ -36,7 +36,7 @@ namespace Measurements.Core.Tests
             var iSession = SessionControllerSingleton.Create();
             iSession.AttachDetector("D1");
 
-            Assert.Single<Session>(SessionControllerSingleton.ManagedSessions);
+            Assert.Single<ISession>(SessionControllerSingleton.ManagedSessions);
 
             Assert.False(SessionControllerSingleton.AvailableDetectors.Where(d => d.Name == "D1").Any());
             Assert.True(SessionControllerSingleton.AvailableDetectors.Where(d => d.Name == "D5").Any());
@@ -52,7 +52,7 @@ namespace Measurements.Core.Tests
 
             var iSession = SessionControllerSingleton.Load("bdrum-test");
 
-            Assert.Single<Session>(SessionControllerSingleton.ManagedSessions);
+            Assert.Single<ISession>(SessionControllerSingleton.ManagedSessions);
 
             Assert.False(SessionControllerSingleton.AvailableDetectors.Where(d => d.Name == "D1" || d.Name == "D5").Any());
             Assert.True(SessionControllerSingleton.AvailableDetectors.Where(d => d.Name == "D6").Any());
@@ -75,7 +75,7 @@ namespace Measurements.Core.Tests
 
             var iSession = SessionControllerSingleton.Load("bdrum-test");
 
-            Assert.Single<Session>(SessionControllerSingleton.ManagedSessions);
+            Assert.Single<ISession>(SessionControllerSingleton.ManagedSessions);
             Assert.False(SessionControllerSingleton.AvailableDetectors.Where(d => d.Name == "D1" || d.Name == "D5").Any());
             Assert.True(SessionControllerSingleton.AvailableDetectors.Where(d => d.Name == "D6").Any());
 
