@@ -6,16 +6,17 @@ using AutoMapper;
 
 namespace Measurements.Core
 {
-    partial class Session : ISession, IDisposable
+    public partial class Session : ISession, IDisposable
     {
         private void SetIrradiationsList(DateTime date)
         {
+            _nLogger.Info($"List of samples from irradiations journal will be loaded. Then list of measurements will be prepare");
             try
             {
                 if (string.IsNullOrEmpty(Type))
                     throw new ArgumentNullException("Before choosing date of irradiations you should choose type of irradiations");
 
-                IrradiationList.AddRange(_infoContext.Irradiations.Where(i => i.DateTimeStart.ToString("dd.MM.yyyy") == date.ToString("dd.MM.yyyy") && i.Type == Type).ToList());
+                IrradiationList.AddRange(_infoContext.Irradiations.Where(i => i.DateTimeStart.HasValue && i.DateTimeStart.Value.Date == date.Date && i.Type == Type).ToList());
 
                 var configuration = new MapperConfiguration(cfg => cfg.AddMaps("MeasurementsCore"));
                 var mapper = new Mapper(configuration);
@@ -39,35 +40,39 @@ namespace Measurements.Core
 
         public void SpreadSamplesToDetectors()
         {
+            _nLogger.Info($"Spreading samples to detectors has began");
             try
             {
                 int CountOfContainers = IrradiationList.Select(ir => ir.Container).Max().Value;
                 int CountOfDetectors = ManagedDetectors.Count();
                 int i = 1;
+                var detNumberDict = new Dictionary<int, int> { {1,1 }, { 2,5}, { 3,6}, { 4,7} };
 
-                if (ManagedDetectors.Count == 0)
-                    throw new ArgumentOutOfRangeException("Session has hot managed any detector");
+                if (!ManagedDetectors.Any())
+                    throw new ArgumentOutOfRangeException("Session has managed no-one detector");
 
-                if (SpreadedSamples.Count != 0)
-                    SpreadedSamples.Clear();
+                if (!IrradiationList.Any())
+                    throw new ArgumentOutOfRangeException("Session doesn't contain sample to measure");
 
-                foreach (var d in ManagedDetectors)
-                {
-                    SpreadedSamples.Add(d.Name, new List<IrradiationInfo>());
-                }
+                //TODO: in order to avoid duplication I want clear spreaded arrays
+                //if (SpreadedSamples.Values.Count != 0)
+                    //SpreadedSamples.Values;
 
                 for (var j = 1; j <= CountOfContainers; ++j)
                 {
-                    SpreadedSamples[$"D{i}"].AddRange(IrradiationList.Where(ir => ir.Container == j).ToList());
+                    // FIXME: SLI samples have another logic for spreading!
+                    // FIXME: three query instead one!
+                    // FIXME: containers could be non ordered, e.g. in irradiations from 26.05.2019 container with number 2 doesn't exist
+
+                    SpreadedSamples[$"D{detNumberDict[i]}"].AddRange(IrradiationList.Where(ir => ir.Container == j).ToList());
+                    _nLogger.Info($"Samples {IrradiationList.Where(ir => ir.Container == j).First().SetKey}-[{(string.Join(",", IrradiationList.Where(ir => ir.Container == j).Select(ir => ir.SampleNumber).ToArray()))}] will measure on the detector D{detNumberDict[i]}");
                     i++;
-                    if (i > CountOfDetectors)
+                    if (i >= CountOfDetectors)
                         i = 1;
                 }
 
                 foreach (var d in ManagedDetectors)
-                {
                     d.CurrentSample = SpreadedSamples[d.Name][0];
-                }
             }
             catch (ArgumentOutOfRangeException ae)
             {

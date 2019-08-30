@@ -5,45 +5,69 @@ using System.IO;
 
 namespace Measurements.Core
 {
-    partial class Session : ISession, IDisposable
+    public partial class Session : ISession, IDisposable
     {
         //for each detector task run (or await) start measure queue
         public void StartMeasurements()
         {
-            foreach (var d in ManagedDetectors)
-                d.Start();
+            _nLogger.Info($"Session {Name} starts measurements of the sample sets");
+            try
+            {
+                SpreadSamplesToDetectors();
+
+                foreach (var d in ManagedDetectors)
+                {
+                    if (SpreadedSamples[d.Name].Count == 0) // FIXME: how would be with situations: 1. Only one detector not spreaded (e.g. not enough samples for choosing detectors)
+                        throw new ArgumentOutOfRangeException($"Detector {d.Name} doesn't contain samples to measure. Before the acquiring distribute samples on detectors. Perhaps amount of samples not enough to fill all detectors. You could detach empty detector {d.Name}.");
+                    // FIXME: I don't like such logic, also it should allow redefinition of some measurement parameters
+                    d.CurrentMeasurement.Height = Height;
+                    _nLogger.Info($"Height {Height} has specified for sample {d.CurrentMeasurement.ToString()} on detector {d.Name}");
+                    d.CurrentMeasurement.Type = Type;
+                    d.Start();
+                }
+            }
+            catch (ArgumentOutOfRangeException are)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = are.Message, Level = NLog.LogLevel.Warn });
+            }
         }
         public void StopMeasurements()
         {
+            _nLogger.Info($"Session {Name} stops measurements by user command");
             foreach (var d in ManagedDetectors)
                 d.Stop();
-
         }
 
         public void SaveSpectra(ref IDetector d)
         {
-                d.CurrentMeasurement.FileSpectra = GenerateFileSpectraName(d.Name);
-                d.Save();
+            d.CurrentMeasurement.FileSpectra = GenerateFileSpectraName(d.Name);
+            _nLogger.Info($"Detector {d.Name} will save spectra to file with name - '{d.CurrentMeasurement.FileSpectra}'");
+            d.Save();
         }
 
        public void ContinueMeasurements()
         {
+            _nLogger.Info($"Session {Name} will continue measurements by user command");
             foreach (var d in ManagedDetectors)
                 d.Continue();
         }
         public void PauseMeasurements()
         {
+            _nLogger.Info($"Session {Name} will pause measurements by user command");
             foreach (var d in ManagedDetectors)
                 d.Pause();
         }
         public void ClearMeasurements()
         {
+            _nLogger.Info($"Session {Name} will clear measurements by user command");
             foreach (var d in ManagedDetectors)
                 d.Clear();
         }
 
        public void AttachDetector(string dName)
         {
+
+            _nLogger.Info($"Session {Name} will take a control for detector 'dName'");
             try
             {
                 if (SessionControllerSingleton.AvailableDetectors == null || SessionControllerSingleton.AvailableDetectors.Count == 0)
@@ -52,9 +76,12 @@ namespace Measurements.Core
                 var det = SessionControllerSingleton.AvailableDetectors.Find(d => d.Name == dName);
                 if (det != null)
                 {
+
                     ManagedDetectors.Add(det);
+                    SpreadedSamples.Add(det.Name, new List<IrradiationInfo>());
                     SessionControllerSingleton.AvailableDetectors.Remove(det);
                     det.AcquiringStatusChanged += ProcessAcquiringMessage;
+                    _nLogger.Info($"Session {Name} successfuly attached detector {det.Name}");
                 }
                 else
                     throw new ArgumentNullException(dName);
@@ -74,6 +101,7 @@ namespace Measurements.Core
         }
         public void DetachDetector(string dName)
         {
+            _nLogger.Info($"Session {Name} will detach detector 'dName'");
             try
             {
                 if (ManagedDetectors == null && ManagedDetectors.Count == 0)
@@ -86,7 +114,9 @@ namespace Measurements.Core
                 {
                     det.Dispose(); //?
                     SessionControllerSingleton.AvailableDetectors.Add(det);
+                    SpreadedSamples.Remove(det.Name);
                     ManagedDetectors.Remove(det);
+                    _nLogger.Info($"Session {Name} successfuly detached detector {det.Name}");
                 }
                 else
                     throw new ArgumentNullException();
@@ -105,6 +135,23 @@ namespace Measurements.Core
             }
         }
 
+
+        private void MeasurementDoneHandler(Object detObj, EventArgs eventArgs)
+        {
+
+            if (_countOfDetectorsWichDone == ManagedDetectors.Count)
+            {
+                _nLogger.Info($"In session {Name} detector {((Detector)detObj).Name} has done measurement process");
+                SessionComplete.Invoke(this, eventArgs);
+                _countOfDetectorsWichDone = 0;
+            }
+            else
+            {
+                _nLogger.Info($"In session {Name} all detectors [{(string.Join(",", ManagedDetectors.Select(d => d.Name).ToArray()))}] has done measurement process");
+                _countOfDetectorsWichDone++;
+            }
+        }
+
         private void ProcessAcquiringMessage(object o, EventArgs args)
         {
             try
@@ -112,11 +159,16 @@ namespace Measurements.Core
                 if (o is Detector)
                 {
                     IDetector d = (Detector) o;
+                    _nLogger.Info($"Session {Name} has received message from the detector {d.Name}");
                     if (d.Status == DetectorStatus.ready)
                     {
+                        _nLogger.Info($"The message is 'Acquiring has done'");
                         SaveSpectra(ref d);
                         NextSample(ref d);
-                        d.Start();
+                        if (SpreadedSamples[d.Name].Any())
+                            d.Start();
+                        else
+                            MeasurementDone.Invoke(d, EventArgs.Empty);
                     }
                 }
                 else
@@ -134,6 +186,7 @@ namespace Measurements.Core
 
         private string GenerateFileSpectraName(string detName)
         {
+            _nLogger.Info($"Session {Name} will generate file spectra name for the detector {detName}");
             var typeDict = new Dictionary<string, string> { {"SLI", "0"}, {"LLI-1", "1"}, {"LLI-2", "2"} };
             int maxNumber = 0;
             try
@@ -153,7 +206,7 @@ namespace Measurements.Core
                                                                        ).
                                                        Max(m => m.FileNumber);
 
-                return $"{detName.Substring(1,1)}{typeDict[Type]}{maxNumber}";
+                return $"{detName.Substring(1,1)}{typeDict[Type]}{maxNumber}.cnf";
             }
             catch (System.Data.SqlClient.SqlException sqle)
             {
@@ -193,8 +246,7 @@ namespace Measurements.Core
 
         private bool IsNumber(string str)
         {
-            int a = 0;
-            return int.TryParse(str, out a);
+            return int.TryParse(str, out _);
         }
    }
 }

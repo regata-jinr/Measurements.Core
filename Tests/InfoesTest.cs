@@ -33,16 +33,23 @@ namespace Measurements.Core.Tests
                         ni.SetIndex       = (string)   sqr.GetValue(5);
                         ni.SampleNumber   = (string)   sqr.GetValue(6);
                         ni.Type           = (string)   sqr.GetValue(7);
-                        ni.Weight         = (decimal)  sqr.GetValue(8);
+                        if (!DBNull.Value.Equals(sqr.GetValue(8)))
+                            ni.Weight         = (decimal)  sqr.GetValue(8);
                         ni.DateTimeStart  = (DateTime) sqr.GetValue(9);
                         ni.Duration       = (int)      sqr.GetValue(10);
                         ni.DateTimeFinish = (DateTime) sqr.GetValue(11);
-                        ni.Container      = (short)    sqr.GetValue(12);
-                        ni.Position       = (short)    sqr.GetValue(13);
-                        ni.Channel        = (short)    sqr.GetValue(14);
-                        ni.LoadNumber     = (int)      sqr.GetValue(15);
-                        ni.Rehandler      = (string)   sqr.GetValue(16);
-                        ni.Assistant      = (string)   sqr.GetValue(17);
+                        if (!DBNull.Value.Equals(sqr.GetValue(12)))
+                            ni.Container      = (short?)   sqr.GetValue(12);
+                        if (!DBNull.Value.Equals(sqr.GetValue(13)))
+                            ni.Position       = (short?)   sqr.GetValue(13);
+                        if (!DBNull.Value.Equals(sqr.GetValue(14)))
+                            ni.Channel        = (short?)   sqr.GetValue(14);
+                        if (!DBNull.Value.Equals(sqr.GetValue(15)))
+                            ni.LoadNumber     = (int)      sqr.GetValue(15);
+                        if (!DBNull.Value.Equals(sqr.GetValue(16)))
+                            ni.Rehandler      = (string)   sqr.GetValue(16);
+                        if (!DBNull.Value.Equals(sqr.GetValue(17)))
+                            ni.Assistant      = (string)   sqr.GetValue(17);
 
                         if (!DBNull.Value.Equals(sqr.GetValue(18)))
                             ni.Note       = (string)   sqr.GetValue(18);
@@ -54,25 +61,33 @@ namespace Measurements.Core.Tests
             var ic = new InfoContext();
             var i = ic.Irradiations.Where(qi => qi.Id == id).FirstOrDefault();
 
-            Assert.Equal(ni.Id,              i.Id);
-            Assert.Equal(ni.CountryCode,     i.CountryCode);
-            Assert.Equal(ni.ClientNumber,    i.ClientNumber);
-            Assert.Equal(ni.Year,            i.Year);
-            Assert.Equal(ni.SetNumber,       i.SetNumber);
-            Assert.Equal(ni.SetIndex,        i.SetIndex);
-            Assert.Equal(ni.SampleNumber,    i.SampleNumber);
-            Assert.Equal(ni.Type,            i.Type);
-            Assert.Equal((double)ni.Weight,  (double)i.Weight, 4);
-            Assert.Equal(ni.DateTimeStart,   i.DateTimeStart);
-            Assert.Equal(ni.Duration,        i.Duration);
-            Assert.Equal(ni.DateTimeFinish,  i.DateTimeFinish);
-            Assert.Equal(ni.Container,       i.Container);
-            Assert.Equal(ni.Position,        i.Position);
-            Assert.Equal(ni.Channel,         i.Channel);
-            Assert.Equal(ni.LoadNumber,      i.LoadNumber);
-            Assert.Equal(ni.Rehandler,       i.Rehandler);
-            Assert.Equal(ni.Assistant,       i.Assistant);
-            Assert.Equal(ni.Note,            i.Note);
+            Assert.Equal(ni.Id,                    i.Id);
+            Assert.Equal(ni.CountryCode,           i.CountryCode);
+            Assert.Equal(ni.ClientNumber,          i.ClientNumber);
+            Assert.Equal(ni.Year,                  i.Year);
+            Assert.Equal(ni.SetNumber,             i.SetNumber);
+            Assert.Equal(ni.SetIndex,              i.SetIndex);
+            Assert.Equal(ni.SampleNumber,          i.SampleNumber);
+            Assert.Equal(ni.Type,                  i.Type);
+            if (ni.Weight.HasValue)
+                Assert.Equal((double)ni.Weight.Value,  (double)i.Weight.Value, 4);
+            if (ni.Weight.HasValue)
+            Assert.Equal(ni.DateTimeStart.Value,   i.DateTimeStart.Value);
+            if (ni.DateTimeStart.HasValue)
+            Assert.Equal(ni.Duration.Value,        i.Duration.Value);
+            if (ni.DateTimeFinish.HasValue)
+            Assert.Equal(ni.DateTimeFinish.Value,  i.DateTimeFinish.Value);
+            if (ni.Container.HasValue)
+            Assert.Equal(ni.Container.Value,       i.Container.Value);
+            if (ni.Position.HasValue)
+            Assert.Equal(ni.Position.Value,        i.Position.Value);
+            if (ni.Channel.HasValue)
+            Assert.Equal(ni.Channel.Value,         i.Channel.Value);
+            if (ni.LoadNumber.HasValue)
+            Assert.Equal(ni.LoadNumber.Value,      i.LoadNumber.Value);
+            Assert.Equal(ni.Rehandler,             i.Rehandler);
+            Assert.Equal(ni.Assistant,             i.Assistant);
+            Assert.Equal(ni.Note,                  i.Note);
         }
     }
   public class MeasurementInfoTest
@@ -131,23 +146,27 @@ namespace Measurements.Core.Tests
             var mc = new InfoContext();
             var m = mc.Measurements.Where(qm => qm.Id == id).FirstOrDefault();
 
-            Assert.Equal(mi.Id,              m.Id);
-            Assert.Equal(mi.IrradiationId,   m.IrradiationId);
-            Assert.Equal(mi.CountryCode,     m.CountryCode);
-            Assert.Equal(mi.ClientNumber,    m.ClientNumber);
-            Assert.Equal(mi.Year,            m.Year);
-            Assert.Equal(mi.SetNumber,       m.SetNumber);
-            Assert.Equal(mi.SetIndex,        m.SetIndex);
-            Assert.Equal(mi.SampleNumber,    m.SampleNumber);
-            Assert.Equal(mi.Type,            m.Type);
-            Assert.Equal(mi.DateTimeStart,   m.DateTimeStart);
-            Assert.Equal(mi.Duration,        m.Duration);
-            Assert.Equal(mi.DateTimeFinish,  m.DateTimeFinish);
-            Assert.Equal(mi.Height,          m.Height);
-            Assert.Equal(mi.FileSpectra,     m.FileSpectra);
-            Assert.Equal(mi.Detector,        m.Detector);
-            Assert.Equal(mi.Assistant,       m.Assistant);
-            Assert.Equal(mi.Note,            m.Note);
+            Assert.Equal(mi.Id,                    m.Id);
+            Assert.Equal(mi.IrradiationId,         m.IrradiationId);
+            Assert.Equal(mi.CountryCode,           m.CountryCode);
+            Assert.Equal(mi.ClientNumber,          m.ClientNumber);
+            Assert.Equal(mi.Year,                  m.Year);
+            Assert.Equal(mi.SetNumber,             m.SetNumber);
+            Assert.Equal(mi.SetIndex,              m.SetIndex);
+            Assert.Equal(mi.SampleNumber,          m.SampleNumber);
+            Assert.Equal(mi.Type,                  m.Type);
+            if (mi.DateTimeStart.HasValue)
+            Assert.Equal(mi.DateTimeStart.Value,   m.DateTimeStart.Value);
+            if (mi.Duration.HasValue)
+            Assert.Equal(mi.Duration.Value,        m.Duration.Value);
+            if (mi.DateTimeFinish.HasValue)
+            Assert.Equal(mi.DateTimeFinish.Value,  m.DateTimeFinish.Value);
+            if (mi.Height.HasValue)
+            Assert.Equal(mi.Height.Value,          m.Height.Value);
+            Assert.Equal(mi.FileSpectra,           m.FileSpectra);
+            Assert.Equal(mi.Detector,              m.Detector);
+            Assert.Equal(mi.Assistant,             m.Assistant);
+            Assert.Equal(mi.Note,                  m.Note);
         }
    }
     public class SessionInfoTest

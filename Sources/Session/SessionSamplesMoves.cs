@@ -6,27 +6,31 @@ using AutoMapper;
 
 namespace Measurements.Core
 {
-    partial class Session : ISession, IDisposable
+    public partial class Session : ISession, IDisposable
     {
        public void NextSample(ref IDetector d)
         {
-                int currentIndex = SpreadedSamples[d.Name].IndexOf(d.CurrentSample);
-
-                if (SpreadedSamples[d.Name].Count - 1 != currentIndex)
-                    d.CurrentSample = SpreadedSamples[d.Name][++currentIndex];
-                // else // TODO: notify that this detector done and check are all detectors is done?
+            _nLogger.Info($"Change sample {d.CurrentSample.ToString()} to the next one for dtector {d.Name}");
+            int currentIndex = SpreadedSamples[d.Name].IndexOf(d.CurrentSample);
+            SpreadedSamples[d.Name].Remove(d.CurrentSample);
+            if (SpreadedSamples[d.Name].Any())
+                d.CurrentSample = SpreadedSamples[d.Name][++currentIndex];
+            else
+                MeasurementDone.Invoke(d, EventArgs.Empty);
                     
         }
 
-        public void MakeSampleCurrentOnDetector(ref IrradiationInfo ii, ref IDetector det)
+        public void MakeSampleCurrentOnDetector(ref IrradiationInfo ii, ref IDetector d)
         {
-            det.CurrentSample = ii;
+            _nLogger.Info($"Make sample {ii.ToString()} current on detector {d.Name}");
+            d.CurrentSample = ii;
         }
 
        public void PrevSample(ref IDetector d)
         {
-                int currentIndex = SpreadedSamples[d.Name].IndexOf(d.CurrentSample);
-                d.CurrentSample = SpreadedSamples[d.Name][--currentIndex];
+            _nLogger.Info($"Change sample {d.CurrentSample.ToString()} to the previous one for dtector {d.Name}");
+            int currentIndex = SpreadedSamples[d.Name].IndexOf(d.CurrentSample);
+            d.CurrentSample = SpreadedSamples[d.Name][--currentIndex];
         }
     }
 }

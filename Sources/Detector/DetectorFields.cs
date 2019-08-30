@@ -45,7 +45,7 @@ namespace Measurements.Core
         private IrradiationInfo    _currentSample;
         private const string       _baseDir = @"C:\GENIE2K\CAMFILES";
 
-        public MeasurementInfo     CurrentMeasurement { get; private set; }
+        public MeasurementInfo     CurrentMeasurement { get; set; }
         public event EventHandler  StatusChanged;
         public event EventHandler  AcquiringStatusChanged;
 

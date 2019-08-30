@@ -14,7 +14,7 @@ namespace Measurements.Core
     // FIXME: adding costura for merging dlls, but pay attention that it will break tests.
     //        find out how to exclude test. exclude assemblies with xunit didn't help
 
-    static class SessionControllerSingleton
+    public static class SessionControllerSingleton
     {
 
         public static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();

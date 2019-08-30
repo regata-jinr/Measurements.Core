@@ -2,11 +2,11 @@
 
 namespace Measurements.Core
 {
-    class InfoContext : DbContext
- {
+    public class InfoContext : DbContext
+    {
         public DbSet<IrradiationInfo> Irradiations { get; set; }
         public DbSet<MeasurementInfo> Measurements { get; set; }
-        public DbSet<SessionInfo> Sessions { get; set; }
+        public DbSet<SessionInfo>     Sessions     { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

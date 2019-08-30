@@ -31,7 +31,7 @@ namespace Measurements.Core
         decimal               Height                 { get; set; }
         string                Note                   { get; set; }
         DateTime              CurrentIrradiationDate { get; set; }
-        List<DateTime>        IrradiationDateList    { get; }
+        List<DateTime?>        IrradiationDateList    { get; }
         List<IrradiationInfo> IrradiationList        { get; }
         List<MeasurementInfo> MeasurementList        { get; }
         List<IDetector>        ManagedDetectors       { get; }

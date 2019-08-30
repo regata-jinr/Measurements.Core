@@ -10,29 +10,34 @@ namespace Measurements.Core
     //TODO: add tests
     //TODO: add docs
 
-    partial class Session : ISession, IDisposable
+    public partial class Session : ISession, IDisposable
     {
+        private NLog.Logger        _nLogger;
         public string Name { get; private set; }
         private string _type;
+
         public string Type
         {
             get { return _type; }
             set
             {
+                _nLogger.Info($"Type of measurement is {value}. List of irradiations dates will be prepare");
                 _type = value;
                 // TODO: perhaps here is better to use view with data has already agregated
-                IrradiationDateList = _infoContext.Irradiations.Where(i => i.Type == Type).Select(i => i.DateTimeStart).Distinct().ToList();
+                IrradiationDateList.AddRange(_infoContext.Irradiations.Where(i => i.Type == value).Select(i => i.DateTimeStart).Distinct().ToList());
             }
         }
-        public List<DateTime> IrradiationDateList { get; private set; }
+        public List<DateTime?> IrradiationDateList { get; private set; }
         private DateTime _currentIrradiationDate;
         public DateTime CurrentIrradiationDate { get { return _currentIrradiationDate; }
             set
             {
+                _nLogger.Info($"{value.ToString("dd.MM.yyyy")} has chosen. List of samples will be prepare");
                 _currentIrradiationDate = value;
                 SetIrradiationsList(_currentIrradiationDate); 
             }
         }
+
         public string Note { get; set; }
         private decimal _height;
         public decimal Height
@@ -40,18 +45,22 @@ namespace Measurements.Core
             get { return _height; }
             set
             {
+                _nLogger.Info($"Height {value} has specified");
+
                 foreach (var m in MeasurementList)
                     m.Height = value;
             }
         }
         public event EventHandler SessionComplete;
         public event EventHandler MeasurementDone;
+  
         private CanberraDeviceAccessLib.AcquisitionModes _countMode;
         public CanberraDeviceAccessLib.AcquisitionModes CountMode
         {
             get { return _countMode; }
             set
             {
+                _nLogger.Info($"Count mode {value} has chosen");
                 _countMode = value;
                 foreach (var d in ManagedDetectors)
                     d.Options(value, Counts);
@@ -63,13 +72,15 @@ namespace Measurements.Core
             get { return _counts; }
             set
             {
+
+                _nLogger.Info($"Duration of measurements {value} has specified");
                 _counts = value;
                 foreach (var d in ManagedDetectors)
                     d.Options(CountMode, value);
             }
         }
+
         private InfoContext _infoContext;
-        
         public IrradiationInfo CurrentSample { get; private set; }
         public MeasurementInfo CurrentMeasurement { get; private set; } 
         public List<IrradiationInfo> IrradiationList { get; private set; }
@@ -78,15 +89,19 @@ namespace Measurements.Core
         //private List<IDetector> _managedDetectors;
         public List<IDetector> ManagedDetectors { get; }
         private bool _isDisposed = false;
+        private int _countOfDetectorsWichDone = 0;
         private Dictionary<string, CanberraDeviceAccessLib.AcquisitionModes> _countModeDict;
-
              
         public Session()
         {
+            _nLogger = SessionControllerSingleton.logger;
+
+            _nLogger.Info("Initialisation of session has began");
+
             Name                   = "Untitled session";
             _height                = 2.5m;
             _infoContext           = new InfoContext();
-            IrradiationDateList    = new List<DateTime>();
+            IrradiationDateList    = new List<DateTime?>();
             IrradiationList        = new List<IrradiationInfo>();
             MeasurementList        = new List<MeasurementInfo>();
             CurrentMeasurement     = new MeasurementInfo();
@@ -100,11 +115,12 @@ namespace Measurements.Core
                                             { "aCountToRealTime", CanberraDeviceAccessLib.AcquisitionModes.aCountToRealTime },
                                             { "aCountNormal", CanberraDeviceAccessLib.AcquisitionModes.aCountNormal }
                                         };
-            
+            MeasurementDone += MeasurementDoneHandler;
         }
 
         public Session(SessionInfo session) : this()
         {
+            _nLogger.Info($"Session with parameters {session} will be loaded");
             Name = session.Name;
             Type = session.Type;
             Counts = session.Duration;
@@ -113,33 +129,49 @@ namespace Measurements.Core
             Note = session.Note;
 
             foreach (var dName in session.DetectorsNames.Split(','))
-            {
                 AttachDetector(dName);                
-            }
 
         }
 
         public void SaveSession(string nameOfSession, bool isBasic=false, string note = "")
         {
-            //TODO: add try catch for warning in case of some data is missed.
-            Name = nameOfSession;
-            var sessionContext = new InfoContext();
+            _nLogger.Info($"Session with parameters {this} will be save into DB {(isBasic ? "as basic" : "as customed" )} session with name '{nameOfSession}'");
 
-            string assistant = null;
-            if (!isBasic) assistant = SessionControllerSingleton.ConnectionStringBuilder.UserID;
+            try
+            {
+                if (string.IsNullOrEmpty(nameOfSession))
+                    throw new ArgumentNullException("Name of session must be specified");
+                Name = nameOfSession;
+                var sessionContext = new InfoContext();
 
-            sessionContext.Add(new SessionInfo
-                                              {
-                                                   CountMode      = this.CountMode.ToString(),
-                                                   Duration       = this.Counts,
-                                                   Height         = this.Height,
-                                                   Name           = this.Name,
-                                                   Type           = this.Type,
-                                                   Assistant      = assistant,
-                                                   Note           = note,
-                                                   DetectorsNames = string.Join(",", ManagedDetectors.Select(n => n.Name).ToArray())
-                                               }
-            );
+                string assistant = null;
+                if (!isBasic) assistant = SessionControllerSingleton.ConnectionStringBuilder.UserID;
+
+                sessionContext.Add(new SessionInfo
+                {
+                    CountMode = this.CountMode.ToString(),
+                    Duration = this.Counts,
+                    Height = this.Height,
+                    Name = this.Name,
+                    Type = this.Type,
+                    Assistant = assistant,
+                    Note = note,
+                    DetectorsNames = string.Join(",", ManagedDetectors.Select(n => n.Name).ToArray())
+                }
+                );
+            }
+            catch (ArgumentNullException arne)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = arne.Message, Level = NLog.LogLevel.Error });
+            }
+            catch (Microsoft.EntityFrameworkCore.DbUpdateException dbu)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{dbu.InnerException}. The most probably you specified already existing name of session. Name of session should be unique.", Level = NLog.LogLevel.Warn });
+            }
+            catch (Exception e)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = e.Message, Level = NLog.LogLevel.Error });
+            }
         }
 
         ~Session()
@@ -155,6 +187,7 @@ namespace Measurements.Core
 
         private void CleanUp()
         {
+            _nLogger.Info($"Disposing session has began");
 
             if (!_isDisposed)
             {

@@ -15,10 +15,10 @@ namespace Measurements.Core
         public string       SetIndex       { get; set; } // j
         public string       SampleNumber   { get; set; } // 1
         public string       Type           { get; set; } // SLI
-        public decimal      Weight         { get; set; }
-        public DateTime     DateTimeStart  { get; set; }
-        public int          Duration       { get; set; }
-        public DateTime     DateTimeFinish { get; set; }
+        public decimal?      Weight         { get; set; }
+        public DateTime?     DateTimeStart  { get; set; }
+        public int?          Duration       { get; set; }
+        public DateTime?     DateTimeFinish { get; set; }
         public short?       Container      { get; set; }
         public short?       Position       { get; set; }
         public short?       Channel        { get; set; }

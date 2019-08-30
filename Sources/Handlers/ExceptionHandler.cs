@@ -7,13 +7,14 @@ namespace Measurements.Core.Handlers
     public static class ExceptionHandler
     {
         public static event EventHandler<ExceptionEventsArgs> ExceptionEvent;
+        private static NLog.Logger _nLogger = SessionControllerSingleton.logger;
 
         public static void ExceptionNotify(object obj, ExceptionEventsArgs exceptionEventsArgs)
         {
             if (obj is Detector)
                SessionControllerSingleton.logger.WithProperty("DetName", ((Detector)obj).Name);
 
-            SessionControllerSingleton.logger.Log(exceptionEventsArgs.Level, exceptionEventsArgs.Message);
+            _nLogger.Log(exceptionEventsArgs.Level, exceptionEventsArgs.Message);
             ExceptionEvent?.Invoke(obj, exceptionEventsArgs);
         }
     }
