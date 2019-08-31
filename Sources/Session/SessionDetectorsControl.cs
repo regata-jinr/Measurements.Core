@@ -67,7 +67,7 @@ namespace Measurements.Core
        public void AttachDetector(string dName)
         {
 
-            _nLogger.Info($"Session {Name} will take a control for detector 'dName'");
+            _nLogger.Info($"Session {Name} will take a control for detector '{dName}'");
             try
             {
                 if (SessionControllerSingleton.AvailableDetectors == null || SessionControllerSingleton.AvailableDetectors.Count == 0)
@@ -136,6 +136,7 @@ namespace Measurements.Core
         }
 
 
+        //TODO: parse messages correctly it's not only done message
         private void MeasurementDoneHandler(Object detObj, EventArgs eventArgs)
         {
 

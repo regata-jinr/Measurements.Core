@@ -20,12 +20,13 @@ namespace Measurements.Core
         void   AttachDetector(string dName);
         void   DetachDetector(string dName);
         void   SpreadSamplesToDetectors();
+        void SetAcquireModeAndDuration(CanberraDeviceAccessLib.AcquisitionModes acqm, int duration);
 
         event EventHandler    SessionComplete;
         event EventHandler    MeasurementDone;
 
-        AcquisitionModes      CountMode              { get; set; }
-        int                   Counts                 { get; set; }
+        AcquisitionModes      CountMode              { get; }
+        int                   Counts                 { get; }
         string                Type                   { get; set; }
         string                Name                   { get; }
         decimal               Height                 { get; set; }

@@ -53,32 +53,15 @@ namespace Measurements.Core
         }
         public event EventHandler SessionComplete;
         public event EventHandler MeasurementDone;
-  
-        private CanberraDeviceAccessLib.AcquisitionModes _countMode;
-        public CanberraDeviceAccessLib.AcquisitionModes CountMode
-        {
-            get { return _countMode; }
-            set
-            {
-                _nLogger.Info($"Count mode {value} has chosen");
-                _countMode = value;
-                foreach (var d in ManagedDetectors)
-                    d.Options(value, Counts);
-            }
-        }
-        private int _counts;
-        public int Counts
-        {
-            get { return _counts; }
-            set
-            {
 
-                _nLogger.Info($"Duration of measurements {value} has specified");
-                _counts = value;
-                foreach (var d in ManagedDetectors)
-                    d.Options(CountMode, value);
-            }
+        public void SetAcquireModeAndDuration(CanberraDeviceAccessLib.AcquisitionModes acqm, int duration)
+        {
+            foreach (var d in ManagedDetectors)
+                d.Options(acqm, duration);
         }
+
+        public CanberraDeviceAccessLib.AcquisitionModes CountMode { get; }
+        public int Counts { get; }
 
         private InfoContext _infoContext;
         public IrradiationInfo CurrentSample { get; private set; }

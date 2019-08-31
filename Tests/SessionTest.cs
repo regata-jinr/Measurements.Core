@@ -15,19 +15,20 @@ namespace Measurements.Core.Tests
             //TODO: add test for sli and lli (for sli spreading logic should be different!)
             //TODO: something wrong in filling info. looks like current sample on detector doesn't assign!
             SessionControllerSingleton.InitializeDBConnectionString(@"Server=RUMLAB\REGATALOCAL;Database=NAA_DB_TEST;Trusted_Connection=True;");
+            SessionControllerSingleton.ConnectionStringBuilder.UserID = "bdrum";
             session = new Session();
 
             session.Type = "LLI-1";
 
             session.CurrentIrradiationDate = DateTime.Parse("24.05.2019");
 
-            session.AttachDetector("D1");
-            session.AttachDetector("D5");
-            session.AttachDetector("D6");
-
-            session.CountMode = CanberraDeviceAccessLib.AcquisitionModes.aCountToRealTime;
-            session.Counts = 10;
             // TODO: here I break the order of measurement. Assign count mode and counts number before creation detectors. Add extension for such case!
+
+            session.AttachDetector("D1");
+            //session.AttachDetector("D5");
+            //session.AttachDetector("D6");
+
+            session.SetAcquireModeAndDuration(CanberraDeviceAccessLib.AcquisitionModes.aCountToRealTime, 10);
         }
     }
 
@@ -69,6 +70,8 @@ namespace Measurements.Core.Tests
         void StartPauseContinueStopSingleMeasurements()
         {
 
+            sessionFixture.session.ClearMeasurements();
+            System.Threading.Thread.Sleep(2000);
             sessionFixture.session.StartMeasurements();
             System.Threading.Thread.Sleep(2000);
             Assert.True(sessionFixture.session.ManagedDetectors.All(d => d.Status == DetectorStatus.busy));

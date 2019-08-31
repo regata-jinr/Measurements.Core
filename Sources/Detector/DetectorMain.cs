@@ -74,10 +74,12 @@ namespace Measurements.Core
         /// <param name="lParam">The second parameter of information associated with the message</param>
         private void ProcessDeviceMessages(int message, int wParam, int lParam)
         {
+            string response = "";
             //TODO: wrap to try-catch-finally
             if ((int)AdviseMessageMasks.amAcquireDone == lParam)
             {
                 _nLogger.Info($"{message}, {wParam}, {lParam})--Has got message AcquireDone.");
+                response = "Acquire has done";
                 Status = DetectorStatus.ready;
                 CurrentMeasurement.DateTimeStart = DateTime.Now;
             }
@@ -85,6 +87,7 @@ namespace Measurements.Core
             if ((int)AdviseMessageMasks.amAcquireStart == lParam)
             {
                 _nLogger.Info($"{message}, {wParam}, {lParam})--Has got message amAcquireStart.");
+                response = "Acquire has start";
                 Status = DetectorStatus.busy;
             }
 
@@ -92,11 +95,11 @@ namespace Measurements.Core
             {
                 Status = DetectorStatus.error;
                 ErrorMessage = $"{_device.Message((MessageCodes)lParam)}";
+                response = ErrorMessage;
                 Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{message}, {wParam}, {lParam})--Has got message amHardwareError. Error Message is [{ErrorMessage}]", Level = NLog.LogLevel.Error });
             }
 
-            //TODO: realise how to pass parameters to called function in event
-            AcquiringStatusChanged?.Invoke(this, EventArgs.Empty);
+            AcquiringStatusChanged?.Invoke(this, new DetectorEventsArgs { Message = response, Name = this.Name, Status = this.Status });
         }
 
         private Task ConnectInternalTask(CancellationToken c)
@@ -273,6 +276,7 @@ namespace Measurements.Core
 
         public void Options(CanberraDeviceAccessLib.AcquisitionModes opt, int param)
         {
+            _nLogger.Info($"Detector {Name} get Acquisition mode - '{opt}' and count number - '{param}'");
             _device.SpectroscopyAcquireSetup(opt, param);
         }
 
@@ -483,6 +487,14 @@ namespace Measurements.Core
         }
 
     }
-   
+
+     public class DetectorEventsArgs : EventArgs
+    {
+        public string         Name;
+        public DetectorStatus Status;
+        public string         Message;
+    }
+
+
 }
 
