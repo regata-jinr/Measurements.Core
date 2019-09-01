@@ -54,6 +54,7 @@ namespace Measurements.Core
             get { return _currentSample; }
             set
             {
+                _nLogger.Info($"Set sample {value} as current");
                 _currentSample = value;
                 var configuration = new MapperConfiguration(cfg => cfg.AddMaps("MeasurementsCore"));
                 var mapper = new Mapper(configuration);

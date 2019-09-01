@@ -67,7 +67,7 @@ namespace Measurements.Core
                     SpreadedSamples[$"D{detNumberDict[i]}"].AddRange(IrradiationList.Where(ir => ir.Container == j).ToList());
                     _nLogger.Info($"Samples {IrradiationList.Where(ir => ir.Container == j).First().SetKey}-[{(string.Join(",", IrradiationList.Where(ir => ir.Container == j).Select(ir => ir.SampleNumber).ToArray()))}] will measure on the detector D{detNumberDict[i]}");
                     i++;
-                    if (i >= CountOfDetectors)
+                    if (i > CountOfDetectors)
                         i = 1;
                 }
 

@@ -25,8 +25,8 @@ namespace Measurements.Core.Tests
             // TODO: here I break the order of measurement. Assign count mode and counts number before creation detectors. Add extension for such case!
 
             session.AttachDetector("D1");
-            //session.AttachDetector("D5");
-            //session.AttachDetector("D6");
+            session.AttachDetector("D5");
+            session.AttachDetector("D6");
 
             session.SetAcquireModeAndDuration(CanberraDeviceAccessLib.AcquisitionModes.aCountToRealTime, 10);
         }
@@ -79,7 +79,7 @@ namespace Measurements.Core.Tests
             sessionFixture.session.PauseMeasurements();
             foreach (var d in sessionFixture.session.ManagedDetectors)
             {
-                Assert.Equal(10, double.Parse(d.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_L_PMREAL)), 2);
+                Assert.Equal(10, double.Parse(d.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_PREAL)), 2);
 
                 double realTime = double.Parse(d.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_EREAL));
                 Assert.NotEqual(0, realTime);

@@ -75,6 +75,7 @@ namespace Measurements.Core
         private void ProcessDeviceMessages(int message, int wParam, int lParam)
         {
             string response = "";
+            bool isForCalling = false;
             //TODO: wrap to try-catch-finally
             if ((int)AdviseMessageMasks.amAcquireDone == lParam)
             {
@@ -82,6 +83,7 @@ namespace Measurements.Core
                 response = "Acquire has done";
                 Status = DetectorStatus.ready;
                 CurrentMeasurement.DateTimeStart = DateTime.Now;
+                isForCalling = true;
             }
 
             if ((int)AdviseMessageMasks.amAcquireStart == lParam)
@@ -89,6 +91,7 @@ namespace Measurements.Core
                 _nLogger.Info($"Has got message amAcquireStart.");
                 response = "Acquire has start";
                 Status = DetectorStatus.busy;
+                isForCalling = true;
             }
 
             if ((int)AdviseMessageMasks.amHardwareError == lParam)
@@ -97,9 +100,16 @@ namespace Measurements.Core
                 ErrorMessage = $"{_device.Message((MessageCodes)lParam)}";
                 response = ErrorMessage;
                 Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Has got message amHardwareError. Error Message is [{ErrorMessage}]", Level = NLog.LogLevel.Error });
+                isForCalling = true;
+            }
+            if ((int)AdviseMessageMasks.amAcquisitionParamChange == lParam)
+            {
+                response = "Device ready to use!";
+
             }
 
-            AcquiringStatusChanged?.Invoke(this, new DetectorEventsArgs { Message = response, Name = this.Name, Status = this.Status });
+            if (isForCalling)
+                AcquiringStatusChanged?.Invoke(this, new DetectorEventsArgs { Message = response, Name = this.Name, Status = this.Status });
         }
 
         private Task ConnectInternalTask(CancellationToken c)

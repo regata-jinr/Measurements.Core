@@ -143,7 +143,7 @@ namespace Measurements.Core
             if (_countOfDetectorsWichDone == ManagedDetectors.Count)
             {
                 _nLogger.Info($"Detector {((Detector)detObj).Name} has done measurement process");
-                SessionComplete.Invoke(this, eventArgs);
+                SessionComplete?.Invoke(this, eventArgs);
                 _countOfDetectorsWichDone = 0;
             }
             else
@@ -157,19 +157,22 @@ namespace Measurements.Core
         {
             try
             {
-                if (o is Detector)
+                if (o is Detector && args is DetectorEventsArgs)
                 {
+                    //FIXME: how to avoid boxing gere? to use my own delegate?
                     IDetector d = (Detector) o;
+                    DetectorEventsArgs darg = (DetectorEventsArgs) args;
+
                     _nLogger.Info($"has received message from the detector {d.Name}");
                     if (d.Status == DetectorStatus.ready)
                     {
-                        _nLogger.Info($"The message is 'Acquiring has done'");
+                        _nLogger.Info($"The message is '{darg.Message}'");
                         SaveSpectra(ref d);
                         NextSample(ref d);
                         if (SpreadedSamples[d.Name].Any())
                             d.Start();
                         else
-                            MeasurementDone.Invoke(d, EventArgs.Empty);
+                            MeasurementDone?.Invoke(d, EventArgs.Empty);
                     }
                 }
                 else
