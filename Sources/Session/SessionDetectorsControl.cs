@@ -10,7 +10,7 @@ namespace Measurements.Core
         //for each detector task run (or await) start measure queue
         public void StartMeasurements()
         {
-            _nLogger.Info($"Session {Name} starts measurements of the sample sets");
+            _nLogger.Info($"starts measurements of the sample sets");
             try
             {
                 SpreadSamplesToDetectors();
@@ -33,7 +33,7 @@ namespace Measurements.Core
         }
         public void StopMeasurements()
         {
-            _nLogger.Info($"Session {Name} stops measurements by user command");
+            _nLogger.Info($"stops measurements by user command");
             foreach (var d in ManagedDetectors)
                 d.Stop();
         }
@@ -47,19 +47,19 @@ namespace Measurements.Core
 
        public void ContinueMeasurements()
         {
-            _nLogger.Info($"Session {Name} will continue measurements by user command");
+            _nLogger.Info($"will continue measurements by user command");
             foreach (var d in ManagedDetectors)
                 d.Continue();
         }
         public void PauseMeasurements()
         {
-            _nLogger.Info($"Session {Name} will pause measurements by user command");
+            _nLogger.Info($"will pause measurements by user command");
             foreach (var d in ManagedDetectors)
                 d.Pause();
         }
         public void ClearMeasurements()
         {
-            _nLogger.Info($"Session {Name} will clear measurements by user command");
+            _nLogger.Info($"will clear measurements by user command");
             foreach (var d in ManagedDetectors)
                 d.Clear();
         }
@@ -67,7 +67,7 @@ namespace Measurements.Core
        public void AttachDetector(string dName)
         {
 
-            _nLogger.Info($"Session {Name} will take a control for detector '{dName}'");
+            _nLogger.Info($"will take a control for detector '{dName}'");
             try
             {
                 if (SessionControllerSingleton.AvailableDetectors == null || SessionControllerSingleton.AvailableDetectors.Count == 0)
@@ -81,7 +81,7 @@ namespace Measurements.Core
                     SpreadedSamples.Add(det.Name, new List<IrradiationInfo>());
                     SessionControllerSingleton.AvailableDetectors.Remove(det);
                     det.AcquiringStatusChanged += ProcessAcquiringMessage;
-                    _nLogger.Info($"Session {Name} successfuly attached detector {det.Name}");
+                    _nLogger.Info($"successfuly attached detector {det.Name}");
                 }
                 else
                     throw new ArgumentNullException(dName);
@@ -101,7 +101,7 @@ namespace Measurements.Core
         }
         public void DetachDetector(string dName)
         {
-            _nLogger.Info($"Session {Name} will detach detector 'dName'");
+            _nLogger.Info($"will detach detector 'dName'");
             try
             {
                 if (ManagedDetectors == null && ManagedDetectors.Count == 0)
@@ -116,7 +116,7 @@ namespace Measurements.Core
                     SessionControllerSingleton.AvailableDetectors.Add(det);
                     SpreadedSamples.Remove(det.Name);
                     ManagedDetectors.Remove(det);
-                    _nLogger.Info($"Session {Name} successfuly detached detector {det.Name}");
+                    _nLogger.Info($"successfuly detached detector {det.Name}");
                 }
                 else
                     throw new ArgumentNullException();
@@ -142,13 +142,13 @@ namespace Measurements.Core
 
             if (_countOfDetectorsWichDone == ManagedDetectors.Count)
             {
-                _nLogger.Info($"In session {Name} detector {((Detector)detObj).Name} has done measurement process");
+                _nLogger.Info($"Detector {((Detector)detObj).Name} has done measurement process");
                 SessionComplete.Invoke(this, eventArgs);
                 _countOfDetectorsWichDone = 0;
             }
             else
             {
-                _nLogger.Info($"In session {Name} all detectors [{(string.Join(",", ManagedDetectors.Select(d => d.Name).ToArray()))}] has done measurement process");
+                _nLogger.Info($"All detectors [{(string.Join(",", ManagedDetectors.Select(d => d.Name).ToArray()))}] has done measurement process");
                 _countOfDetectorsWichDone++;
             }
         }
@@ -160,7 +160,7 @@ namespace Measurements.Core
                 if (o is Detector)
                 {
                     IDetector d = (Detector) o;
-                    _nLogger.Info($"Session {Name} has received message from the detector {d.Name}");
+                    _nLogger.Info($"has received message from the detector {d.Name}");
                     if (d.Status == DetectorStatus.ready)
                     {
                         _nLogger.Info($"The message is 'Acquiring has done'");
@@ -187,7 +187,7 @@ namespace Measurements.Core
 
         private string GenerateFileSpectraName(string detName)
         {
-            _nLogger.Info($"Session {Name} will generate file spectra name for the detector {detName}");
+            _nLogger.Info($"will generate file spectra name for the detector {detName}");
             var typeDict = new Dictionary<string, string> { {"SLI", "0"}, {"LLI-1", "1"}, {"LLI-2", "2"} };
             int maxNumber = 0;
             try

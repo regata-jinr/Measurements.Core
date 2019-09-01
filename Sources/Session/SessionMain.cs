@@ -13,7 +13,16 @@ namespace Measurements.Core
     public partial class Session : ISession, IDisposable
     {
         private NLog.Logger        _nLogger;
-        public string Name { get; private set; }
+        private string _name;
+        public string Name
+        {
+            get { return _name; }
+            private set
+            {
+                _name = value;
+                _nLogger = SessionControllerSingleton.logger.WithProperty("ParamName", $"{SessionControllerSingleton.ConnectionStringBuilder.UserID}--{Name}");
+            }
+        }
         private string _type;
 
         public string Type
@@ -74,25 +83,24 @@ namespace Measurements.Core
         private bool _isDisposed = false;
         private int _countOfDetectorsWichDone = 0;
         private Dictionary<string, CanberraDeviceAccessLib.AcquisitionModes> _countModeDict;
-             
+
         public Session()
         {
-            _nLogger = SessionControllerSingleton.logger;
+            Name = "Untitled session";
 
             _nLogger.Info("Initialisation of session has began");
 
-            Name                   = "Untitled session";
-            _height                = 2.5m;
-            _infoContext           = new InfoContext();
-            IrradiationDateList    = new List<DateTime?>();
-            IrradiationList        = new List<IrradiationInfo>();
-            MeasurementList        = new List<MeasurementInfo>();
-            CurrentMeasurement     = new MeasurementInfo();
-            CurrentSample          = new IrradiationInfo();
-            ManagedDetectors       = new List<IDetector>();
-            SpreadedSamples        = new Dictionary<string, List<IrradiationInfo>>();
-            CountMode              = CanberraDeviceAccessLib.AcquisitionModes.aCountToRealTime;
-            _countModeDict         = new Dictionary<string, CanberraDeviceAccessLib.AcquisitionModes>
+            _height = 2.5m;
+            _infoContext = new InfoContext();
+            IrradiationDateList = new List<DateTime?>();
+            IrradiationList = new List<IrradiationInfo>();
+            MeasurementList = new List<MeasurementInfo>();
+            CurrentMeasurement = new MeasurementInfo();
+            CurrentSample = new IrradiationInfo();
+            ManagedDetectors = new List<IDetector>();
+            SpreadedSamples = new Dictionary<string, List<IrradiationInfo>>();
+            CountMode = CanberraDeviceAccessLib.AcquisitionModes.aCountToRealTime;
+            _countModeDict = new Dictionary<string, CanberraDeviceAccessLib.AcquisitionModes>
                                         {
                                             { "aCountToLiveTime", CanberraDeviceAccessLib.AcquisitionModes.aCountToLiveTime },
                                             { "aCountToRealTime", CanberraDeviceAccessLib.AcquisitionModes.aCountToRealTime },
@@ -110,7 +118,7 @@ namespace Measurements.Core
             Height = session.Height;
             CountMode = _countModeDict[session.CountMode];
             Note = session.Note;
-
+            
             foreach (var dName in session.DetectorsNames.Split(','))
                 AttachDetector(dName);                
 

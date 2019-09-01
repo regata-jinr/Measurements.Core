@@ -70,12 +70,12 @@ namespace Measurements.Core
                 if (detsList.Contains(value))
                 {
                     _name = value;
-                    _nLogger.Info($"{value})--Detector with name '{value}' was found in the MID wizard list and will be used.");
+                    _nLogger.Info($"Detector with name '{value}' was found in the MID wizard list and will be used");
                 }
                 else
                 {
                     Status = DetectorStatus.error;
-                    ErrorMessage = $"{value})--Detector with name '{value}' wasn't find in the MID wizard list. Status will change to 'error'.";
+                    ErrorMessage = $"Detector with name '{value}' wasn't find in the MID wizard list. Status will change to 'error'";
                     Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Detector({_name}). {ErrorMessage}", Level = NLog.LogLevel.Error });
                 }
             }
@@ -86,7 +86,7 @@ namespace Measurements.Core
             get { return _countToRealTime; }
             set
             {
-                _nLogger.Info($"{value})--Setting aCountToRealTime.");
+                _nLogger.Info($"Setting aCountToRealTime");
                 _device.SpectroscopyAcquireSetup(CanberraDeviceAccessLib.AcquisitionModes.aCountToRealTime, value);
             }
         }
@@ -96,7 +96,7 @@ namespace Measurements.Core
             get { return _countToLiveTime; }
             set
             {
-                _nLogger.Info($"{value})--Setting aCountToLiveTime.");
+                _nLogger.Info($"Setting aCountToLiveTime");
                 _device.SpectroscopyAcquireSetup(CanberraDeviceAccessLib.AcquisitionModes.aCountToLiveTime, value);
             }
         }
@@ -106,7 +106,7 @@ namespace Measurements.Core
             get { return _countNormal; }
             set
             {
-                _nLogger.Info($"{value})--Setting aCountNormal.");
+                _nLogger.Info($"Setting aCountNormal");
                 _device.SpectroscopyAcquireSetup(CanberraDeviceAccessLib.AcquisitionModes.aCountNormal, value);
             }
         }
@@ -121,7 +121,7 @@ namespace Measurements.Core
             {
                 if (_status != value)
                 {
-                    _nLogger.Info($"value)--The detector status changed from {_status} to {value}");
+                    _nLogger.Info($"The detector status changed from {_status} to {value}");
                     _status = value;
                     StatusChanged?.Invoke(this, EventArgs.Empty);
                 }

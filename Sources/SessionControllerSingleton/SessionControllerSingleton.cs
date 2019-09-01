@@ -30,6 +30,7 @@ namespace Measurements.Core
         {
             _connectionStringBuilder.ConnectionString = connectionString;
             TestDBConnection();
+            logger.WithProperty("ParamName", ConnectionStringBuilder.UserID);
         }
 
         public static bool TestDBConnection()

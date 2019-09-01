@@ -22,8 +22,8 @@ namespace Measurements.Core
         {
             try
             {
-                _nLogger = SessionControllerSingleton.logger.WithProperty("DetName", name);
-                _nLogger.Info($"{name}, {option.ToString()}, {timeOutLimitSeconds})--Initializing of the detector.");
+                _nLogger = SessionControllerSingleton.logger.WithProperty("ParamName", name);
+                _nLogger.Info($"Initialisation of the detector {name} with mode {option.ToString()} and timeout limit {timeOutLimitSeconds}");
                 _conOption = option;
                 _isDisposed = false;
                 Status = DetectorStatus.off;
@@ -78,7 +78,7 @@ namespace Measurements.Core
             //TODO: wrap to try-catch-finally
             if ((int)AdviseMessageMasks.amAcquireDone == lParam)
             {
-                _nLogger.Info($"{message}, {wParam}, {lParam})--Has got message AcquireDone.");
+                _nLogger.Info($"Has got message AcquireDone.");
                 response = "Acquire has done";
                 Status = DetectorStatus.ready;
                 CurrentMeasurement.DateTimeStart = DateTime.Now;
@@ -86,7 +86,7 @@ namespace Measurements.Core
 
             if ((int)AdviseMessageMasks.amAcquireStart == lParam)
             {
-                _nLogger.Info($"{message}, {wParam}, {lParam})--Has got message amAcquireStart.");
+                _nLogger.Info($"Has got message amAcquireStart.");
                 response = "Acquire has start";
                 Status = DetectorStatus.busy;
             }
@@ -96,7 +96,7 @@ namespace Measurements.Core
                 Status = DetectorStatus.error;
                 ErrorMessage = $"{_device.Message((MessageCodes)lParam)}";
                 response = ErrorMessage;
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{message}, {wParam}, {lParam})--Has got message amHardwareError. Error Message is [{ErrorMessage}]", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Has got message amHardwareError. Error Message is [{ErrorMessage}]", Level = NLog.LogLevel.Error });
             }
 
             AcquiringStatusChanged?.Invoke(this, new DetectorEventsArgs { Message = response, Name = this.Name, Status = this.Status });
@@ -104,7 +104,7 @@ namespace Measurements.Core
 
         private Task ConnectInternalTask(CancellationToken c)
         {
-            _nLogger.Debug($")--Starts internal connection task to the detector");
+            _nLogger.Debug($"Starts internal connection task to the detector");
             var t = Task.Run(() => 
             {
                 try
@@ -127,7 +127,7 @@ namespace Measurements.Core
 
         public async void ConnectAsync()
         {
-            _nLogger.Info($")--Starts async connecting to the detector.");
+            _nLogger.Info($"Starts async connecting to the detector.");
 
             CancellationTokenSource cts = new CancellationTokenSource();
             var ct = cts.Token;
@@ -143,14 +143,14 @@ namespace Measurements.Core
         {
             try
             {
-                _nLogger.Info($")--Starts connecting to the detector.");
+                _nLogger.Info($"Starts connecting to the detector");
                 ConnectInternal();
                 //TODO: Figure out how to add to internal connection timeout exception.
                 //var task = new Task(() => ConnectInternal());
                 //if (!task.Wait(TimeSpan.FromMilliseconds(_timeOutLimitSeconds)))
                 //    throw new TimeoutException("Connection timeout");
                 if (_device.IsConnected)
-                    _nLogger.Info($")--Connection to the detector was successful");
+                    _nLogger.Info($"Connection to the detector was successful");
 
             }
             catch (TimeoutException)
@@ -168,13 +168,13 @@ namespace Measurements.Core
         {
             try
             {
-                _nLogger.Debug($")--Starts internal connection to the detector");
+                _nLogger.Debug($"Starts internal connection to the detector");
 
                 Status = DetectorStatus.off;
                 _device.Connect(_name, _conOption);
                 Status = DetectorStatus.ready;
 
-                _nLogger.Debug($")--Internal connection was successful");
+                _nLogger.Debug($"Internal connection was successful");
             }
             catch (Exception ex)
             {
@@ -189,7 +189,7 @@ namespace Measurements.Core
         /// Recconects will trying to ressurect connection via detector. In case detector has status error or ready, it will do nothing. In case detector is off it will just call connect. In case status is busy, it will run recursively before 3 attempts with 5sec pausing.
         public void Reconnect()
         {
-            _nLogger.Info($")--Attempt to reconnect to the detector.");
+            _nLogger.Info($"Attempt to reconnect to the detector.");
             if (_device.IsConnected) { Connect(); return; }
             Disconnect();
             Connect();
@@ -200,7 +200,7 @@ namespace Measurements.Core
         /// </summary>
         public void Save()
         {
-            _nLogger.Info($"Starts saving of current session to file.");
+            _nLogger.Info($"Starts saving of current session to file");
             try
             {
                 if (!_device.IsConnected || Status == DetectorStatus.off)
@@ -215,7 +215,7 @@ namespace Measurements.Core
 
                 if (File.Exists($"{_baseDir}\\{CurrentMeasurement.FileSpectra}"))
                     _nLogger.Info($"File '{_baseDir}\\{CurrentMeasurement.FileSpectra}' saved");
-                else _nLogger.Error($"{ CurrentMeasurement.FileSpectra})--Some problems during saving. File doesn't exist.");
+                else _nLogger.Error($"Some problems during saving. File {CurrentMeasurement.FileSpectra} doesn't exist.");
             }
             catch (ArgumentNullException)
             {
@@ -238,10 +238,10 @@ namespace Measurements.Core
         {
             try
             {
-                _nLogger.Info($")--Disconnecting from the detector.");
+                _nLogger.Info($"Disconnecting from the detector.");
                 if (_device.IsConnected)
                     _device.Disconnect();
-                _nLogger.Info($")--Disconnecting was successful.");
+                _nLogger.Info($"Disconnecting was successful.");
                 Status = DetectorStatus.off;
                 ErrorMessage = "";
             }
@@ -259,13 +259,13 @@ namespace Measurements.Core
             try
             {
                 //TODO: check that it do reseting in the meaning that I'm thinking about it!
-                _nLogger.Info($")--Attempt to reset the detector");
+                _nLogger.Info($"Attempt to reset the detector");
                 _device.SendCommand(DeviceCommands.aReset);
 
                 if (Status == DetectorStatus.ready)
-                    _nLogger.Info($")--Resetting was successful");
+                    _nLogger.Info($"Resetting was successful");
                 else
-                    Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $")--Reset command was passed, but status is {Status}", Level = NLog.LogLevel.Warn });
+                    Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Reset command was passed, but status is {Status}", Level = NLog.LogLevel.Warn });
             }
             catch (Exception ex) 
             {
@@ -276,7 +276,7 @@ namespace Measurements.Core
 
         public void Options(CanberraDeviceAccessLib.AcquisitionModes opt, int param)
         {
-            _nLogger.Info($"Detector {Name} get Acquisition mode - '{opt}' and count number - '{param}'");
+            _nLogger.Info($"Detector get Acquisition mode - '{opt}' and count number - '{param}'");
             _device.SpectroscopyAcquireSetup(opt, param);
         }
 
@@ -290,16 +290,16 @@ namespace Measurements.Core
             try
             {
                 CurrentMeasurement.Assistant = SessionControllerSingleton.ConnectionStringBuilder.UserID;
-                _nLogger.Debug($")--Initializing of acquiring.");
+                _nLogger.Debug($"Initializing of acquiring.");
                 _device.Clear();
 
                 if (Status != DetectorStatus.ready)
                 {
-                    Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $")--Detector is not ready for acquiring. Status is {Status}", Level = NLog.LogLevel.Warn });
+                    Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Detector is not ready for acquiring. Status is {Status}", Level = NLog.LogLevel.Warn });
                     return;
                 }
                 _device.AcquireStart(); // already async
-                _nLogger.Info($")--Acquiring in process...");
+                _nLogger.Info($"Acquiring in process...");
                 CurrentMeasurement.DateTimeStart = DateTime.Now;
             }
             catch (Exception ex) 
@@ -314,11 +314,11 @@ namespace Measurements.Core
         {
             if (Status != DetectorStatus.ready)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $")--Detector is not ready for conitnue acquiring. Status is {Status}", Level = NLog.LogLevel.Warn });
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Detector is not ready for conitnue acquiring. Status is {Status}", Level = NLog.LogLevel.Warn });
                 return;
             }
             _device.AcquireStart();
-            _nLogger.Info($")--Acquiring will continue after pause");
+            _nLogger.Info($"Acquiring will continue after pause");
 
         }
 
@@ -333,10 +333,10 @@ namespace Measurements.Core
                 if (Status == DetectorStatus.ready)
                     return;
 
-                _nLogger.Info($")--Attempt to set pause for the acquiring");
+                _nLogger.Info($"Attempt to set pause for the acquiring");
                 _device.AcquirePause();
                 Status = DetectorStatus.ready;
-                _nLogger.Info($")--Paused was successful. Detector ready to continue acquire process");
+                _nLogger.Info($"Paused was successful. Detector ready to continue acquire process");
             }
             catch (Exception ex) 
             {
@@ -355,10 +355,10 @@ namespace Measurements.Core
                 if (Status == DetectorStatus.ready)
                     return;
 
-                _nLogger.Info($")--Attempt to stop the acquiring");
+                _nLogger.Info($"Attempt to stop the acquiring");
                 _device.AcquireStop();
                 Status = DetectorStatus.ready;
-                _nLogger.Info($")--Stop was successful. Detector ready to acquire again");
+                _nLogger.Info($"Stop was successful. Detector ready to acquire again");
             }
             catch (Exception ex) 
             {
@@ -374,7 +374,7 @@ namespace Measurements.Core
         {
             try
             {
-                _nLogger.Info($")--Clearing the detector");
+                _nLogger.Info($"Clearing the detector");
                 _device.Clear();
             }
             catch (Exception ex) 
@@ -386,7 +386,7 @@ namespace Measurements.Core
 
         private void CleanUp(bool isDisposing)
         {
-            _nLogger.Info($")--Cleaning of the detector {Name}");
+            _nLogger.Info($"Cleaning of the detector {Name}");
 
             if (!_isDisposed)
             {
@@ -429,7 +429,7 @@ namespace Measurements.Core
             try
             {
                 //TODO: add build type like irradiation.    see info about spectra file
-                _nLogger.Info($")--Filling information      about sample: {CurrentMeasurement.ToString()}");
+                _nLogger.Info($"Filling information about sample: {CurrentMeasurement.ToString()}");
                 _device.Param[ParamCodes.CAM_T_STITLE]      = $"{CurrentSample.SampleKey}";// title
                 _device.Param[ParamCodes.CAM_T_SCOLLNAME]   = CurrentMeasurement.Assistant; // operator's name
                 DivideString(CurrentSample.Note);           //filling description field in file
@@ -444,7 +444,7 @@ namespace Measurements.Core
                 _device.Param[ParamCodes.CAM_F_SSYSTERR]    = 0; // Non-random sample error (%)
                 _device.Param[ParamCodes.CAM_T_STYPE]       = CurrentMeasurement.Type;
                 _device.Param[ParamCodes.CAM_T_SGEOMTRY]    = CurrentMeasurement.Height.ToString();
-                _nLogger.Info($")--Filling information      was complete");
+                _nLogger.Info($"Filling information was complete");
             }
             catch (Exception ex)
             {
