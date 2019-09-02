@@ -49,7 +49,7 @@ namespace Measurements.Core
         {
             _nLogger.Info($"will continue measurements by user command");
             foreach (var d in ManagedDetectors)
-                d.Continue();
+                d.Start();
         }
         public void PauseMeasurements()
         {
@@ -163,10 +163,10 @@ namespace Measurements.Core
                     IDetector d = (Detector) o;
                     DetectorEventsArgs darg = (DetectorEventsArgs) args;
 
-                    _nLogger.Info($"has received message from the detector {d.Name}");
+                    //_nLogger.Info($"has received message from the detector {d.Name}");
                     if (d.Status == DetectorStatus.ready)
                     {
-                        _nLogger.Info($"The message is '{darg.Message}'");
+                        //_nLogger.Info($"The message is '{darg.Message}'");
                         SaveSpectra(ref d);
                         NextSample(ref d);
                         if (SpreadedSamples[d.Name].Any())

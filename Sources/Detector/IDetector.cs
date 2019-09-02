@@ -12,6 +12,7 @@ namespace Measurements.Core
         void ConnectAsync();
         void Connect();
         DetectorStatus Status { get; }
+        bool IsPaused { get; }
         bool IsHV { get; }
         bool IsConnected { get; }
         string ErrorMessage { get; }
@@ -22,7 +23,6 @@ namespace Measurements.Core
         void Reset();
         void Start();
         void Dispose();
-        void Continue();
         void Pause();
         void Stop();
         void Clear();

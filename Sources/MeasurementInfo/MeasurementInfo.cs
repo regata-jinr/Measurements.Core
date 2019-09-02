@@ -40,6 +40,7 @@ namespace Measurements.Core
         public DateTime?  DateTimeFinish { get; set; }
         public string     FileSpectra    { get; set; }
         public string     Detector       { get; set; }
+        [Ignore]
         public string     Assistant      { get; set; }
         public string     Note           { get; set; }
         [NotMapped]

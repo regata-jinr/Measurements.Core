@@ -48,6 +48,7 @@ namespace Measurements.Core
         public MeasurementInfo     CurrentMeasurement { get; set; }
         public event EventHandler  StatusChanged;
         public event EventHandler  AcquiringStatusChanged;
+        public bool IsPaused { get; private set; }
 
         public IrradiationInfo    CurrentSample
         {

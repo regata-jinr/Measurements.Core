@@ -42,6 +42,7 @@ namespace Measurements.Core
                 _countToRealTime = 0;
                 _countToLiveTime = 0;
                 _countNormal = 0;
+                IsPaused = false;
                 Connect();
             }
             catch (Exception ex)
@@ -77,7 +78,7 @@ namespace Measurements.Core
             string response = "";
             bool isForCalling = false;
             //TODO: wrap to try-catch-finally
-            if ((int)AdviseMessageMasks.amAcquireDone == lParam)
+            if ((int)AdviseMessageMasks.amAcquireDone == lParam && !IsPaused)
             {
                 _nLogger.Info($"Has got message AcquireDone.");
                 response = "Acquire has done";
@@ -299,15 +300,20 @@ namespace Measurements.Core
         {
             try
             {
+                //TODO: assigmnet of params should be in one place (I also don't use current measurement param in Session)
                 CurrentMeasurement.Assistant = SessionControllerSingleton.ConnectionStringBuilder.UserID;
-                _nLogger.Debug($"Initializing of acquiring.");
-                _device.Clear();
+
+                if (!IsPaused)
+                    _device.Clear();
+
+                IsPaused = false;
 
                 if (Status != DetectorStatus.ready)
                 {
                     Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Detector is not ready for acquiring. Status is {Status}", Level = NLog.LogLevel.Warn });
                     return;
                 }
+
                 _device.AcquireStart(); // already async
                 _nLogger.Info($"Acquiring in process...");
                 CurrentMeasurement.DateTimeStart = DateTime.Now;
@@ -317,21 +323,7 @@ namespace Measurements.Core
                 Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{ex.Message}", Level = NLog.LogLevel.Error });
             }
 
-}
-
-
-        public void Continue()
-        {
-            if (Status != DetectorStatus.ready)
-            {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Detector is not ready for conitnue acquiring. Status is {Status}", Level = NLog.LogLevel.Warn });
-                return;
-            }
-            _device.AcquireStart();
-            _nLogger.Info($"Acquiring will continue after pause");
-
         }
-
 
         /// <summary>
         /// Set acquiring on pause.
@@ -347,6 +339,7 @@ namespace Measurements.Core
                 _device.AcquirePause();
                 Status = DetectorStatus.ready;
                 _nLogger.Info($"Paused was successful. Detector ready to continue acquire process");
+                IsPaused = true;
             }
             catch (Exception ex) 
             {
@@ -438,8 +431,9 @@ namespace Measurements.Core
         {
             try
             {
-                //TODO: add build type like irradiation.    see info about spectra file
+                //TODO: add tests for null parameter
                 _nLogger.Info($"Filling information about sample: {CurrentMeasurement.ToString()}");
+
                 _device.Param[ParamCodes.CAM_T_STITLE]      = $"{CurrentSample.SampleKey}";// title
                 _device.Param[ParamCodes.CAM_T_SCOLLNAME]   = CurrentMeasurement.Assistant; // operator's name
                 DivideString(CurrentSample.Note);           //filling description field in file
@@ -447,14 +441,13 @@ namespace Measurements.Core
                 _device.Param[ParamCodes.CAM_F_SQUANT]      = (double)CurrentSample.Weight; // weight
                 _device.Param[ParamCodes.CAM_F_SQUANTERR]   = 0; // err = 0
                 _device.Param[ParamCodes.CAM_T_SUNITS]      = "gram"; // units = gram
-                //_device.Param[ParamCodes.CAM_X_SDEPOSIT]    = CurrentSample.DateTimeStart; // irr start date time
-                _device.Param[ParamCodes.CAM_X_ELSDATE]     = CurrentSample.DateTimeStart; // irr start date time
+                _device.Param[ParamCodes.CAM_T_BUILDUPTYPE] = "IRRAD";
+                _device.Param[ParamCodes.CAM_X_SDEPOSIT]    = CurrentSample.DateTimeStart; // irr start date time
                 _device.Param[ParamCodes.CAM_X_STIME]       = CurrentSample.DateTimeFinish; // irr finish date time
                 _device.Param[ParamCodes.CAM_F_SSYSERR]     = 0; // Random sample error (%)
                 _device.Param[ParamCodes.CAM_F_SSYSTERR]    = 0; // Non-random sample error (%)
                 _device.Param[ParamCodes.CAM_T_STYPE]       = CurrentMeasurement.Type;
                 _device.Param[ParamCodes.CAM_T_SGEOMTRY]    = CurrentMeasurement.Height.ToString();
-                _nLogger.Info($"Filling information was complete");
             }
             catch (Exception ex)
             {
