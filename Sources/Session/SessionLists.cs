@@ -38,38 +38,71 @@ namespace Measurements.Core
             }
         }
 
+        //TODO: add event in case of sample number increase the size of disk, but not break the measurements!
+        private void SpreadLLISamplesToDetectors()
+        {
+            try
+            {
+                var NumberOfContainers = IrradiationList.Select(ir => ir.Container).Distinct().ToArray();
+                int i = 0;
+
+                foreach (var conNum in NumberOfContainers)
+                {
+                    var sampleList = new List<IrradiationInfo> (IrradiationList.Where(ir => ir.Container == conNum).ToList());
+                    SpreadedSamples[ManagedDetectors[i].Name].AddRange(sampleList);
+                    _nLogger.Info($"Samples {sampleList.First().SetKey}-[{(string.Join(",", sampleList))}] will measure on the detector {ManagedDetectors[i].Name}");
+                    i++;
+                    if (i > ManagedDetectors.Count())
+                        i = 0;
+                }
+
+                foreach (var d in ManagedDetectors)
+                    d.CurrentSample = SpreadedSamples[d.Name][0];
+            }
+            catch (Exception e)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{e.Message}", Level = NLog.LogLevel.Error });
+            }
+        }
+
+        //TODO: add option for spreading (for lli by containers, or uniform, or by the order)
+        // uniform means - count all samples, then divide to count of detectors (pay attention to boundaries)
+        // by the order means first {sizeOfDisk} to first detector so on....
+        private void SpreaSLISampleToDetectors()
+        {
+            try
+            {
+
+            }
+            catch (Exception e)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{e.Message}", Level = NLog.LogLevel.Error });
+            }
+        }
+
         public void SpreadSamplesToDetectors()
         {
             _nLogger.Info($"Spreading samples to detectors has began");
             try
             {
-                int CountOfContainers = IrradiationList.Select(ir => ir.Container).Max().Value;
-                int CountOfDetectors = ManagedDetectors.Count();
-                int i = 1;
-                var detNumberDict = new Dictionary<int, int> { {1,1 }, { 2,5}, { 3,6}, { 4,7} };
-
                 if (!ManagedDetectors.Any())
                     throw new ArgumentOutOfRangeException("Session has managed no-one detector");
 
                 if (!IrradiationList.Any())
                     throw new ArgumentOutOfRangeException("Session doesn't contain sample to measure");
 
-                //TODO: in order to avoid duplication I want clear spreaded arrays
-                //if (SpreadedSamples.Values.Count != 0)
-                    //SpreadedSamples.Values;
-
-                for (var j = 1; j <= CountOfContainers; ++j)
+                foreach (var dName in ManagedDetectors.Select(d => d.Name).ToArray())
                 {
-                    // FIXME: SLI samples have another logic for spreading!
-                    // FIXME: three query instead one!
-                    // FIXME: containers could be non ordered, e.g. in irradiations from 26.05.2019 container with number 2 doesn't exist
-
-                    SpreadedSamples[$"D{detNumberDict[i]}"].AddRange(IrradiationList.Where(ir => ir.Container == j).ToList());
-                    _nLogger.Info($"Samples {IrradiationList.Where(ir => ir.Container == j).First().SetKey}-[{(string.Join(",", IrradiationList.Where(ir => ir.Container == j).Select(ir => ir.SampleNumber).ToArray()))}] will measure on the detector D{detNumberDict[i]}");
-                    i++;
-                    if (i > CountOfDetectors)
-                        i = 1;
+                    if (SpreadedSamples[dName].Any())
+                        SpreadedSamples[dName].Clear();
                 }
+
+                if (Type.Contains("LLI"))
+                    SpreadLLISamplesToDetectors();
+                else if (Type.Contains("SLI"))
+                    SpreaSLISampleToDetectors();
+                else
+                    throw new Exception("Type of measurement was not recognized by the program. Use only 'SLI', 'LLI-1', 'LLI-2'"); 
 
                 foreach (var d in ManagedDetectors)
                     d.CurrentSample = SpreadedSamples[d.Name][0];

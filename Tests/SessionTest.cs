@@ -25,8 +25,8 @@ namespace Measurements.Core.Tests
             // TODO: here I break the order of measurement. Assign count mode and counts number before creation detectors. Add extension for such case!
 
             session.AttachDetector("D1");
-            session.AttachDetector("D5");
-            session.AttachDetector("D6");
+            //session.AttachDetector("D5");
+            //session.AttachDetector("D6");
 
             session.SetAcquireModeAndDuration(CanberraDeviceAccessLib.AcquisitionModes.aCountToRealTime, 10);
         }

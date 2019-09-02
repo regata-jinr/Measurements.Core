@@ -7,7 +7,7 @@ namespace Measurements.Core
 {
     public partial class Session : ISession, IDisposable
     {
-        //for each detector task run (or await) start measure queue
+
         public void StartMeasurements()
         {
             _nLogger.Info($"starts measurements of the sample sets");
@@ -88,11 +88,12 @@ namespace Measurements.Core
             }
             catch (ArgumentNullException)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Детектор '{dName}' не найден в списке доступных детекторов для панели управления сессиями. Либо он уже используется либо он не доступен.", Level = NLog.LogLevel.Error });
+                //TODO: russian language returns "??????? ..."
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Detector '{dName}' was not found in the list of available detectors for the session. Either it already in use or it has hardware error", Level = NLog.LogLevel.Error });
             }
             catch (InvalidOperationException)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Все детекторы уже заняты в других сессиях или не доступны по причине проблем с оборудованием. Проверьте соединения с детекторами вручную.", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"All detectors already in use or no-one is not available. Please, check connection with the detector by your hand", Level = NLog.LogLevel.Error });
             }
             catch (Exception ex)
             {
@@ -123,11 +124,11 @@ namespace Measurements.Core
             }
             catch (ArgumentNullException)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Детектор '{dName}' не найден в списке доступных для сессии детекторов. Скорее всего он не был добавлен.", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Detector '{dName}' was not found in the list of detectors which managed by the session. The most probably you didn't add it", Level = NLog.LogLevel.Error });
             }
             catch (InvalidOperationException)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Детектор с заданным именем '{dName}' отсутствует в списке детекторов сессии.", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Detector with specified name '{dName}' doesn't exist in the list of detectos which managed by the session", Level = NLog.LogLevel.Error });
             }
             catch (Exception ex)
             {
@@ -163,10 +164,8 @@ namespace Measurements.Core
                     IDetector d = (Detector) o;
                     DetectorEventsArgs darg = (DetectorEventsArgs) args;
 
-                    //_nLogger.Info($"has received message from the detector {d.Name}");
                     if (d.Status == DetectorStatus.ready)
                     {
-                        //_nLogger.Info($"The message is '{darg.Message}'");
                         SaveSpectra(ref d);
                         NextSample(ref d);
                         if (SpreadedSamples[d.Name].Any())

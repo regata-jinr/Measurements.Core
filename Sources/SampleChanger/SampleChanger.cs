@@ -8,5 +8,6 @@ namespace Measurements.Core
 {
     class SampleChanger
     {
+        const short SizeOfDisk = 45;
     }
 }
