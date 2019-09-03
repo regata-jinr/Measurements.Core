@@ -10,6 +10,7 @@ namespace Measurements.Core
         void   NextSample(ref IDetector d);
         void   PrevSample(ref IDetector d);
         void   MakeSampleCurrentOnDetector(ref IrradiationInfo ii, ref IDetector det);
+        void   MakeSamplesCurrentOnAllDetectorsByNumber(int n);
         void   PauseMeasurements();
         void   StopMeasurements(); //Pause and Clear
         void   SaveSpectra(ref IDetector d); //if connection closed save locally to json
@@ -26,6 +27,7 @@ namespace Measurements.Core
         event EventHandler    MeasurementDone;
 
         AcquisitionModes      CountMode              { get; }
+        SpreadOptions         SpreadOption           { get; set; }
         int                   Counts                 { get; }
         string                Type                   { get; set; }
         string                Name                   { get; }

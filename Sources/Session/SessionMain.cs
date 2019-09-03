@@ -10,10 +10,15 @@ namespace Measurements.Core
     //TODO: add tests
     //TODO: add docs
 
+    public enum SpreadOptions { container, uniform, inOrder }
+
     public partial class Session : ISession, IDisposable
     {
         private NLog.Logger        _nLogger;
         private string _name;
+
+        public SpreadOptions SpreadOption { get; set; }
+
         public string Name
         {
             get { return _name; }
@@ -107,6 +112,7 @@ namespace Measurements.Core
                                             { "aCountNormal", CanberraDeviceAccessLib.AcquisitionModes.aCountNormal }
                                         };
             MeasurementDone += MeasurementDoneHandler;
+            SpreadOption = SpreadOptions.container;
         }
 
         public Session(SessionInfo session) : this()

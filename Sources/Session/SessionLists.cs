@@ -38,26 +38,67 @@ namespace Measurements.Core
             }
         }
 
-        //TODO: add event in case of sample number increase the size of disk, but not break the measurements!
-        private void SpreadLLISamplesToDetectors()
+        private void CheckExcessionOfDiskSize()
+        {
+                //if ((IrradiationList.Count / ManagedDetectors.Count) > SampleChanger.SizeOfDisk)
+                //ExcessTheSizeOfDiskEvent?.Invoke(this, EventArgs.Empty);
+        }
+
+        //TODO: add event in case of sample number increase the size of disk, but user should decide break the measurements or not!
+        private void SpreadSamplesByContainer()
         {
             try
             {
+                if (Type.Contains("SLI"))
+                {
+                    SpreadSamplesUniform();
+                    throw new ArgumentException("Spreading by container could not be used for measurements of samples type of 'SLI'. Uniform option was used, also you can use spreading by the order for this type");
+                }
+
+                CheckExcessionOfDiskSize();
+
                 var NumberOfContainers = IrradiationList.Select(ir => ir.Container).Distinct().ToArray();
+
                 int i = 0;
 
                 foreach (var conNum in NumberOfContainers)
                 {
                     var sampleList = new List<IrradiationInfo> (IrradiationList.Where(ir => ir.Container == conNum).ToList());
                     SpreadedSamples[ManagedDetectors[i].Name].AddRange(sampleList);
-                    _nLogger.Info($"Samples {sampleList.First().SetKey}-[{(string.Join(",", sampleList))}] will measure on the detector {ManagedDetectors[i].Name}");
                     i++;
                     if (i > ManagedDetectors.Count())
                         i = 0;
                 }
 
-                foreach (var d in ManagedDetectors)
-                    d.CurrentSample = SpreadedSamples[d.Name][0];
+                MakeSamplesCurrentOnAllDetectorsByNumber();
+            }
+            catch (ArgumentException ae)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = ae.Message, Level = NLog.LogLevel.Warn });
+            }
+             catch (Exception e)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{e.Message}", Level = NLog.LogLevel.Error });
+            }
+        }
+
+        private void SpreadSamplesUniform()
+        {
+            try
+            {
+                CheckExcessionOfDiskSize();
+
+                int i = 0;
+
+                foreach (var sample in IrradiationList)
+                {
+                    SpreadedSamples[ManagedDetectors[i].Name].Add(sample);
+                    i++;
+                    if (i > ManagedDetectors.Count())
+                        i = 0;
+                }
+
+                MakeSamplesCurrentOnAllDetectorsByNumber();
             }
             catch (Exception e)
             {
@@ -65,14 +106,23 @@ namespace Measurements.Core
             }
         }
 
-        //TODO: add option for spreading (for lli by containers, or uniform, or by the order)
-        // uniform means - count all samples, then divide to count of detectors (pay attention to boundaries)
-        // by the order means first {sizeOfDisk} to first detector so on....
-        private void SpreaSLISampleToDetectors()
+        private void SpreadSamplesByTheOrder()
         {
             try
             {
+                CheckExcessionOfDiskSize();
 
+                int i = 0;
+
+                foreach (var sample in IrradiationList)
+                {
+                    SpreadedSamples[ManagedDetectors[i].Name].Add(sample);
+                    i++;
+                    if (i > SampleChanger.SizeOfDisk)
+                        i = 0;
+                }
+
+                MakeSamplesCurrentOnAllDetectorsByNumber();
             }
             catch (Exception e)
             {
@@ -97,12 +147,14 @@ namespace Measurements.Core
                         SpreadedSamples[dName].Clear();
                 }
 
-                if (Type.Contains("LLI"))
-                    SpreadLLISamplesToDetectors();
-                else if (Type.Contains("SLI"))
-                    SpreaSLISampleToDetectors();
+                if (SpreadOption == SpreadOptions.container)
+                    SpreadSamplesByContainer();
+                else if (SpreadOption == SpreadOptions.inOrder)
+                    SpreadSamplesByTheOrder();
+                else if (SpreadOption == SpreadOptions.uniform)
+                    SpreadSamplesUniform();
                 else
-                    throw new Exception("Type of measurement was not recognized by the program. Use only 'SLI', 'LLI-1', 'LLI-2'"); 
+                    throw new Exception("Type of spreaded options doesn't recognize"); 
 
                 foreach (var d in ManagedDetectors)
                     d.CurrentSample = SpreadedSamples[d.Name][0];

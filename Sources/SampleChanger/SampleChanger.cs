@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace Measurements.Core
 {
-    class SampleChanger
+     public class SampleChanger
     {
-        const short SizeOfDisk = 45;
+        public const short SizeOfDisk = 45;
     }
 }

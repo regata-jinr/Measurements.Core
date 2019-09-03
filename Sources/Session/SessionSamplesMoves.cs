@@ -20,6 +20,15 @@ namespace Measurements.Core
                     
         }
 
+        public void MakeSamplesCurrentOnAllDetectorsByNumber(int n = 0)
+        {
+            foreach (var d in ManagedDetectors)
+            {
+                _nLogger.Info($"Samples {SpreadedSamples[d.Name].First().SetKey}-[{(string.Join(",", SpreadedSamples[d.Name]))}] will measure on the detector {d.Name}");
+                d.CurrentSample = SpreadedSamples[d.Name][n];
+            }
+        }
+
         public void MakeSampleCurrentOnDetector(ref IrradiationInfo ii, ref IDetector d)
         {
             _nLogger.Info($"Make sample {ii.ToString()} current on detector {d.Name}");
