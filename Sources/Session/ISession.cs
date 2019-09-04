@@ -21,7 +21,7 @@ namespace Measurements.Core
         void   AttachDetector(string dName);
         void   DetachDetector(string dName);
         void   SpreadSamplesToDetectors();
-        void SetAcquireModeAndDuration(CanberraDeviceAccessLib.AcquisitionModes acqm, int duration);
+        void   SetAcquireDurationAndMode(int duration, AcquisitionModes acqm = AcquisitionModes.aCountToRealTime);
 
         event EventHandler    SessionComplete;
         event EventHandler    MeasurementDone;

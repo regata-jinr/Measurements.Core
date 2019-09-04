@@ -68,10 +68,10 @@ namespace Measurements.Core
         public event EventHandler SessionComplete;
         public event EventHandler MeasurementDone;
 
-        public void SetAcquireModeAndDuration(CanberraDeviceAccessLib.AcquisitionModes acqm, int duration)
+        public void SetAcquireDurationAndMode(int duration, CanberraDeviceAccessLib.AcquisitionModes acqm = CanberraDeviceAccessLib.AcquisitionModes.aCountToRealTime)
         {
             foreach (var d in ManagedDetectors)
-                d.Options(acqm, duration);
+                d.SetAcqureCountsAndMode(duration, acqm);
         }
 
         public CanberraDeviceAccessLib.AcquisitionModes CountMode { get; }

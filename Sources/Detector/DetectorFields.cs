@@ -35,9 +35,6 @@ namespace Measurements.Core
         private DeviceAccessClass  _device;
         private string             _name;
         private int                _timeOutLimitSeconds;
-        private int                _countToRealTime;
-        private int                _countToLiveTime;
-        private int                _countNormal;
         private bool               _isDisposed;
         private DetectorStatus     _status;
         private ConnectOptions     _conOption;
@@ -45,12 +42,19 @@ namespace Measurements.Core
         private IrradiationInfo    _currentSample;
         private const string       _baseDir = @"C:\GENIE2K\CAMFILES";
 
-        public MeasurementInfo     CurrentMeasurement { get; set; }
+        public MeasurementInfo CurrentMeasurement { get; set; }
         public event EventHandler  StatusChanged;
-        public event EventHandler  AcquiringStatusChanged;
+        public event EventHandler<DetectorEventsArgs>  AcquiringStatusChanged;
+
+        //protected virtual void OnProcessAcquiringMessaget(DetectorEventsArgs e)
+        //{
+            //AcquiringStatusChanged?.Invoke(this, e);
+        //}
+
+
         public bool IsPaused { get; private set; }
 
-        public IrradiationInfo    CurrentSample
+        public IrradiationInfo CurrentSample
         {
             get { return _currentSample; }
             set
@@ -83,36 +87,10 @@ namespace Measurements.Core
             }
         }
 
-        public int CountToRealTime
-        {
-            get { return _countToRealTime; }
-            set
-            {
-                _nLogger.Info($"Setting aCountToRealTime");
-                _device.SpectroscopyAcquireSetup(CanberraDeviceAccessLib.AcquisitionModes.aCountToRealTime, value);
-            }
-        }
+        public int CountToRealTime =>  int.Parse(GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_PREAL)); 
+        public int CountToLiveTime =>  int.Parse(GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_PLIVE)); 
 
-        public int CountToLiveTime
-        {
-            get { return _countToLiveTime; }
-            set
-            {
-                _nLogger.Info($"Setting aCountToLiveTime");
-                _device.SpectroscopyAcquireSetup(CanberraDeviceAccessLib.AcquisitionModes.aCountToLiveTime, value);
-            }
-        }
-
-        public int CountNormal
-        {
-            get { return _countNormal; }
-            set
-            {
-                _nLogger.Info($"Setting aCountNormal");
-                _device.SpectroscopyAcquireSetup(CanberraDeviceAccessLib.AcquisitionModes.aCountNormal, value);
-            }
-        }
-
+       
         /// <summary> Returns status of detector. {ready, off, busy, error}. </summary>
         /// <seealso cref="Enum Status"/>
         public DetectorStatus Status

@@ -6,9 +6,8 @@ namespace Measurements.Core
     public interface IDetector
     {
         string Name { get; }
-        int CountToRealTime { get; set; }
-        int CountToLiveTime { get; set; }
-        int CountNormal { get; set; }
+        int CountToRealTime { get; }
+        int CountToLiveTime { get; }
         void ConnectAsync();
         void Connect();
         DetectorStatus Status { get; }
@@ -16,7 +15,7 @@ namespace Measurements.Core
         bool IsHV { get; }
         bool IsConnected { get; }
         string ErrorMessage { get; }
-        void Options(CanberraDeviceAccessLib.AcquisitionModes opt, int param);
+        void SetAcqureCountsAndMode(int counts, CanberraDeviceAccessLib.AcquisitionModes mode);
         void Reconnect();
         void Save();
         void Disconnect();
@@ -31,6 +30,6 @@ namespace Measurements.Core
         IrradiationInfo CurrentSample { get; set; }
 
         event EventHandler StatusChanged;
-        event EventHandler AcquiringStatusChanged;
+        event EventHandler<DetectorEventsArgs> AcquiringStatusChanged;
     }
 }

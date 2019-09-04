@@ -13,6 +13,7 @@ namespace Measurements.Core
             _nLogger.Info($"starts measurements of the sample sets");
             try
             {
+                //TODO: here we need check if SpreadedSamples weren't fillied than call the method:
                 SpreadSamplesToDetectors();
 
                 foreach (var d in ManagedDetectors)
@@ -141,30 +142,27 @@ namespace Measurements.Core
         private void MeasurementDoneHandler(Object detObj, EventArgs eventArgs)
         {
 
+                _nLogger.Info($"Detector {((Detector)detObj).Name} has done measurement process");
+                _countOfDetectorsWichDone++;
+
             if (_countOfDetectorsWichDone == ManagedDetectors.Count)
             {
-                _nLogger.Info($"Detector {((Detector)detObj).Name} has done measurement process");
-                SessionComplete?.Invoke(this, eventArgs);
-                _countOfDetectorsWichDone = 0;
-            }
-            else
-            {
                 _nLogger.Info($"All detectors [{(string.Join(",", ManagedDetectors.Select(d => d.Name).ToArray()))}] has done measurement process");
-                _countOfDetectorsWichDone++;
+                _countOfDetectorsWichDone = 0;
+                SessionComplete?.Invoke(this, eventArgs);
             }
         }
 
-        private void ProcessAcquiringMessage(object o, EventArgs args)
-        {
+       private void ProcessAcquiringMessage(object o, DetectorEventsArgs args)
+       {
             try
             {
-                if (o is Detector && args is DetectorEventsArgs)
+                if (o is Detector)
                 {
                     //FIXME: how to avoid boxing gere? to use my own delegate?
                     IDetector d = (Detector) o;
-                    DetectorEventsArgs darg = (DetectorEventsArgs) args;
 
-                    if (d.Status == DetectorStatus.ready)
+                    if (d.Status == DetectorStatus.ready && args.AcquireMessageParam == (int)CanberraDeviceAccessLib.AdviseMessageMasks.amAcquireDone)
                     {
                         SaveSpectra(ref d);
                         NextSample(ref d);
@@ -185,7 +183,7 @@ namespace Measurements.Core
             {
                 Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{ex.Message}", Level = NLog.LogLevel.Error });
             }
-        }
+       }
 
         private string GenerateFileSpectraName(string detName)
         {
@@ -209,7 +207,7 @@ namespace Measurements.Core
                                                                        ).
                                                        Max(m => m.FileNumber);
 
-                return $"{detName.Substring(1,1)}{typeDict[Type]}{maxNumber}.cnf";
+                return $"{detName.Substring(1,1)}{typeDict[Type]}{maxNumber.ToString("D5")}.cnf";
             }
             catch (System.Data.SqlClient.SqlException sqle)
             {
@@ -234,7 +232,7 @@ namespace Measurements.Core
                                         ).
                                   Max(f => f.FileNumber);
 
-                return $"{detName.Substring(1,1)}{typeDict[Type]}{maxNumber}";
+                return $"{detName.Substring(1,1)}{typeDict[Type]}{maxNumber.ToString("D5")}";
             }
             catch (Microsoft.EntityFrameworkCore.DbUpdateException dbe) // for duplicates
             {

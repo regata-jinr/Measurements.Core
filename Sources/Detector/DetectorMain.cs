@@ -39,9 +39,6 @@ namespace Measurements.Core
                 Name = name;
                 _device.DeviceMessages += ProcessDeviceMessages;
                 _timeOutLimitSeconds = timeOutLimitSeconds * 1000;
-                _countToRealTime = 0;
-                _countToLiveTime = 0;
-                _countNormal = 0;
                 IsPaused = false;
                 Connect();
             }
@@ -83,7 +80,7 @@ namespace Measurements.Core
                 _nLogger.Info($"Has got message AcquireDone.");
                 response = "Acquire has done";
                 Status = DetectorStatus.ready;
-                CurrentMeasurement.DateTimeStart = DateTime.Now;
+                CurrentMeasurement.DateTimeFinish = DateTime.Now;
                 isForCalling = true;
             }
 
@@ -110,7 +107,7 @@ namespace Measurements.Core
             }
 
             if (isForCalling)
-                AcquiringStatusChanged?.Invoke(this, new DetectorEventsArgs { Message = response, Name = this.Name, Status = this.Status });
+                AcquiringStatusChanged?.Invoke(this, new DetectorEventsArgs { Message = response, AcquireMessageParam = lParam, Name = this.Name, Status = this.Status });
         }
 
         private Task ConnectInternalTask(CancellationToken c)
@@ -285,10 +282,10 @@ namespace Measurements.Core
 
         }
 
-        public void Options(CanberraDeviceAccessLib.AcquisitionModes opt, int param)
+        public void SetAcqureCountsAndMode(int counts, CanberraDeviceAccessLib.AcquisitionModes mode = AcquisitionModes.aCountToRealTime)
         {
-            _nLogger.Info($"Detector get Acquisition mode - '{opt}' and count number - '{param}'");
-            _device.SpectroscopyAcquireSetup(opt, param);
+            _nLogger.Info($"Detector get Acquisition mode - '{mode}' and count number - '{counts}'");
+            _device.SpectroscopyAcquireSetup(mode, counts);
         }
 
 
@@ -300,9 +297,6 @@ namespace Measurements.Core
         {
             try
             {
-                //TODO: assigmnet of params should be in one place (I also don't use current measurement param in Session)
-                CurrentMeasurement.Assistant = SessionControllerSingleton.ConnectionStringBuilder.UserID;
-
                 if (!IsPaused)
                     _device.Clear();
 
@@ -316,6 +310,7 @@ namespace Measurements.Core
 
                 _device.AcquireStart(); // already async
                 _nLogger.Info($"Acquiring in process...");
+                Status = DetectorStatus.busy;
                 CurrentMeasurement.DateTimeStart = DateTime.Now;
             }
             catch (Exception ex) 
@@ -348,8 +343,8 @@ namespace Measurements.Core
 
         }
 
-       /// <summary>
-        /// Stops acquiring. Means pause and clear.
+        /// <summary>
+        /// Stops acquiring. Means pause and clear and **generate acquire done event.**
         /// </summary>
         public void Stop()
         {
@@ -361,7 +356,7 @@ namespace Measurements.Core
                 _nLogger.Info($"Attempt to stop the acquiring");
                 _device.AcquireStop();
                 Status = DetectorStatus.ready;
-                _nLogger.Info($"Stop was successful. Detector ready to acquire again");
+                _nLogger.Info($"Stop was successful. Acquire done event will be generate. Detector ready to acquire again");
             }
             catch (Exception ex) 
             {
@@ -431,7 +426,9 @@ namespace Measurements.Core
         {
             try
             {
-                //TODO: add tests for null parameter
+                if (CurrentMeasurement == null || string.IsNullOrEmpty(CurrentMeasurement.Assistant) || string.IsNullOrEmpty(CurrentMeasurement.Type) || string.IsNullOrEmpty(CurrentSample.SampleKey))
+                    throw new ArgumentNullException("Some of principal parameters is null. Probably you don't specify the sample");
+
                 _nLogger.Info($"Filling information about sample: {CurrentMeasurement.ToString()}");
 
                 _device.Param[ParamCodes.CAM_T_STITLE]      = $"{CurrentSample.SampleKey}";// title
@@ -449,9 +446,13 @@ namespace Measurements.Core
                 _device.Param[ParamCodes.CAM_T_STYPE]       = CurrentMeasurement.Type;
                 _device.Param[ParamCodes.CAM_T_SGEOMTRY]    = CurrentMeasurement.Height.ToString();
             }
-            catch (Exception ex)
+            catch (ArgumentNullException aex)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{ex.Message}", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = aex.Message, Level = NLog.LogLevel.Error });
+            }
+             catch (Exception ex)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = ex.Message, Level = NLog.LogLevel.Error });
             }
        }
 
@@ -495,6 +496,7 @@ namespace Measurements.Core
     {
         public string         Name;
         public DetectorStatus Status;
+        public int            AcquireMessageParam;
         public string         Message;
     }
 

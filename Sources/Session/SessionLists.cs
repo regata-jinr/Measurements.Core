@@ -49,15 +49,15 @@ namespace Measurements.Core
         {
             try
             {
-                if (Type.Contains("SLI"))
-                {
-                    SpreadSamplesUniform();
-                    throw new ArgumentException("Spreading by container could not be used for measurements of samples type of 'SLI'. Uniform option was used, also you can use spreading by the order for this type");
-                }
-
                 CheckExcessionOfDiskSize();
 
-                var NumberOfContainers = IrradiationList.Select(ir => ir.Container).Distinct().ToArray();
+                var NumberOfContainers = IrradiationList.Select(ir => ir.Container).Distinct().OrderBy(ir => ir.Value).ToArray();
+
+                if (!NumberOfContainers.Any())
+                {
+                    SpreadSamplesUniform();
+                    throw new ArgumentException("Spreading by container could not be use for the measurements because samples don't have information about containers numbers. Uniform option was used, also you can use spreading by the order for this type");
+                }
 
                 int i = 0;
 
@@ -66,7 +66,7 @@ namespace Measurements.Core
                     var sampleList = new List<IrradiationInfo> (IrradiationList.Where(ir => ir.Container == conNum).ToList());
                     SpreadedSamples[ManagedDetectors[i].Name].AddRange(sampleList);
                     i++;
-                    if (i > ManagedDetectors.Count())
+                    if (i >= ManagedDetectors.Count())
                         i = 0;
                 }
 
@@ -154,10 +154,16 @@ namespace Measurements.Core
                 else if (SpreadOption == SpreadOptions.uniform)
                     SpreadSamplesUniform();
                 else
-                    throw new Exception("Type of spreaded options doesn't recognize"); 
+                {
+                    SpreadSamplesByContainer();
+                    throw new Exception("Type of spreaded options doesn't recognize. Spreaded by container has done.");
+                }
 
                 foreach (var d in ManagedDetectors)
+                {
                     d.CurrentSample = SpreadedSamples[d.Name][0];
+                    d.CurrentMeasurement.Assistant = SessionControllerSingleton.ConnectionStringBuilder.UserID;
+                }
             }
             catch (ArgumentOutOfRangeException ae)
             {

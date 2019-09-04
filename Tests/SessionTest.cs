@@ -8,12 +8,11 @@ namespace Measurements.Core.Tests
 
     public class SessionFixture
     {
-        public Session session;
+        public ISession session;
 
         public SessionFixture()
         {
-            //TODO: add test for sli and lli (for sli spreading logic should be different!)
-            //TODO: something wrong in filling info. looks like current sample on detector doesn't assign!
+            //TODO: add test for sli and lli 
             SessionControllerSingleton.InitializeDBConnectionString(@"Server=RUMLAB\REGATALOCAL;Database=NAA_DB_TEST;Trusted_Connection=True;");
             SessionControllerSingleton.ConnectionStringBuilder.UserID = "bdrum";
             session = new Session();
@@ -25,10 +24,10 @@ namespace Measurements.Core.Tests
             // TODO: here I break the order of measurement. Assign count mode and counts number before creation detectors. Add extension for such case!
 
             session.AttachDetector("D1");
-            //session.AttachDetector("D5");
+            session.AttachDetector("D5");
             //session.AttachDetector("D6");
 
-            session.SetAcquireModeAndDuration(CanberraDeviceAccessLib.AcquisitionModes.aCountToRealTime, 10);
+            session.SetAcquireDurationAndMode(20);
         }
     }
 
@@ -67,7 +66,7 @@ namespace Measurements.Core.Tests
 
 
         [Fact]
-        void StartPauseContinueStopSingleMeasurements()
+        void StartPauseContinuePauseSingleMeasurements()
         {
 
             sessionFixture.session.ClearMeasurements();
@@ -79,7 +78,7 @@ namespace Measurements.Core.Tests
             sessionFixture.session.PauseMeasurements();
             foreach (var d in sessionFixture.session.ManagedDetectors)
             {
-                Assert.Equal(10, double.Parse(d.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_PREAL)), 2);
+                Assert.Equal(d.CountToRealTime, double.Parse(d.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_PREAL)), 2);
 
                 double realTime = double.Parse(d.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_EREAL));
                 Assert.NotEqual(0, realTime);
@@ -94,7 +93,9 @@ namespace Measurements.Core.Tests
 
             Assert.True(sessionFixture.session.ManagedDetectors.All(d => d.Status == DetectorStatus.busy));
 
-            sessionFixture.session.StopMeasurements();
+            System.Threading.Thread.Sleep(4000);
+
+            sessionFixture.session.PauseMeasurements();
 
             Assert.True(sessionFixture.session.ManagedDetectors.All(d => d.Status == DetectorStatus.ready));
 
@@ -107,8 +108,42 @@ namespace Measurements.Core.Tests
         }
 
         [Fact]
-        void   NextSample()
+        void NextSample()
         {
+            Assert.True(sessionFixture.session.ManagedDetectors.Any());
+
+            foreach (var d in sessionFixture.session.ManagedDetectors)
+            {
+                Assert.Null(d.CurrentSample.Assistant);
+                Assert.Null(d.CurrentMeasurement.Assistant);
+                Assert.False(sessionFixture.session.SpreadedSamples[d.Name].Any());
+            }
+
+            Assert.Equal(SpreadOptions.container, sessionFixture.session.SpreadOption);
+
+            sessionFixture.session.SpreadSamplesToDetectors();            
+
+            foreach (var d in sessionFixture.session.ManagedDetectors)
+            {
+                Assert.NotNull(d.CurrentSample.Assistant);
+                Assert.NotNull(d.CurrentMeasurement.Assistant);
+                Assert.True(sessionFixture.session.SpreadedSamples[d.Name].Any());
+                Assert.Equal(0, sessionFixture.session.SpreadedSamples[d.Name].IndexOf(d.CurrentSample));
+            }
+
+
+            foreach (IDetector d in sessionFixture.session.ManagedDetectors)
+            {
+                //TODO: think about logic: why should I use references if I have list of managed detectors in session....
+                sessionFixture.session.NextSample(ref d);
+                Assert.NotNull(d.CurrentSample.Assistant);
+                Assert.NotNull(d.CurrentMeasurement.Assistant);
+                Assert.True(sessionFixture.session.SpreadedSamples[d.Name].Any());
+                Assert.Equal(1, sessionFixture.session.SpreadedSamples[d.Name].IndexOf(d.CurrentSample));
+            }
+
+
+
 
 
         }

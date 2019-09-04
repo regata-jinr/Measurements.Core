@@ -65,7 +65,11 @@ namespace Measurements.Core.Tests
         [Fact]
         public void StartPauseContinueClear()
         {
-            _detectors.d1.CountToRealTime = 5;
+            _detectors.d1.SetAcqureCountsAndMode(5, CanberraDeviceAccessLib.AcquisitionModes.aCountToLiveTime);
+            Assert.Equal(5, _detectors.d1.CountToLiveTime);
+            _detectors.d1.SetAcqureCountsAndMode(5);
+            Assert.Equal(5, _detectors.d1.CountToRealTime);
+
             _detectors.d1.Start();
             Assert.False(_detectors.d1.IsPaused);
             System.Threading.Thread.Sleep(2000);
@@ -89,7 +93,7 @@ namespace Measurements.Core.Tests
         public void StartStopContinue()
         {
             Assert.False(_detectors.d1.IsPaused);
-            _detectors.d1.CountToRealTime = 3;
+            _detectors.d1.SetAcqureCountsAndMode(3);
             _detectors.d1.Start();
             Assert.False(_detectors.d1.IsPaused);
             System.Threading.Thread.Sleep(2000);
@@ -131,7 +135,7 @@ namespace Measurements.Core.Tests
             _detectors.d1.CurrentMeasurement.Height = 10;
             _detectors.d1.CurrentMeasurement.Type = "SLI";
             _detectors.d1.CurrentMeasurement.FileSpectra = "testD1.cnf";
-            _detectors.d1.CountToRealTime = 3;
+            _detectors.d1.SetAcqureCountsAndMode(3);
 
             _detectors.d1.Start();
             _detectors.d1.CurrentMeasurement.Assistant = "bdrum";

@@ -12,11 +12,11 @@ namespace Measurements.Core
         {
             _nLogger.Info($"Change sample {d.CurrentSample.ToString()} to the next one for dtector {d.Name}");
             int currentIndex = SpreadedSamples[d.Name].IndexOf(d.CurrentSample);
-            SpreadedSamples[d.Name].Remove(d.CurrentSample);
+            //SpreadedSamples[d.Name].Remove(d.CurrentSample);
             if (SpreadedSamples[d.Name].Any())
                 d.CurrentSample = SpreadedSamples[d.Name][++currentIndex];
             else
-                MeasurementDone.Invoke(d, EventArgs.Empty);
+                MeasurementDone?.Invoke(d, EventArgs.Empty);
                     
         }
 
@@ -24,7 +24,7 @@ namespace Measurements.Core
         {
             foreach (var d in ManagedDetectors)
             {
-                _nLogger.Info($"Samples {SpreadedSamples[d.Name].First().SetKey}-[{(string.Join(",", SpreadedSamples[d.Name]))}] will measure on the detector {d.Name}");
+                _nLogger.Info($"Samples {SpreadedSamples[d.Name].First().SetKey}-[{(string.Join(",", SpreadedSamples[d.Name].OrderBy(ss => ss.SampleNumber).Select(ss => ss.SampleNumber).ToArray()))}] will measure on the detector {d.Name}");
                 d.CurrentSample = SpreadedSamples[d.Name][n];
             }
         }
