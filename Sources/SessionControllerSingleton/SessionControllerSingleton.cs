@@ -130,7 +130,7 @@ namespace Measurements.Core
         {
             CheckSessionControllerInitialisation();
 
-            logger.Info("Loading session parameters from DB");
+            logger.Info($"Loading session with name '{sName}' from DB");
             try
             {
                 var sessionContext = new InfoContext();

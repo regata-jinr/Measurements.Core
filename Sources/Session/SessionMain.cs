@@ -87,7 +87,6 @@ namespace Measurements.Core
         public List<IDetector> ManagedDetectors { get; }
         private bool _isDisposed = false;
         private int _countOfDetectorsWichDone = 0;
-        private Dictionary<string, CanberraDeviceAccessLib.AcquisitionModes> _countModeDict;
 
         public Session()
         {
@@ -95,35 +94,30 @@ namespace Measurements.Core
 
             _nLogger.Info("Initialisation of session has began");
 
-            _height = 2.5m;
-            _infoContext = new InfoContext();
+            _height             = 2.5m;
+            _infoContext        = new InfoContext();
             IrradiationDateList = new List<DateTime?>();
-            IrradiationList = new List<IrradiationInfo>();
-            MeasurementList = new List<MeasurementInfo>();
-            CurrentMeasurement = new MeasurementInfo();
-            CurrentSample = new IrradiationInfo();
-            ManagedDetectors = new List<IDetector>();
-            SpreadedSamples = new Dictionary<string, List<IrradiationInfo>>();
-            CountMode = CanberraDeviceAccessLib.AcquisitionModes.aCountToRealTime;
-            _countModeDict = new Dictionary<string, CanberraDeviceAccessLib.AcquisitionModes>
-                                        {
-                                            { "aCountToLiveTime", CanberraDeviceAccessLib.AcquisitionModes.aCountToLiveTime },
-                                            { "aCountToRealTime", CanberraDeviceAccessLib.AcquisitionModes.aCountToRealTime },
-                                            { "aCountNormal", CanberraDeviceAccessLib.AcquisitionModes.aCountNormal }
-                                        };
-            MeasurementDone += MeasurementDoneHandler;
-            SpreadOption = SpreadOptions.container;
+            IrradiationList     = new List<IrradiationInfo>();
+            MeasurementList     = new List<MeasurementInfo>();
+            CurrentMeasurement  = new MeasurementInfo();
+            CurrentSample       = new IrradiationInfo();
+            ManagedDetectors    = new List<IDetector>();
+            SpreadedSamples     = new Dictionary<string, List<IrradiationInfo>>();
+            CountMode           = CanberraDeviceAccessLib.AcquisitionModes.aCountToRealTime;
+            MeasurementDone     += MeasurementDoneHandler;
+            SpreadOption        = SpreadOptions.container;
         }
 
         public Session(SessionInfo session) : this()
         {
-            _nLogger.Info($"Session with parameters {session} will be loaded");
-            Name = session.Name;
-            Type = session.Type;
-            Counts = session.Duration;
-            Height = session.Height;
-            CountMode = _countModeDict[session.CountMode];
-            Note = session.Note;
+            _nLogger.Info($"Session with parameters {session} will be created");
+            Name                    = session.Name;
+            Type                    = session.Type;
+            Counts                  = session.Duration;
+            Height                  = session.Height;
+            CountMode               = (CanberraDeviceAccessLib.AcquisitionModes)Enum.Parse(typeof(CanberraDeviceAccessLib.AcquisitionModes), session.CountMode);
+            SpreadOption            = (SpreadOptions)Enum.Parse(typeof(SpreadOptions), session.SpreadOption);
+            Note                    = session.Note;
             
             foreach (var dName in session.DetectorsNames.Split(','))
                 AttachDetector(dName);                
