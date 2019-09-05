@@ -219,10 +219,10 @@ namespace Measurements.Core
 
                 FillFileInfo();
 
-                _device.Save($"{_baseDir}\\{CurrentMeasurement.FileSpectra}", true);
+                _device.Save($"{_baseDir}\\{CurrentMeasurement.FileSpectra}.cnf", true);
 
                 if (File.Exists($"{_baseDir}\\{CurrentMeasurement.FileSpectra}"))
-                    _nLogger.Info($"File '{_baseDir}\\{CurrentMeasurement.FileSpectra}' saved");
+                    _nLogger.Info($"File '{_baseDir}\\{CurrentMeasurement.FileSpectra}.cnf' saved");
                 else _nLogger.Error($"Some problems during saving. File {CurrentMeasurement.FileSpectra} doesn't exist.");
             }
             catch (ArgumentNullException)

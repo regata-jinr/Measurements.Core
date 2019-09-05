@@ -70,10 +70,12 @@ namespace Measurements.Core
         {
             foreach (var d in ManagedDetectors)
                 d.SetAcqureCountsAndMode(duration, acqm);
+            CountMode = acqm;
+            Counts = duration;
         }
 
-        public CanberraDeviceAccessLib.AcquisitionModes CountMode { get; }
-        public int Counts { get; }
+        public CanberraDeviceAccessLib.AcquisitionModes CountMode { get; private set; }
+        public int Counts { get; private set; }
 
         private InfoContext _infoContext;
         public IrradiationInfo CurrentSample { get; private set; }
@@ -85,6 +87,8 @@ namespace Measurements.Core
         public List<IDetector> ManagedDetectors { get; }
         private bool _isDisposed = false;
         private int _countOfDetectorsWichDone = 0;
+
+        public override string ToString() => $"{Name}-{Type}-{string.Join(",", ManagedDetectors.Select(d => d.Name).ToArray())}-{CountMode}-{Counts}-{SpreadOption}-{Height}-{SessionControllerSingleton.ConnectionStringBuilder.UserID}-{Note}";
 
         public Session()
         {
@@ -122,7 +126,7 @@ namespace Measurements.Core
 
         }
 
-        public void SaveSession(string nameOfSession, bool isBasic=false, string note = "")
+        public void SaveSession(string nameOfSession, bool isBasic=false)
         {
             _nLogger.Info($"Session with parameters {this} will be save into DB {(isBasic ? "as basic" : "as customed" )} session with name '{nameOfSession}'");
 
@@ -143,11 +147,13 @@ namespace Measurements.Core
                     Height = this.Height,
                     Name = this.Name,
                     Type = this.Type,
+                    SpreadOption = this.SpreadOption.ToString(),
                     Assistant = assistant,
-                    Note = note,
+                    Note = this.Note,
                     DetectorsNames = string.Join(",", ManagedDetectors.Select(n => n.Name).ToArray())
                 }
                 );
+                sessionContext.SaveChanges();
             }
             catch (ArgumentNullException arne)
             {

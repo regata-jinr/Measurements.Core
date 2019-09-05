@@ -11,8 +11,12 @@ namespace Measurements.Core
         public void StartMeasurements()
         {
             _nLogger.Info($"starts measurements of the sample sets");
+
             try
             {
+                if (Counts <= 0 || string.IsNullOrEmpty(Type) || IrradiationList.Count == 0)
+                    throw new ArgumentException($"Either some of principal arguments doesnt assign: Duration={Counts}, type of measurements={Type} or list of samples is empty {IrradiationList.Count}");
+
                 //TODO: here we need check if SpreadedSamples weren't fillied than call the method:
                 SpreadSamplesToDetectors();
 
@@ -31,7 +35,13 @@ namespace Measurements.Core
             {
                 Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = are.Message, Level = NLog.LogLevel.Warn });
             }
+            catch (Exception e)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Something went wrong when measurements has started:{Environment.NewLine}{e.Message}", Level = NLog.LogLevel.Error });
+            }
+        
         }
+        //TODO: wrap all operation to try - catch. In the other case it will be not possible to continue working with application.
         public void StopMeasurements()
         {
             _nLogger.Info($"stops measurements by user command");
@@ -201,7 +211,7 @@ namespace Measurements.Core
                                                                        ).
                                                        Max(m => m.FileNumber);
 
-                return $"{detName.Substring(1,1)}{typeDict[Type]}{maxNumber.ToString("D5")}.cnf";
+                return $"{detName.Substring(1,1)}{typeDict[Type]}{(++maxNumber).ToString("D5")}";
             }
             catch (System.Data.SqlClient.SqlException sqle)
             {
@@ -226,7 +236,7 @@ namespace Measurements.Core
                                         ).
                                   Max(f => f.FileNumber);
 
-                return $"{detName.Substring(1,1)}{typeDict[Type]}{maxNumber.ToString("D5")}";
+                return $"{detName.Substring(1,1)}{typeDict[Type]}{(++maxNumber).ToString("D5")}";
             }
             catch (Microsoft.EntityFrameworkCore.DbUpdateException dbe) // for duplicates
             {

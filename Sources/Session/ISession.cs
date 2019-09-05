@@ -14,7 +14,7 @@ namespace Measurements.Core
         void   PauseMeasurements();
         void   StopMeasurements(); //Pause and Clear
         void   SaveSpectra(ref IDetector d); //if connection closed save locally to json
-        void   SaveSession(string nameOfSession, bool isBasic = false, string note = "");
+        void   SaveSession(string nameOfSession, bool isBasic = false);
         void   ContinueMeasurements();
         void   ClearMeasurements();
         void   Dispose();
