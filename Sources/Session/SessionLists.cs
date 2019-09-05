@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using AutoMapper;
 
 namespace Measurements.Core
@@ -163,7 +162,9 @@ namespace Measurements.Core
                 {
                     d.CurrentSample = SpreadedSamples[d.Name][0];
                     d.CurrentMeasurement.Assistant = SessionControllerSingleton.ConnectionStringBuilder.UserID;
+                    _nLogger.Info($"Samples [{(string.Join(",", SpreadedSamples[d.Name].OrderBy(ss => $"{ss.SetKey}-{ss.SampleNumber}").Select(ss => $"{ss.SetKey}-{ss.SampleNumber}").ToArray()))}] will measure on the detector {d.Name}");
                 }
+
             }
             catch (ArgumentOutOfRangeException ae)
             {

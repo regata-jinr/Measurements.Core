@@ -108,6 +108,12 @@ namespace Measurements.Core.Tests
         }
 
         [Fact]
+        void SpreadSamples()
+        {
+            
+        }
+
+        [Fact]
         void NextSample()
         {
             Assert.True(sessionFixture.session.ManagedDetectors.Any());
@@ -126,38 +132,104 @@ namespace Measurements.Core.Tests
             foreach (var d in sessionFixture.session.ManagedDetectors)
             {
                 Assert.NotNull(d.CurrentSample.Assistant);
-                Assert.NotNull(d.CurrentMeasurement.Assistant);
                 Assert.True(sessionFixture.session.SpreadedSamples[d.Name].Any());
                 Assert.Equal(0, sessionFixture.session.SpreadedSamples[d.Name].IndexOf(d.CurrentSample));
             }
 
-
+            IDetector det = null;
             foreach (IDetector d in sessionFixture.session.ManagedDetectors)
             {
-                //TODO: think about logic: why should I use references if I have list of managed detectors in session....
-                sessionFixture.session.NextSample(ref d);
+                det = d;
+                sessionFixture.session.NextSample(ref det);
                 Assert.NotNull(d.CurrentSample.Assistant);
-                Assert.NotNull(d.CurrentMeasurement.Assistant);
                 Assert.True(sessionFixture.session.SpreadedSamples[d.Name].Any());
                 Assert.Equal(1, sessionFixture.session.SpreadedSamples[d.Name].IndexOf(d.CurrentSample));
             }
 
-
-
-
-
+            foreach (IDetector d in sessionFixture.session.ManagedDetectors)
+            {
+                det = d;
+                sessionFixture.session.NextSample(ref det);
+                sessionFixture.session.NextSample(ref det);
+                sessionFixture.session.NextSample(ref det);
+                Assert.NotNull(d.CurrentSample.Assistant);
+                Assert.True(sessionFixture.session.SpreadedSamples[d.Name].Any());
+                Assert.Equal(4, sessionFixture.session.SpreadedSamples[d.Name].IndexOf(d.CurrentSample));
+            }
         }
 
         [Fact]
         void   PrevSample()
         {
+            Assert.True(sessionFixture.session.ManagedDetectors.Any());
+
+            foreach (var d in sessionFixture.session.ManagedDetectors)
+            {
+                Assert.Null(d.CurrentSample.Assistant);
+                Assert.Null(d.CurrentMeasurement.Assistant);
+                Assert.False(sessionFixture.session.SpreadedSamples[d.Name].Any());
+            }
+
+            Assert.Equal(SpreadOptions.container, sessionFixture.session.SpreadOption);
+
+            sessionFixture.session.SpreadSamplesToDetectors();            
+
+            sessionFixture.session.MakeSamplesCurrentOnAllDetectorsByNumber(1);            
+
+            foreach (var d in sessionFixture.session.ManagedDetectors)
+            {
+                Assert.NotNull(d.CurrentSample.Assistant);
+                Assert.True(sessionFixture.session.SpreadedSamples[d.Name].Any());
+                Assert.Equal(1, sessionFixture.session.SpreadedSamples[d.Name].IndexOf(d.CurrentSample));
+            }
+
+            IDetector det = null;
+            foreach (IDetector d in sessionFixture.session.ManagedDetectors)
+            {
+                det = d;
+                sessionFixture.session.PrevSample(ref det);
+                Assert.NotNull(d.CurrentSample.Assistant);
+                Assert.True(sessionFixture.session.SpreadedSamples[d.Name].Any());
+                Assert.Equal(0, sessionFixture.session.SpreadedSamples[d.Name].IndexOf(d.CurrentSample));
+            }
+
+            foreach (IDetector d in sessionFixture.session.ManagedDetectors)
+            {
+                det = d;
+                sessionFixture.session.PrevSample(ref det);
+                Assert.Equal(0, sessionFixture.session.SpreadedSamples[d.Name].IndexOf(d.CurrentSample));
+            }
+
 
         }
 
         [Fact]
         void   MakeSampleCurrentOnDetector()
         {
+            Assert.True(sessionFixture.session.ManagedDetectors.Any());
 
+            foreach (var d in sessionFixture.session.ManagedDetectors)
+            {
+                Assert.Null(d.CurrentSample.Assistant);
+                Assert.Null(d.CurrentMeasurement.Assistant);
+                Assert.False(sessionFixture.session.SpreadedSamples[d.Name].Any());
+            }
+
+            Assert.Equal(SpreadOptions.container, sessionFixture.session.SpreadOption);
+
+            sessionFixture.session.SpreadSamplesToDetectors();
+
+            IDetector det = null;
+
+            foreach (IDetector d in sessionFixture.session.ManagedDetectors)
+            {
+                det = d;
+                var ii = sessionFixture.session.SpreadedSamples[d.Name][10];
+                sessionFixture.session.MakeSampleCurrentOnDetector(ref ii, ref det);
+                Assert.NotNull(d.CurrentSample.Assistant);
+                Assert.True(sessionFixture.session.SpreadedSamples[d.Name].Any());
+                Assert.Equal(10, sessionFixture.session.SpreadedSamples[d.Name].IndexOf(d.CurrentSample));
+            }
         }
 
         [Fact]
@@ -194,12 +266,26 @@ namespace Measurements.Core.Tests
         void   AttachDetector()
         {
 
+            Assert.False(SessionControllerSingleton.AvailableDetectors.Where(d => d.Name == "D1" || d.Name == "D5").Any());
+            Assert.True(sessionFixture.session.ManagedDetectors.All(d => d.Name == "D1" || d.Name == "D5"));
+
+            sessionFixture.session.AttachDetector("D6");
+
+            Assert.False(SessionControllerSingleton.AvailableDetectors.Where(d => d.Name == "D6").Any());
+            Assert.True(sessionFixture.session.ManagedDetectors.Where(d => d.Name == "D6").Any());
+
         }
 
         [Fact]
         void   DetachDetector()
         {
+            Assert.False(SessionControllerSingleton.AvailableDetectors.Where(d => d.Name == "D5").Any());
+            Assert.True(sessionFixture.session.ManagedDetectors.Where(d => d.Name == "D5").Any());
 
+            sessionFixture.session.DetachDetector("D5");
+
+            Assert.True(SessionControllerSingleton.AvailableDetectors.Where(d => d.Name == "D5").Any());
+            Assert.False(sessionFixture.session.ManagedDetectors.Where(d => d.Name == "D5").Any());
         }
 
         [Fact]

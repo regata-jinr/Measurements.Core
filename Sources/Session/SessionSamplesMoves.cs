@@ -1,31 +1,46 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using AutoMapper;
 
 namespace Measurements.Core
 {
     public partial class Session : ISession, IDisposable
     {
-       public void NextSample(ref IDetector d)
+        public void NextSample(ref IDetector d)
         {
-            _nLogger.Info($"Change sample {d.CurrentSample.ToString()} to the next one for dtector {d.Name}");
-            int currentIndex = SpreadedSamples[d.Name].IndexOf(d.CurrentSample);
-            //SpreadedSamples[d.Name].Remove(d.CurrentSample);
-            if (SpreadedSamples[d.Name].Any())
-                d.CurrentSample = SpreadedSamples[d.Name][++currentIndex];
-            else
-                MeasurementDone?.Invoke(d, EventArgs.Empty);
+            try
+            { 
+                _nLogger.Info($"Change sample {d.CurrentSample.ToString()} to the next one for dtector {d.Name}");
+                int currentIndex = SpreadedSamples[d.Name].IndexOf(d.CurrentSample);
+                if (currentIndex != SpreadedSamples[d.Name].Count)
+                   d.CurrentSample = SpreadedSamples[d.Name][++currentIndex];
+               else
+                   MeasurementDone?.Invoke(d, EventArgs.Empty);
+            }
+            catch (IndexOutOfRangeException ie)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = ie.Message, Level = NLog.LogLevel.Warn });
+            }
+            catch (Exception ex)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = ex.Message, Level = NLog.LogLevel.Error });
+            }
                     
         }
 
         public void MakeSamplesCurrentOnAllDetectorsByNumber(int n = 0)
         {
-            foreach (var d in ManagedDetectors)
+            try
             {
-                _nLogger.Info($"Samples {SpreadedSamples[d.Name].First().SetKey}-[{(string.Join(",", SpreadedSamples[d.Name].OrderBy(ss => ss.SampleNumber).Select(ss => ss.SampleNumber).ToArray()))}] will measure on the detector {d.Name}");
-                d.CurrentSample = SpreadedSamples[d.Name][n];
+                foreach (var d in ManagedDetectors)
+                {
+                    if (n < 0 || n >= SpreadedSamples[d.Name].Count)
+                        throw new IndexOutOfRangeException($"For detector '{d.Name}' index out of range");
+
+                    d.CurrentSample = SpreadedSamples[d.Name][n];
+                }
+            }
+            catch (IndexOutOfRangeException ie)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = ie.Message, Level = NLog.LogLevel.Warn });
             }
         }
 
@@ -37,9 +52,22 @@ namespace Measurements.Core
 
        public void PrevSample(ref IDetector d)
         {
-            _nLogger.Info($"Change sample {d.CurrentSample.ToString()} to the previous one for dtector {d.Name}");
-            int currentIndex = SpreadedSamples[d.Name].IndexOf(d.CurrentSample);
-            d.CurrentSample = SpreadedSamples[d.Name][--currentIndex];
+            try
+            {
+                _nLogger.Info($"Change sample {d.CurrentSample.ToString()} to the previous one for dtector {d.Name}");
+                int currentIndex = SpreadedSamples[d.Name].IndexOf(d.CurrentSample);
+                if (currentIndex == 0)
+                    throw new IndexOutOfRangeException($"Current sample on detector {d.Name} has 0 index. Can't go to the previous sample");
+                d.CurrentSample = SpreadedSamples[d.Name][--currentIndex];
+            }
+            catch (IndexOutOfRangeException ie)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = ie.Message, Level = NLog.LogLevel.Warn });
+            }
+            catch (Exception ex)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = ex.Message, Level = NLog.LogLevel.Error });
+            }
         }
-    }
-}
+    } // class
+} // namespace

@@ -109,16 +109,13 @@ namespace Measurements.Core
                 if (ManagedDetectors == null && ManagedDetectors.Count == 0)
                 throw new InvalidOperationException();
 
-                // todo: check should i disconnect detector before removing?
-
                 var det = ManagedDetectors.Find(d => d.Name == dName);
                 if (det != null)
                 {
-                    det.Dispose(); //?
                     SessionControllerSingleton.AvailableDetectors.Add(det);
                     SpreadedSamples.Remove(det.Name);
                     ManagedDetectors.Remove(det);
-                    _nLogger.Info($"successfuly detached detector {det.Name}");
+                    _nLogger.Info($"Successfuly detached detector {det.Name}");
                 }
                 else
                     throw new ArgumentNullException();
@@ -137,8 +134,6 @@ namespace Measurements.Core
             }
         }
 
-
-        //TODO: parse messages correctly it's not only done message
         private void MeasurementDoneHandler(Object detObj, EventArgs eventArgs)
         {
 
@@ -159,7 +154,6 @@ namespace Measurements.Core
             {
                 if (o is Detector)
                 {
-                    //FIXME: how to avoid boxing gere? to use my own delegate?
                     IDetector d = (Detector) o;
 
                     if (d.Status == DetectorStatus.ready && args.AcquireMessageParam == (int)CanberraDeviceAccessLib.AdviseMessageMasks.amAcquireDone)
