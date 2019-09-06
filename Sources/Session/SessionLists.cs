@@ -93,7 +93,7 @@ namespace Measurements.Core
                 {
                     SpreadedSamples[ManagedDetectors[i].Name].Add(sample);
                     i++;
-                    if (i > ManagedDetectors.Count())
+                    if (i >= ManagedDetectors.Count())
                         i = 0;
                 }
 
@@ -111,14 +111,22 @@ namespace Measurements.Core
             {
                 CheckExcessionOfDiskSize();
 
-                int i = 0;
+                int i = 0; // number of detector
+                int n = 0; // number of sample
 
                 foreach (var sample in IrradiationList)
                 {
+
+                    if (i >= ManagedDetectors.Count())
+                        throw new Exception("Count of samples more then disk can contains");
                     SpreadedSamples[ManagedDetectors[i].Name].Add(sample);
-                    i++;
-                    if (i > SampleChanger.SizeOfDisk)
-                        i = 0;
+                    n++;
+
+                    if (n >= SampleChanger.SizeOfDisk)
+                    {
+                        i++;
+                        n = 0;
+                    }
                 }
 
                 MakeSamplesCurrentOnAllDetectorsByNumber();

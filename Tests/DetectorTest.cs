@@ -134,7 +134,7 @@ namespace Measurements.Core.Tests
             _detectors.d1.CurrentSample = sd;
             _detectors.d1.CurrentMeasurement.Height = 10;
             _detectors.d1.CurrentMeasurement.Type = "SLI";
-            _detectors.d1.CurrentMeasurement.FileSpectra = "testD1.cnf";
+            _detectors.d1.CurrentMeasurement.FileSpectra = "testD1";
             _detectors.d1.SetAcqureCountsAndMode(3);
 
             _detectors.d1.Start();

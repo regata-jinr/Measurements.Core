@@ -20,7 +20,7 @@ namespace Measurements.Core.Tests
 
             session.Type = "LLI-1";
 
-            session.CurrentIrradiationDate = DateTime.Parse("26.05.2019");
+            session.CurrentIrradiationDate = DateTime.Parse("24.05.2019");
 
             // TODO: here I break the order of measurement. Assign count mode and counts number before creation detectors. Add extension for such case!
 
@@ -326,25 +326,74 @@ namespace Measurements.Core.Tests
             var ic = new InfoContext();
             if (sessionFixture.session.Type == "SLI") return;
 
-            //TODO: should I sort it?
-            var irD1 = ic.Irradiations.Where(ir1 => ir1.DateTimeStart.HasValue && ir1.DateTimeStart.Value.Date.ToShortDateString() == "26.05.2019" && ir1.Type == "LLI-1" &&  (ir1.Container.Value == 1 || ir1.Container.Value == 4 || ir1.Container.Value == 6)).OrderBy(ir1 => $"{ir1.SetKey}-{ir1.SampleNumber}").ToList();
-            var irD5 = ic.Irradiations.Where(ir5 => ir5.DateTimeStart.HasValue && ir5.DateTimeStart.Value.Date.ToShortDateString() == "26.05.2019" && ir5.Type == "LLI-1" &&  (ir5.Container.Value == 3 || ir5.Container.Value == 5)).OrderBy(ir5 => $"{ir5.SetKey}-{ir5.SampleNumber}").ToList();
+            var irD1 = ic.Irradiations.Where(ir1 => ir1.DateTimeStart.HasValue && ir1.DateTimeStart.Value.Date.ToShortDateString() == "24.05.2019" && ir1.Type == "LLI-1" &&  (ir1.Container.Value == 1 || ir1.Container.Value == 3 || ir1.Container.Value == 5)).ToList();
+            var irD5 = ic.Irradiations.Where(ir5 => ir5.DateTimeStart.HasValue && ir5.DateTimeStart.Value.Date.ToShortDateString() == "24.05.2019" && ir5.Type == "LLI-1" &&  (ir5.Container.Value == 2 || ir5.Container.Value == 4 || ir5.Container.Value == 6)).ToList();
 
             sessionFixture.session.SpreadSamplesToDetectors();
 
-            Assert.True(irD1.SequenceEqual(sessionFixture.session.SpreadedSamples["D1"].OrderBy(ird1 => $"{ird1.SetKey}-{ird1.SampleNumber}").ToList()));
-            Assert.True(irD5.SequenceEqual(sessionFixture.session.SpreadedSamples["D5"].OrderBy(ird5 => $"{ird5.SetKey}-{ird5.SampleNumber}").ToList()));
+            foreach (var id1 in irD1)
+                Assert.True(sessionFixture.session.SpreadedSamples["D1"].Exists(idr1 => $"{idr1.SetKey}-{idr1.SampleNumber}" == $"{id1.SetKey}-{id1.SampleNumber}"));
+
+            foreach (var id5 in irD5)
+                Assert.True(sessionFixture.session.SpreadedSamples["D5"].Exists(idr5 => $"{idr5.SetKey}-{idr5.SampleNumber}" == $"{id5.SetKey}-{id5.SampleNumber}"));
+
         }
 
         [Fact]
         void SpreadSamplesToDetectorsUniformOption()
         {
+            sessionFixture.session.SpreadOption = SpreadOptions.uniform;
+
+            var ic = new InfoContext();
+
+            var irD = ic.Irradiations.Where(ir1 => ir1.DateTimeStart.HasValue && ir1.DateTimeStart.Value.Date.ToShortDateString() == "24.05.2019" && ir1.Type == "LLI-1").ToList();
+
+            var d1List = new List<IrradiationInfo>();
+            var d5List = new List<IrradiationInfo>();
+
+            foreach (var i in irD)
+            {
+                if (irD.IndexOf(i) % 2 == 0)
+                    d1List.Add(i);
+                else d5List.Add(i);
+            }
+
+            sessionFixture.session.SpreadSamplesToDetectors();
+            foreach (var id1 in d1List)
+                Assert.True(sessionFixture.session.SpreadedSamples["D1"].Exists(idr1 => $"{idr1.SetKey}-{idr1.SampleNumber}" == $"{id1.SetKey}-{id1.SampleNumber}"));
+
+            foreach (var id5 in d5List)
+                Assert.True(sessionFixture.session.SpreadedSamples["D5"].Exists(idr5 => $"{idr5.SetKey}-{idr5.SampleNumber}" == $"{id5.SetKey}-{id5.SampleNumber}"));
+
 
         }
 
         [Fact]
         void SpreadSamplesToDetectorsInOrderOption()
         {
+            sessionFixture.session.SpreadOption = SpreadOptions.inOrder;
+
+            var ic = new InfoContext();
+
+            var irD = ic.Irradiations.Where(ir1 => ir1.DateTimeStart.HasValue && ir1.DateTimeStart.Value.Date.ToShortDateString() == "24.05.2019" && ir1.Type == "LLI-1").ToList();
+
+            var d1List = new List<IrradiationInfo>();
+            var d5List = new List<IrradiationInfo>();
+
+            foreach (var i in irD)
+            {
+                if (irD.IndexOf(i) < 45)
+                    d1List.Add(i);
+                else d5List.Add(i);
+            }
+
+            sessionFixture.session.SpreadSamplesToDetectors();
+            foreach (var id1 in d1List)
+                Assert.True(sessionFixture.session.SpreadedSamples["D1"].Exists(idr1 => $"{idr1.SetKey}-{idr1.SampleNumber}" == $"{id1.SetKey}-{id1.SampleNumber}"));
+
+            foreach (var id5 in d5List)
+                Assert.True(sessionFixture.session.SpreadedSamples["D5"].Exists(idr5 => $"{idr5.SetKey}-{idr5.SampleNumber}" == $"{id5.SetKey}-{id5.SampleNumber}"));
+
 
         }
     }
