@@ -219,11 +219,15 @@ namespace Measurements.Core
 
                 FillFileInfo();
 
-                _device.Save($"{_baseDir}\\{CurrentMeasurement.FileSpectra}.cnf", true);
+                var _currentDir = $"D:\\Spectra\\{DateTime.Now.Year}\\{DateTime.Now.Month.ToString("D2")}\\{CurrentMeasurement.Type.ToLower()}";
+                Directory.CreateDirectory(_currentDir);
 
-                if (File.Exists($"{_baseDir}\\{CurrentMeasurement.FileSpectra}"))
-                    _nLogger.Info($"File '{_baseDir}\\{CurrentMeasurement.FileSpectra}.cnf' saved");
-                else _nLogger.Error($"Some problems during saving. File {CurrentMeasurement.FileSpectra} doesn't exist.");
+                _device.Save($"{_currentDir}\\{CurrentMeasurement.FileSpectra}.cnf", true);
+                FullFileSpectraName = $"{_currentDir}\\{CurrentMeasurement.FileSpectra}.cnf";
+
+                if (File.Exists($"{_currentDir}\\{CurrentMeasurement.FileSpectra}.cnf"))
+                    _nLogger.Info($"File '{_currentDir}\\{CurrentMeasurement.FileSpectra}.cnf' saved");
+                else _nLogger.Error($"Some problems during saving. File {CurrentMeasurement.FileSpectra}.cnf doesn't exist.");
             }
             catch (ArgumentNullException)
             {
@@ -312,6 +316,7 @@ namespace Measurements.Core
                 _nLogger.Info($"Acquiring in process...");
                 Status = DetectorStatus.busy;
                 CurrentMeasurement.DateTimeStart = DateTime.Now;
+                CurrentMeasurement.Detector = Name;
             }
             catch (Exception ex) 
             {

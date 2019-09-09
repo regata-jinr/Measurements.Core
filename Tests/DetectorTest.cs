@@ -28,7 +28,6 @@ namespace Measurements.Core.Tests
         private readonly ITestOutputHelper output;
         public Detectors _detectors;
         DataAccess f1;
-        string testDir = @"C:\GENIE2K\CAMFILES";
 
         public DetectorsTest(Detectors dets, ITestOutputHelper output)
         {
@@ -113,9 +112,6 @@ namespace Measurements.Core.Tests
         [Fact]
         public void StartStopSave()
         {
-            System.IO.File.Delete($"{testDir}\\test{_detectors.d1.Name}.cnf");
-            Assert.False(System.IO.File.Exists($"{testDir}\\test{_detectors.d1.Name}.cnf"));
-
             var sd = new IrradiationInfo()
             {
                 CountryCode = "RO",
@@ -149,9 +145,9 @@ namespace Measurements.Core.Tests
             Assert.Equal(DetectorStatus.ready, _detectors.d1.Status);
 
             System.Threading.Thread.Sleep(1000);
-            Assert.True(System.IO.File.Exists($"{testDir}\\test{_detectors.d1.Name}.cnf"));
+            Assert.True(System.IO.File.Exists(_detectors.d1.FullFileSpectraName));
 
-            f1.Open($"{testDir}\\test{_detectors.d1.Name}.cnf");
+            f1.Open(_detectors.d1.FullFileSpectraName);
 
             Assert.Equal($"{_detectors.d1.CurrentSample.SampleKey}", f1.Param[ParamCodes.CAM_T_STITLE].ToString()); // title
             Assert.Equal(_detectors.d1.CurrentSample.Assistant, f1.Param[ParamCodes.CAM_T_SCOLLNAME].ToString()); // operator's name
@@ -168,6 +164,9 @@ namespace Measurements.Core.Tests
             Assert.Equal(_detectors.d1.CurrentMeasurement.Height.ToString(), f1.Param[ParamCodes.CAM_T_SGEOMTRY].ToString());
 
             f1.Close();
+
+            System.IO.File.Delete(_detectors.d1.FullFileSpectraName);
+            Assert.False(System.IO.File.Exists(_detectors.d1.FullFileSpectraName));
         }
 
         [Fact]

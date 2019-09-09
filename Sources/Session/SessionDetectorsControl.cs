@@ -28,6 +28,7 @@ namespace Measurements.Core
                     d.CurrentMeasurement.Height = Height;
                     _nLogger.Info($"Height {Height} has specified for sample {d.CurrentMeasurement.ToString()} on detector {d.Name}");
                     d.CurrentMeasurement.Type = Type;
+                    d.CurrentMeasurement.Duration = Counts;
                     d.Start();
                 }
             }
@@ -169,6 +170,7 @@ namespace Measurements.Core
                     if (d.Status == DetectorStatus.ready && args.AcquireMessageParam == (int)CanberraDeviceAccessLib.AdviseMessageMasks.amAcquireDone)
                     {
                         SaveSpectra(ref d);
+                        SaveMeasurement(ref d);
                         NextSample(ref d);
                         if (SpreadedSamples[d.Name].Any())
                             d.Start();

@@ -6,6 +6,7 @@ namespace Measurements.Core
     public interface IDetector
     {
         string Name { get; }
+        string FullFileSpectraName { get; }
         int CountToRealTime { get; }
         int CountToLiveTime { get; }
         void ConnectAsync();

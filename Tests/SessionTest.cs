@@ -1,11 +1,16 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
-using System.Data.SqlClient;
 using Xunit;
 
 namespace Measurements.Core.Tests
 {
+
+    //TODO: add test for sli and lli 
+    //TODO: add test for end of the list of samples
+    //TODO: add test for detector finish event and measurements done
+    //TODO: add test for save measurements to db and locally
 
     public class SessionFixture
     {
@@ -13,7 +18,6 @@ namespace Measurements.Core.Tests
 
         public SessionFixture()
         {
-            //TODO: add test for sli and lli 
             SessionControllerSingleton.InitializeDBConnectionString(@"Server=RUMLAB\REGATALOCAL;Database=NAA_DB_TEST;Trusted_Connection=True;");
             SessionControllerSingleton.ConnectionStringBuilder.UserID = "bdrum";
             session = new Session();
@@ -250,7 +254,7 @@ namespace Measurements.Core.Tests
                 det = d;
                 sessionFixture.session.SaveSpectra(ref det);
 
-                Assert.True(System.IO.File.Exists($"C:\\GENIE2K\\CAMFILES\\{det.CurrentMeasurement.FileSpectra}.cnf"));
+                Assert.True(System.IO.File.Exists(det.FullFileSpectraName));
                 Assert.False(ic.Measurements.Where(m => m.FileSpectra == det.CurrentMeasurement.FileSpectra).Any()); 
             }
 
@@ -394,7 +398,78 @@ namespace Measurements.Core.Tests
             foreach (var id5 in d5List)
                 Assert.True(sessionFixture.session.SpreadedSamples["D5"].Exists(idr5 => $"{idr5.SetKey}-{idr5.SampleNumber}" == $"{id5.SetKey}-{id5.SampleNumber}"));
 
+        }
 
+        [Fact]
+        void SaveMeasurementRemotely()
+        {
+            sessionFixture.session.ClearMeasurements();
+            System.Threading.Thread.Sleep(2000);
+            sessionFixture.session.StartMeasurements();
+            System.Threading.Thread.Sleep(4000);
+            Assert.True(sessionFixture.session.ManagedDetectors.All(d => d.Status == DetectorStatus.busy));
+            sessionFixture.session.PauseMeasurements();
+            IDetector det = null;
+
+            var ic = new InfoContext();
+
+            foreach (var d in sessionFixture.session.ManagedDetectors)
+            {
+                det = d;
+                Assert.Equal(d.CountToRealTime, double.Parse(d.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_PREAL)), 2);
+
+                double realTime = double.Parse(d.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_EREAL));
+                Assert.NotEqual(0, realTime);
+                sessionFixture.session.SaveSpectra(ref det);
+                d.CurrentMeasurement.Note = "TEST!";
+                Assert.False(ic.Measurements.Where(m => m.FileSpectra == d.CurrentMeasurement.FileSpectra).Any());
+                sessionFixture.session.SaveMeasurement(ref det); 
+                Assert.True(ic.Measurements.Where(m => m.FileSpectra == d.CurrentMeasurement.FileSpectra).Any());
+                Assert.True(ic.Measurements.Where(m => m.FileSpectra == d.CurrentMeasurement.FileSpectra && m.Note == "TEST!").Any());
+            }
+
+            Assert.True(sessionFixture.session.ManagedDetectors.All(d => d.Status == DetectorStatus.ready));
+
+        }
+        [Fact]
+        void SaveMeasurementLocally()
+        {
+            sessionFixture.session.ClearMeasurements();
+            System.Threading.Thread.Sleep(2000);
+            sessionFixture.session.StartMeasurements();
+            System.Threading.Thread.Sleep(4000);
+            Assert.True(sessionFixture.session.ManagedDetectors.All(d => d.Status == DetectorStatus.busy));
+            sessionFixture.session.PauseMeasurements();
+            IDetector det = null;
+
+            var ic = new InfoContext();
+
+            Assert.True(Directory.Exists(@"D:\LocalData"));
+            Assert.False(Directory.GetFiles(@"D:\LocalData", "*.json").Any());
+
+            SessionControllerSingleton.ConnectionStringBuilder.DataSource = "1";
+            foreach (var d in sessionFixture.session.ManagedDetectors)
+            {
+                det = d;
+                Assert.Equal(d.CountToRealTime, double.Parse(d.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_PREAL)), 2);
+
+                double realTime = double.Parse(d.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_EREAL));
+                Assert.NotEqual(0, realTime);
+                sessionFixture.session.SaveSpectra(ref det);
+                d.CurrentMeasurement.Note = "TEST!";
+                sessionFixture.session.SaveMeasurement(ref det);
+            }
+
+            Assert.True(Directory.GetFiles(@"D:\LocalData", "*.json").Any());
+            SessionControllerSingleton.ConnectionStringBuilder.DataSource = "RUMLAB\\REGATALOCAL";
+            System.Threading.Thread.Sleep(13000);
+
+
+            foreach (var d in sessionFixture.session.ManagedDetectors)
+                Assert.True(ic.Measurements.Where(m => m.FileSpectra == d.CurrentMeasurement.FileSpectra && m.Note == "TEST!").Any());
+
+
+            Assert.False(Directory.GetFiles(@"D:\LocalData", "*.json").Any());
         }
     }
 }

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json;
+using System.IO;
 
 namespace Measurements.Core
 {
@@ -83,7 +85,6 @@ namespace Measurements.Core
         public List<IrradiationInfo> IrradiationList { get; private set; }
         public List<MeasurementInfo> MeasurementList { get; private set; }
         public Dictionary<string, List<IrradiationInfo>> SpreadedSamples { get; }
-        //private List<IDetector> _managedDetectors;
         public List<IDetector> ManagedDetectors { get; }
         private bool _isDisposed = false;
         private int _countOfDetectorsWichDone = 0;
@@ -108,6 +109,7 @@ namespace Measurements.Core
             CountMode           = CanberraDeviceAccessLib.AcquisitionModes.aCountToRealTime;
             MeasurementDone     += MeasurementDoneHandler;
             SpreadOption        = SpreadOptions.container;
+            SessionControllerSingleton.ConectionRestoreEvent += UploadLocalDataToDB;
         }
 
         public Session(SessionInfo session) : this()
@@ -194,5 +196,114 @@ namespace Measurements.Core
             _isDisposed = true;
         }
 
+        public void SaveMeasurement(ref IDetector det)
+        {
+            if (SessionControllerSingleton.TestDBConnection())
+                SaveRemotely(ref det);
+            else
+                SaveLocally(ref det);
+        }
+
+        private void SaveLocally(ref IDetector det)
+        {
+            _nLogger.Info($"Something wrong with connection to the data base. Information about measurement of current sample {det.CurrentSample} from detector '{det.Name}' will be save locally");
+
+            JsonSerializer serializer = new JsonSerializer();
+            serializer.NullValueHandling = NullValueHandling.Include;
+
+            if (!Directory.Exists(@"D:\\LocalData"))
+                Directory.CreateDirectory(@"D:\\LocalData");
+
+            StreamWriter sw   = null;
+            JsonWriter writer = null;
+
+            try
+            {
+                sw = new StreamWriter($"D:\\LocalData\\{DateTime.Now.ToString("dd-MM-yyyy_hh-mm")}_{det.CurrentSample}.json");
+                writer = new JsonTextWriter(sw);
+                serializer.Serialize(writer, det.CurrentMeasurement);
+            }
+            catch (Exception ex)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = ex.Message, Level = NLog.LogLevel.Error });
+            }
+            finally
+            {
+                sw?.Dispose();
+                writer?.Close();
+            }
+        }
+
+
+        private void SaveRemotely(ref IDetector det)
+        {
+            try
+            {
+                _nLogger.Info($"Information about measurement of current sample {det.CurrentSample} from detector '{det.Name}' will be save to the data base");
+                var ic = new InfoContext();
+                ic.Measurements.Add(det.CurrentMeasurement);
+                ic.SaveChanges();
+            }
+            catch (Microsoft.EntityFrameworkCore.DbUpdateException de)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Error has received:{Environment.NewLine}{de.Message}{Environment.NewLine}Local saving has begun", Level = NLog.LogLevel.Error });
+                SaveLocally(ref det);
+            }
+        }
+
+        private List<MeasurementInfo> LoadMeasurementsFiles()
+        {
+            _nLogger.Info($"Deserilization has begun");
+            
+            var dir                       = new DirectoryInfo(@"D:\LocalData");
+            var files                     = dir.GetFiles("*.json").ToList();
+            var MeasurementsInfoForUpload = new List<MeasurementInfo>();
+            string                        fileName = "";
+            StreamReader                  fileStream = null;
+
+            try
+            {
+                foreach (var file in files)
+                {
+                    fileName = file.Name;
+                    fileStream = File.OpenText(file.FullName);
+                    JsonSerializer serializer = new JsonSerializer();
+                    MeasurementsInfoForUpload.Add((MeasurementInfo)serializer.Deserialize(fileStream, typeof(MeasurementInfo)));
+                    fileStream.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Error has received during deserializing of the file '{fileName}':{Environment.NewLine}{ex.Message}{Environment.NewLine}", Level = NLog.LogLevel.Error });
+            }
+            finally
+            {
+                fileStream?.Dispose();
+            }
+
+            return MeasurementsInfoForUpload;
+        }
+
+        // TODO: re-think saving design (perhaps merely function for MeasurementInfo the best) now it looks too complicated
+        private void UploadLocalDataToDB()
+        {
+            try
+            {
+                _nLogger.Info($"Local data has found. It will deserialize, load into db and then delete from local storage");
+                var fileList = LoadMeasurementsFiles();
+                if (fileList.Count == 0) return;
+                var ic = new InfoContext();
+                ic.Measurements.AddRange(LoadMeasurementsFiles());
+                ic.SaveChanges();
+                var dir   = new DirectoryInfo(@"D:\LocalData");
+                var files = dir.GetFiles("*.json").ToList();
+                foreach (var file in files)
+                    file.Delete();
+            }
+            catch (Exception ex)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Error has received during uploading local files into database:{Environment.NewLine}{ex.Message}", Level = NLog.LogLevel.Error });
+            }
+        }
     }
 }

@@ -35,6 +35,7 @@ namespace Measurements.Core
         public decimal?   Height         { get; set; }
         [Ignore]
         public DateTime?  DateTimeStart  { get; set; }
+        [Ignore]
         public int?       Duration       { get; set; }
         [Ignore]
         public DateTime?  DateTimeFinish { get; set; }
@@ -42,6 +43,7 @@ namespace Measurements.Core
         public string     Detector       { get; set; }
         [Ignore]
         public string     Assistant      { get; set; }
+        [Ignore]
         public string     Note           { get; set; }
         [NotMapped]
         [Ignore]

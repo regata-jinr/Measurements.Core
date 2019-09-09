@@ -2,6 +2,7 @@
 using System.Data.SqlClient;
 using CanberraDeviceAccessLib;
 using System;
+using System.Threading.Tasks;
 using System.Linq;
 
 namespace Measurements.Core
@@ -10,16 +11,18 @@ namespace Measurements.Core
     // TODO:  add functional tests in order to check working sequence, 
     //        such test should simulate program working in general manner and more (for clearify logs) 
     // TODO:  improve readability of logs
+    // TODO:  add local mode for windows credentials accounts
     // TODO:  deny running of appliaction in case it already running
     // FIXME: adding costura for merging dlls, but pay attention that it will break tests.
     //        find out how to exclude test. exclude assemblies with xunit didn't help
 
     public static class SessionControllerSingleton
     {
-
         public static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         public static List<ISession>              ManagedSessions         { get; private set; }
         public static List<IDetector>             AvailableDetectors      { get; private set; }
+
+        public static bool LocalMode;
 
         private static SqlConnectionStringBuilder _connectionStringBuilder; 
         public static SqlConnectionStringBuilder ConnectionStringBuilder
@@ -46,23 +49,52 @@ namespace Measurements.Core
 
                 isConnected = true;
 
-                sqlCon.Dispose();
                 logger.Info("Connection successful");
             }
 
             catch (SqlException sqlex)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(null, new Handlers.ExceptionEventsArgs { Message = $"{sqlex.Message}{Environment.NewLine}Program will work in the local mode", Level = NLog.LogLevel.Warn });
+                Handlers.ExceptionHandler.ExceptionNotify(null, new Handlers.ExceptionEventsArgs { Message = $"Connection to the db has fallen {Environment.NewLine}{sqlex.Message}{Environment.NewLine}Program will work in the local mode", Level = NLog.LogLevel.Warn });
+                sqlCon.Dispose();
+                if (!LocalMode)
+                    Task.Run(() => ConnectionWaiter());
+            }
+            finally
+            {
                 sqlCon.Dispose();
             }
 
             return isConnected;
         }
 
+        public static event Action ConectionRestoreEvent;
+
+        private static void WaiterWrapper()
+        {
+        }
+
+        private static void ConnectionWaiter()
+        {
+            logger.Info("Try to connect to db asynchronously");
+            LocalMode = true;
+            System.Threading.Thread.Sleep(10000);
+            if (TestDBConnection())
+            {
+                logger.Info("Connection has restored!");
+                LocalMode = false;
+                ConectionRestoreEvent?.Invoke();
+                return;
+            }
+            else ConnectionWaiter();
+        }
+
         private static void CheckSessionControllerInitialisation()
         {
             if (string.IsNullOrEmpty(_connectionStringBuilder.ConnectionString))
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(null, new Handlers.ExceptionEventsArgs { Message = $"Connection string is null or empty.", Level = NLog.LogLevel.Error });
                 throw new ArgumentNullException("First of all call InitializeDBConnection method!");
+            }
         }
 
         private static void AddDetectorToList(string name)
@@ -105,10 +137,11 @@ namespace Measurements.Core
         {
             logger.Info("Inititalization of Session Controller instance has began");
 
-            _isDisposed = false;
+            _isDisposed              = false;
+            LocalMode                = false;
             _connectionStringBuilder = new SqlConnectionStringBuilder(); 
-            AvailableDetectors = new List<IDetector>();
-            ManagedSessions    = new List<ISession>();
+            AvailableDetectors       = new List<IDetector>();
+            ManagedSessions          = new List<ISession>();
 
             DetectorsInititalisation();
 

@@ -44,6 +44,7 @@ namespace Measurements.Core
 
         public MeasurementInfo CurrentMeasurement { get; set; }
         public event EventHandler  StatusChanged;
+        public string FullFileSpectraName { get; private set; }
         public event EventHandler<DetectorEventsArgs>  AcquiringStatusChanged;
 
         //protected virtual void OnProcessAcquiringMessaget(DetectorEventsArgs e)

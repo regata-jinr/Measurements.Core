@@ -13,7 +13,8 @@ namespace Measurements.Core
         void   MakeSamplesCurrentOnAllDetectorsByNumber(int n);
         void   PauseMeasurements();
         void   StopMeasurements(); //Pause and Clear
-        void   SaveSpectra(ref IDetector d); //if connection closed save locally to json
+        void   SaveMeasurement(ref IDetector d);
+        void   SaveSpectra(ref IDetector d);
         void   SaveSession(string nameOfSession, bool isBasic = false);
         void   ContinueMeasurements();
         void   ClearMeasurements();
@@ -34,10 +35,10 @@ namespace Measurements.Core
         decimal               Height                 { get; set; }
         string                Note                   { get; set; }
         DateTime              CurrentIrradiationDate { get; set; }
-        List<DateTime?>        IrradiationDateList    { get; }
+        List<DateTime?>       IrradiationDateList    { get; }
         List<IrradiationInfo> IrradiationList        { get; }
         List<MeasurementInfo> MeasurementList        { get; }
-        List<IDetector>        ManagedDetectors       { get; }
+        List<IDetector>       ManagedDetectors       { get; }
         IrradiationInfo       CurrentSample          { get; }
         MeasurementInfo       CurrentMeasurement     { get; } 
 
