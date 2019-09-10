@@ -2,8 +2,6 @@
 
 namespace Measurements.Core.Handlers
 {
-    //fixme: now exception doesn't contain information about calling object!
-
     public static class ExceptionHandler
     {
         public static event EventHandler<ExceptionEventsArgs> ExceptionEvent;
@@ -11,10 +9,7 @@ namespace Measurements.Core.Handlers
 
         public static void ExceptionNotify(object obj, ExceptionEventsArgs exceptionEventsArgs)
         {
-            if (obj is Detector)
-               SessionControllerSingleton.logger.WithProperty("DetName", ((Detector)obj).Name);
-
-            _nLogger.Log(exceptionEventsArgs.Level, exceptionEventsArgs.Message);
+            _nLogger.Log(exceptionEventsArgs.Level, $"Exception in the object {obj?.ToString()} has occurred. The message is {Environment.NewLine}{exceptionEventsArgs.Message}");
             ExceptionEvent?.Invoke(obj, exceptionEventsArgs);
         }
     }

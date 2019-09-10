@@ -7,7 +7,7 @@ namespace Measurements.Core
     public interface ISession
     {
         void   StartMeasurements();
-        void   NextSample(ref IDetector d);
+        bool   NextSample(ref IDetector d);
         void   PrevSample(ref IDetector d);
         void   MakeSampleCurrentOnDetector(ref IrradiationInfo ii, ref IDetector det);
         void   MakeSamplesCurrentOnAllDetectorsByNumber(int n);

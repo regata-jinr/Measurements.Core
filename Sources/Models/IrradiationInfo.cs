@@ -32,6 +32,5 @@ namespace Measurements.Core
         [NotMapped]
         public string SampleKey => $"{SetIndex}-{SampleNumber}";
         public override string ToString() => $"{SetKey}-{SampleNumber}";
-
     }
 }

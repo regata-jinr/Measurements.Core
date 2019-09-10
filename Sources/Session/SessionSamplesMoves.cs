@@ -1,19 +1,23 @@
 ﻿using System;
+using System.Linq;
 
 namespace Measurements.Core
 {
     public partial class Session : ISession, IDisposable
     {
-        public void NextSample(ref IDetector d)
+        public bool NextSample(ref IDetector d)
         {
             try
             { 
-                _nLogger.Info($"Change sample {d.CurrentSample.ToString()} to the next one for dtector {d.Name}");
+                _nLogger.Info($"Change sample {d.CurrentSample.ToString()} to the next one for detector {d.Name}");
                 int currentIndex = SpreadedSamples[d.Name].IndexOf(d.CurrentSample);
-                if (currentIndex != SpreadedSamples[d.Name].Count)
-                   d.CurrentSample = SpreadedSamples[d.Name][++currentIndex];
-               else
-                   MeasurementDone?.Invoke(d, EventArgs.Empty);
+                if (currentIndex != SpreadedSamples[d.Name].Count - 1)
+                {
+                    d.CurrentSample = SpreadedSamples[d.Name][++currentIndex];
+                    int IrId = d.CurrentSample.Id;
+                    d.CurrentMeasurement = MeasurementList.Where(cm => cm.IrradiationId == IrId).First();
+                    return true;
+                }
             }
             catch (IndexOutOfRangeException ie)
             {
@@ -23,7 +27,8 @@ namespace Measurements.Core
             {
                 Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = ex.Message, Level = NLog.LogLevel.Error });
             }
-                    
+
+            return false;
         }
 
         public void MakeSamplesCurrentOnAllDetectorsByNumber(int n = 0)

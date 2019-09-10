@@ -16,6 +16,8 @@ Our measurement process involved plenty internal processes:
 <br>
 
 This core has implemented all of described point above.
+The main goal of this core is make software independent from the interface.
+Now we have desktop interfaces implemented via WinForms, but in plans we would like to migrate it to web interface based on ASP.NET.
 
 ### Developer's notes:
 
@@ -45,12 +47,57 @@ Let's see to the each one more detailed.
 
 ### Detector
 
+This is the main wrapper on CanberraDeviceAccessLib.DeviceAccessClass.
+Detector class designed for controling real HPGe detector device and interaction with connected pc.
+It allows to start, stop, clear, pause, continue measurements, save all measurement info to the file in the local storage.
+
 ### Handlers
+
+This is additional tools for handling exceptions. It allows you to manage of occurred exceptions and wrap these  to any user interface form such as MessageBox or javascript Alert method.
 
 ### Models
 
+Models are entities of real data. These models corresponds with EFcore models.
+
 ### SampleChanger
+TBA
 
 ### Session
 
+Session is the whole measurement process. In the frame of one session you able to controll certain detectors and samples. You can create few session and measure different samples on different detectors.
+
 ### SessionControllerSingleton
+
+This is the control panel for managing of sessions. Using this one you can create, delete, attach|detach detectors to the created session. Load session from the DB.
+
+## Getting Started
+
+Typical macro that demonstrates how to use this core:
+
+>**Before you start please pay attention that this software has determined data base structure that you can find in Models. Please, first of all create required tables and add data to it.**
+
+~~~csharp
+SessionControllerSingleton.InitializeDBConnectionString("YourConnectionString");
+//here you can load session from db or you can create new one
+var iSession = SessionControllerSingleton.Load("name of saved session");
+iSession.Type = "LLI-2";
+iSession.CurrentIrradiationDate = DateTime.Parse("18.06.2012");
+foreach(var m in iSession.MeasurementList)
+    m.Note = "TEST!";
+
+iSession.SetAcquireDurationAndMode(5);
+iSession.StartMeasurements();
+// here we are using pause, because measurements process has async nature inside. 
+System.Threading.Thread.Sleep(iSession.Counts*iSession.IrradiationList.Count*1000 + iSession.IrradiationList.Count*1000);
+~~~
+
+
+## Additional tools
+
+### Logging
+
+We use NLog framework to keep information about internal processes. This allows you to find out the reason of some misleadings fast and easy. 
+
+### Testing
+
+For testing we use Xunit framework. We have unit testa that controls each method and functional tests for controls the process in general.

@@ -2,6 +2,7 @@
 using CanberraDataAccessLib;
 using System;
 using Xunit.Abstractions;
+using AutoMapper;
 
 namespace Measurements.Core.Tests
 {
@@ -128,13 +129,17 @@ namespace Measurements.Core.Tests
             };
 
             _detectors.d1.CurrentSample = sd;
+            var configuration = new MapperConfiguration(cfg => cfg.AddMaps("MeasurementsCore"));
+            var mapper = new Mapper(configuration);
+            var m = mapper.Map<MeasurementInfo>(sd);
+            _detectors.d1.CurrentMeasurement = m;
             _detectors.d1.CurrentMeasurement.Height = 10;
             _detectors.d1.CurrentMeasurement.Type = "SLI";
             _detectors.d1.CurrentMeasurement.FileSpectra = "testD1";
+            _detectors.d1.CurrentMeasurement.Assistant = "bdrum";
             _detectors.d1.SetAcqureCountsAndMode(3);
 
             _detectors.d1.Start();
-            _detectors.d1.CurrentMeasurement.Assistant = "bdrum";
 
             System.Threading.Thread.Sleep(2000);
             

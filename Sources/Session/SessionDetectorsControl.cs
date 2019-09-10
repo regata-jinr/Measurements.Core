@@ -17,19 +17,12 @@ namespace Measurements.Core
                 if (Counts <= 0 || string.IsNullOrEmpty(Type) || IrradiationList.Count == 0)
                     throw new ArgumentException($"Either some of principal arguments doesnt assign: Duration={Counts}, type of measurements={Type} or list of samples is empty {IrradiationList.Count}");
 
-                //TODO: here we need check if SpreadedSamples weren't fillied than call the method:
                 SpreadSamplesToDetectors();
 
                 foreach (var d in ManagedDetectors)
                 {
-                    if (SpreadedSamples[d.Name].Count == 0) // FIXME: how would be with situations: 1. Only one detector not spreaded (e.g. not enough samples for choosing detectors)
-                        throw new ArgumentOutOfRangeException($"Detector {d.Name} doesn't contain samples to measure. Before the acquiring distribute samples on detectors. Perhaps amount of samples not enough to fill all detectors. You could detach empty detector {d.Name}.");
-                    // FIXME: I don't like such logic, also it should allow redefinition of some measurement parameters
-                    d.CurrentMeasurement.Height = Height;
-                    _nLogger.Info($"Height {Height} has specified for sample {d.CurrentMeasurement.ToString()} on detector {d.Name}");
-                    d.CurrentMeasurement.Type = Type;
-                    d.CurrentMeasurement.Duration = Counts;
-                    d.Start();
+                    if (SpreadedSamples[d.Name].Count != 0)
+                        d.Start();
                 }
             }
             catch (ArgumentOutOfRangeException are)
@@ -38,42 +31,78 @@ namespace Measurements.Core
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Something went wrong when measurements has started:{Environment.NewLine}{e.Message}", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Something went wrong when measurement has started:{Environment.NewLine}{e.Message}", Level = NLog.LogLevel.Error });
             }
         
         }
         //TODO: wrap all operation to try - catch. In the other case it will be not possible to continue working with application.
         public void StopMeasurements()
         {
-            _nLogger.Info($"stops measurements by user command");
-            foreach (var d in ManagedDetectors)
-                d.Stop();
+            try
+            {
+                _nLogger.Info($"stops measurements by user command");
+                foreach (var d in ManagedDetectors)
+                    d.Stop();
+            }
+            catch (Exception e)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Something went wrong when measurements has stoped:{Environment.NewLine}{e.Message}", Level = NLog.LogLevel.Error });
+            }
         }
 
         public void SaveSpectra(ref IDetector d)
         {
-            d.CurrentMeasurement.FileSpectra = GenerateFileSpectraName(d.Name);
+            try
+            {
+                d.CurrentMeasurement.FileSpectra = GenerateFileSpectraName(d.Name);
             _nLogger.Info($"Detector {d.Name} will save spectra to file with name - '{d.CurrentMeasurement.FileSpectra}'");
-            d.Save();
+                d.Save();
+            }
+            catch (Exception e)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Something went wrong when measurement has saved spectra:{Environment.NewLine}{e.Message}", Level = NLog.LogLevel.Error
+    });
+            };
         }
 
        public void ContinueMeasurements()
         {
-            _nLogger.Info($"will continue measurements by user command");
-            foreach (var d in ManagedDetectors)
-                d.Start();
+            try
+            {
+                _nLogger.Info($"will continue measurements by user command");
+                foreach (var d in ManagedDetectors)
+                    d.Start();
+            }
+            catch (Exception e)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Something went wrong when measurement has continued:{Environment.NewLine}{e.Message}", Level = NLog.LogLevel.Error });
+            };
         }
         public void PauseMeasurements()
         {
-            _nLogger.Info($"will pause measurements by user command");
-            foreach (var d in ManagedDetectors)
-                d.Pause();
+            try
+            {
+                _nLogger.Info($"will pause measurements by user command");
+                foreach (var d in ManagedDetectors)
+                    d.Pause();
+            }
+            catch (Exception e)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Something went wrong when measurement has paused:{Environment.NewLine}{e.Message}", Level = NLog.LogLevel.Error });
+            };
         }
         public void ClearMeasurements()
         {
-            _nLogger.Info($"will clear measurements by user command");
-            foreach (var d in ManagedDetectors)
-                d.Clear();
+            try
+            {
+                _nLogger.Info($"will clear measurements by user command");
+                foreach (var d in ManagedDetectors)
+                    d.Clear();
+            }
+            catch (Exception e)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Something went wrong when measurement has cleared:{Environment.NewLine}{e.Message}", Level = NLog.LogLevel.Error });
+            };
         }
 
        public void AttachDetector(string dName)
@@ -171,11 +200,9 @@ namespace Measurements.Core
                     {
                         SaveSpectra(ref d);
                         SaveMeasurement(ref d);
-                        NextSample(ref d);
-                        if (SpreadedSamples[d.Name].Any())
+                        if (NextSample(ref d))
                             d.Start();
-                        else
-                            MeasurementDone?.Invoke(d, EventArgs.Empty);
+                        else MeasurementDone?.Invoke(d, EventArgs.Empty);
                     }
                 }
                 else

@@ -6,7 +6,6 @@ using System.IO;
 
 namespace Measurements.Core
 {
-    //TODO: rethinking data delivery via events from detector. Session should distinguish error, done, so on not only based on status.
     //TODO: add tests
     //TODO: add docs
 
@@ -77,7 +76,17 @@ namespace Measurements.Core
         }
 
         public CanberraDeviceAccessLib.AcquisitionModes CountMode { get; private set; }
-        public int Counts { get; private set; }
+        private int _counts;
+        public int Counts
+        {
+            get { return _counts; }
+            private set
+            {
+                _counts = value;
+               foreach (var m in MeasurementList)
+                    m.Duration = value;
+            }
+        }
 
         private InfoContext _infoContext;
         public IrradiationInfo CurrentSample { get; private set; }
@@ -246,7 +255,7 @@ namespace Measurements.Core
             }
             catch (Microsoft.EntityFrameworkCore.DbUpdateException de)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Error has received:{Environment.NewLine}{de.Message}{Environment.NewLine}Local saving has begun", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Error has received:{Environment.NewLine}{de.Message}{de.InnerException.Message}{Environment.NewLine}Local saving has begun", Level = NLog.LogLevel.Error });
                 SaveLocally(ref det);
             }
         }
@@ -284,7 +293,6 @@ namespace Measurements.Core
             return MeasurementsInfoForUpload;
         }
 
-        // TODO: re-think saving design (perhaps merely function for MeasurementInfo the best) now it looks too complicated
         private void UploadLocalDataToDB()
         {
             try

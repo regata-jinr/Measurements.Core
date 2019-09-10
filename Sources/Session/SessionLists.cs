@@ -24,6 +24,7 @@ namespace Measurements.Core
                 {
                     var m = mapper.Map<MeasurementInfo>(i);
                     m.Type = Type;
+                    m.Assistant = SessionControllerSingleton.ConnectionStringBuilder.UserID;
                     MeasurementList.Add(m);
                 }
             }
@@ -169,7 +170,7 @@ namespace Measurements.Core
                 foreach (var d in ManagedDetectors)
                 {
                     d.CurrentSample = SpreadedSamples[d.Name][0];
-                    d.CurrentMeasurement.Assistant = SessionControllerSingleton.ConnectionStringBuilder.UserID;
+                    d.CurrentMeasurement = MeasurementList.Where(cm => cm.IrradiationId == d.CurrentSample.Id).First();
                     _nLogger.Info($"Samples [{(string.Join(",", SpreadedSamples[d.Name].OrderBy(ss => $"{ss.SetKey}-{ss.SampleNumber}").Select(ss => $"{ss.SetKey}-{ss.SampleNumber}").ToArray()))}] will measure on the detector {d.Name}");
                 }
 

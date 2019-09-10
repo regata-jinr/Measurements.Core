@@ -7,11 +7,6 @@ using Xunit;
 namespace Measurements.Core.Tests
 {
 
-    //TODO: add test for sli and lli 
-    //TODO: add test for end of the list of samples
-    //TODO: add test for detector finish event and measurements done
-    //TODO: add test for save measurements to db and locally
-
     public class SessionFixture
     {
         public ISession session;

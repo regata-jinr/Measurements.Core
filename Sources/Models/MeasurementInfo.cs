@@ -6,9 +6,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Measurements.Core
 {
-    //TODO: how to add custom value generator for call in add process?
-    //      https://github.com/aspnet/EntityFrameworkCore/issues/5303
-
     [AutoMap(typeof(IrradiationInfo))]
     public partial class MeasurementInfo
     {

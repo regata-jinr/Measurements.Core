@@ -11,7 +11,6 @@ using CanberraDeviceAccessLib;
 
 namespace Measurements.Core
 {
-    //TODO: add implicit interface implementation
     public partial class Detector : IDetector, IDisposable
     {
         /// <summary>Constructor of Detector class.</summary>
@@ -74,40 +73,46 @@ namespace Measurements.Core
         {
             string response = "";
             bool isForCalling = false;
-            //TODO: wrap to try-catch-finally
-            if ((int)AdviseMessageMasks.amAcquireDone == lParam && !IsPaused)
+            try
             {
-                _nLogger.Info($"Has got message AcquireDone.");
-                response = "Acquire has done";
-                Status = DetectorStatus.ready;
-                CurrentMeasurement.DateTimeFinish = DateTime.Now;
-                isForCalling = true;
-            }
+                if ((int)AdviseMessageMasks.amAcquireDone == lParam && !IsPaused)
+                {
+                    _nLogger.Info($"Has got message AcquireDone.");
+                    response = "Acquire has done";
+                    Status = DetectorStatus.ready;
+                    CurrentMeasurement.DateTimeFinish = DateTime.Now;
+                    isForCalling = true;
+                }
 
-            if ((int)AdviseMessageMasks.amAcquireStart == lParam)
+                if ((int)AdviseMessageMasks.amAcquireStart == lParam)
+                {
+                    _nLogger.Info($"Has got message amAcquireStart.");
+                    response = "Acquire has start";
+                    Status = DetectorStatus.busy;
+                    isForCalling = true;
+                }
+
+                if ((int)AdviseMessageMasks.amHardwareError == lParam)
+                {
+                    Status = DetectorStatus.error;
+                    ErrorMessage = $"{_device.Message((MessageCodes)lParam)}";
+                    response = ErrorMessage;
+                    Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Has got message amHardwareError. Error Message is [{ErrorMessage}]", Level = NLog.LogLevel.Error });
+                    isForCalling = true;
+                }
+                if ((int)AdviseMessageMasks.amAcquisitionParamChange == lParam)
+                {
+                    response = "Device ready to use!";
+
+                }
+
+                if (isForCalling)
+                    AcquiringStatusChanged?.Invoke(this, new DetectorEventsArgs { Message = response, AcquireMessageParam = lParam, Name = this.Name, Status = this.Status });
+            }
+            catch (Exception ex)
             {
-                _nLogger.Info($"Has got message amAcquireStart.");
-                response = "Acquire has start";
-                Status = DetectorStatus.busy;
-                isForCalling = true;
+                    Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Has got error: [{ex.Message}]", Level = NLog.LogLevel.Error });
             }
-
-            if ((int)AdviseMessageMasks.amHardwareError == lParam)
-            {
-                Status = DetectorStatus.error;
-                ErrorMessage = $"{_device.Message((MessageCodes)lParam)}";
-                response = ErrorMessage;
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Has got message amHardwareError. Error Message is [{ErrorMessage}]", Level = NLog.LogLevel.Error });
-                isForCalling = true;
-            }
-            if ((int)AdviseMessageMasks.amAcquisitionParamChange == lParam)
-            {
-                response = "Device ready to use!";
-
-            }
-
-            if (isForCalling)
-                AcquiringStatusChanged?.Invoke(this, new DetectorEventsArgs { Message = response, AcquireMessageParam = lParam, Name = this.Name, Status = this.Status });
         }
 
         private Task ConnectInternalTask(CancellationToken c)
@@ -268,9 +273,9 @@ namespace Measurements.Core
         /// </summary>
         public void Reset()
         {
+            //TODO: test it
             try
             {
-                //TODO: check that it do reseting in the meaning that I'm thinking about it!
                 _nLogger.Info($"Attempt to reset the detector");
                 _device.SendCommand(DeviceCommands.aReset);
 
