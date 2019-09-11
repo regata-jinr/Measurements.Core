@@ -41,9 +41,9 @@ namespace Measurements.Core
                 IsPaused = false;
                 Connect();
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = ex.Message, Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this,e, NLog.LogLevel.Error);
             }
         }
 
@@ -97,7 +97,6 @@ namespace Measurements.Core
                     Status = DetectorStatus.error;
                     ErrorMessage = $"{_device.Message((MessageCodes)lParam)}";
                     response = ErrorMessage;
-                    Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Has got message amHardwareError. Error Message is [{ErrorMessage}]", Level = NLog.LogLevel.Error });
                     isForCalling = true;
                 }
                 if ((int)AdviseMessageMasks.amAcquisitionParamChange == lParam)
@@ -109,9 +108,9 @@ namespace Measurements.Core
                 if (isForCalling)
                     AcquiringStatusChanged?.Invoke(this, new DetectorEventsArgs { Message = response, AcquireMessageParam = lParam, Name = this.Name, Status = this.Status });
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                    Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Has got error: [{ex.Message}]", Level = NLog.LogLevel.Error });
+                    Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
             }
         }
 
@@ -127,10 +126,10 @@ namespace Measurements.Core
                     c.ThrowIfCancellationRequested();
 
                 }
-                catch (Exception ex)
+                catch (Exception e)
                 {
-                    Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{ex.Message}", Level = NLog.LogLevel.Error });
-                    if (ex.Message.Contains("278e2a")) Status = DetectorStatus.busy;
+                    Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
+                    if (e.Message.Contains("278e2a")) Status = DetectorStatus.busy;
 
                 }
             });
@@ -166,13 +165,13 @@ namespace Measurements.Core
                     _nLogger.Info($"Connection to the detector was successful");
 
             }
-            catch (TimeoutException)
+            catch (TimeoutException te)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Connection timeout.", Level = NLog.LogLevel.Warn });
+                Handlers.ExceptionHandler.ExceptionNotify(this, te, NLog.LogLevel.Warn );
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{ex.Message}", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
             }
 
         }
@@ -189,10 +188,10 @@ namespace Measurements.Core
 
                 _nLogger.Debug($"Internal connection was successful");
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{ex.Message}", Level = NLog.LogLevel.Error });
-                if (ex.Message.Contains("278e2a")) Status = DetectorStatus.busy;
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
+                if (e.Message.Contains("278e2a")) Status = DetectorStatus.busy;
 
             }
 
@@ -234,17 +233,17 @@ namespace Measurements.Core
                     _nLogger.Info($"File '{_currentDir}\\{CurrentMeasurement.FileSpectra}.cnf' saved");
                 else _nLogger.Error($"Some problems during saving. File {CurrentMeasurement.FileSpectra}.cnf doesn't exist.");
             }
-            catch (ArgumentNullException)
+            catch (ArgumentNullException ae)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Input name of file spectra is empty. It should generated automatically. Something wrong in the sequence of actions.", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, ae, NLog.LogLevel.Error);
             }
-            catch (InvalidOperationException)
+            catch (InvalidOperationException ie)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Detector has connection problem", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, ie, NLog.LogLevel.Error);
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{ex.Message}", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
             }
         }
 
@@ -262,9 +261,9 @@ namespace Measurements.Core
                 Status = DetectorStatus.off;
                 ErrorMessage = "";
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{ex.Message}", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
             }
         }
 
@@ -282,11 +281,11 @@ namespace Measurements.Core
                 if (Status == DetectorStatus.ready)
                     _nLogger.Info($"Resetting was successful");
                 else
-                    Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Reset command was passed, but status is {Status}", Level = NLog.LogLevel.Warn });
+                    throw new Exception($"Something were wrong during reseting of the detector '{Name}'");
             }
-            catch (Exception ex) 
+            catch (Exception e) 
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{ex.Message}", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
             }
 
         }
@@ -312,10 +311,7 @@ namespace Measurements.Core
                 IsPaused = false;
 
                 if (Status != DetectorStatus.ready)
-                {
-                    Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Detector is not ready for acquiring. Status is {Status}", Level = NLog.LogLevel.Warn });
-                    return;
-                }
+                    throw new Exception($"Status of detector '{Name}' is not 'ready'");
 
                 _device.AcquireStart(); // already async
                 _nLogger.Info($"Acquiring in process...");
@@ -323,9 +319,9 @@ namespace Measurements.Core
                 CurrentMeasurement.DateTimeStart = DateTime.Now;
                 CurrentMeasurement.Detector = Name;
             }
-            catch (Exception ex) 
+            catch (Exception e) 
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{ex.Message}", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
             }
 
         }
@@ -346,9 +342,9 @@ namespace Measurements.Core
                 _nLogger.Info($"Paused was successful. Detector ready to continue acquire process");
                 IsPaused = true;
             }
-            catch (Exception ex) 
+            catch (Exception e) 
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{ex.Message}", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
             }
 
         }
@@ -368,9 +364,9 @@ namespace Measurements.Core
                 Status = DetectorStatus.ready;
                 _nLogger.Info($"Stop was successful. Acquire done event will be generate. Detector ready to acquire again");
             }
-            catch (Exception ex) 
+            catch (Exception e) 
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{ex.Message}", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
             }
 
         }
@@ -385,9 +381,9 @@ namespace Measurements.Core
                 _nLogger.Info($"Clearing the detector");
                 _device.Clear();
             }
-            catch (Exception ex) 
+            catch (Exception e) 
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{ex.Message}", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
             }
         }
 
@@ -436,6 +432,8 @@ namespace Measurements.Core
         {
             try
             {
+                //FIXME: 2019-09-11 18:09:25.8397--ERROR----Canberra.DeviceAccess.1 has generated exception from method set_Param. The message is 'Error: ece99d7d. Programming error invalid calling argument.' Stack trace is:'   at CanberraDeviceAccessLib.DeviceAccessClass.set_Param(ParamCodes Params, Int32 lRec, Int32 lEntry, Object pVal)
+
                 if (CurrentMeasurement == null || string.IsNullOrEmpty(CurrentMeasurement.Assistant) || string.IsNullOrEmpty(CurrentMeasurement.Type) || string.IsNullOrEmpty(CurrentSample.SampleKey))
                     throw new ArgumentNullException("Some of principal parameters is null. Probably you don't specify the sample");
 
@@ -445,24 +443,60 @@ namespace Measurements.Core
                 _device.Param[ParamCodes.CAM_T_SCOLLNAME]   = CurrentMeasurement.Assistant; // operator's name
                 DivideString(CurrentSample.Note);           //filling description field in file
                 _device.Param[ParamCodes.CAM_T_SIDENT]      = $"{CurrentMeasurement.SetKey}"; // sample code
-                _device.Param[ParamCodes.CAM_F_SQUANT]      = (double)CurrentSample.Weight; // weight
+
+                if (CurrentSample.Weight.HasValue)
+                    _device.Param[ParamCodes.CAM_F_SQUANT] = (double)CurrentSample.Weight.Value; // weight
+                else
+                {
+                    Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"Weight is empty for {CurrentSample}. Zero will set."), NLog.LogLevel.Warn);
+                    _device.Param[ParamCodes.CAM_F_SQUANT] = 0;
+                }
+
                 _device.Param[ParamCodes.CAM_F_SQUANTERR]   = 0; // err = 0
                 _device.Param[ParamCodes.CAM_T_SUNITS]      = "gram"; // units = gram
                 _device.Param[ParamCodes.CAM_T_BUILDUPTYPE] = "IRRAD";
-                _device.Param[ParamCodes.CAM_X_SDEPOSIT]    = CurrentSample.DateTimeStart; // irr start date time
-                _device.Param[ParamCodes.CAM_X_STIME]       = CurrentSample.DateTimeFinish; // irr finish date time
+
+                if (CurrentSample.DateTimeStart.HasValue)
+                    _device.Param[ParamCodes.CAM_X_SDEPOSIT] = CurrentSample.DateTimeStart.Value; // irr start date time
+                else
+                {
+                    Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"DateTimeStart is empty for {CurrentSample}. DateTime.Now will set."), NLog.LogLevel.Warn);
+                    _device.Param[ParamCodes.CAM_X_SDEPOSIT] = DateTime.Now;
+                }
+
+                if (CurrentSample.DateTimeFinish.HasValue)
+                    _device.Param[ParamCodes.CAM_X_STIME] = CurrentSample.DateTimeFinish.Value; // irr finish date time
+                else
+                {
+                    Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"DateTimeFinish is empty for {CurrentSample}. DateTime.Now + duration will set."), NLog.LogLevel.Warn);
+                    if (CurrentMeasurement.Duration.HasValue)
+                        _device.Param[ParamCodes.CAM_X_STIME] = DateTime.Now.AddSeconds(CurrentMeasurement.Duration.Value);
+                    else
+                    {
+                        Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"Duration also is empty. A counts to real time will add"), NLog.LogLevel.Warn);
+                        _device.Param[ParamCodes.CAM_X_STIME] = DateTime.Now.AddSeconds(CountToRealTime);
+                    }
+                }
+
                 _device.Param[ParamCodes.CAM_F_SSYSERR]     = 0; // Random sample error (%)
                 _device.Param[ParamCodes.CAM_F_SSYSTERR]    = 0; // Non-random sample error (%)
                 _device.Param[ParamCodes.CAM_T_STYPE]       = CurrentMeasurement.Type;
-                _device.Param[ParamCodes.CAM_T_SGEOMTRY]    = CurrentMeasurement.Height.ToString();
+
+                if (CurrentMeasurement.Height.HasValue)
+                    _device.Param[ParamCodes.CAM_T_SGEOMTRY] = (double)CurrentMeasurement.Height.Value; // height
+                else
+                {
+                    Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"Height is empty for {CurrentSample}. Zero will set."), NLog.LogLevel.Warn);
+                    _device.Param[ParamCodes.CAM_T_SGEOMTRY] = 0;
+                }
             }
-            catch (ArgumentNullException aex)
+            catch (ArgumentNullException ae)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = aex.Message, Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, ae, NLog.LogLevel.Error);
             }
-             catch (Exception ex)
+             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = ex.Message, Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
             }
        }
 

@@ -50,9 +50,9 @@ namespace Measurements.Core
                 logger.Info("Connection successful");
             }
 
-            catch (SqlException sqlex)
+            catch (SqlException sqle)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(null, new Handlers.ExceptionEventsArgs { Message = $"Connection to the db has fallen {Environment.NewLine}{sqlex.Message}{Environment.NewLine}Program will work in the local mode", Level = NLog.LogLevel.Warn });
+                Handlers.ExceptionHandler.ExceptionNotify(null, sqle, NLog.LogLevel.Warn);
                 sqlCon.Dispose();
                 if (!LocalMode)
                     Task.Run(() => ConnectionWaiter());
@@ -90,7 +90,7 @@ namespace Measurements.Core
         {
             if (string.IsNullOrEmpty(_connectionStringBuilder.ConnectionString))
             {
-                Handlers.ExceptionHandler.ExceptionNotify(null, new Handlers.ExceptionEventsArgs { Message = $"Connection string is null or empty.", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(null, new ArgumentNullException("First of all call InitializeDBConnection method!"), NLog.LogLevel.Error);
                 throw new ArgumentNullException("First of all call InitializeDBConnection method!");
             }
         }
@@ -105,9 +105,9 @@ namespace Measurements.Core
                         AvailableDetectors.Add(d);
  
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(null, new Handlers.ExceptionEventsArgs { Message = ex.Message, Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(null, e, NLog.LogLevel.Error);
                 d?.Dispose(); 
             }
         }
@@ -125,9 +125,9 @@ namespace Measurements.Core
                     AddDetectorToList(n.ToString());
 
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(null, new Handlers.ExceptionEventsArgs { Message = ex.Message, Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(null, e, NLog.LogLevel.Error);
             }
         }
 
@@ -176,13 +176,13 @@ namespace Measurements.Core
 
                 return session;
             }
-            catch (ArgumentException arg)
+            catch (ArgumentException ae)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(null, new Handlers.ExceptionEventsArgs { Message = arg.Message, Level = NLog.LogLevel.Warn });
+                Handlers.ExceptionHandler.ExceptionNotify(null, ae, NLog.LogLevel.Warn );
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(null, new Handlers.ExceptionEventsArgs { Message = ex.Message, Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(null, e, NLog.LogLevel.Error);
             }
             return null;
         }

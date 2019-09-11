@@ -78,7 +78,7 @@ Typical macro that demonstrates how to use this core:
 
 ~~~csharp
 SessionControllerSingleton.InitializeDBConnectionString("YourConnectionString");
-//here you can load session from db or you can create new one
+//here you can load session from db or you can create the new one
 var iSession = SessionControllerSingleton.Load("name of saved session");
 iSession.Type = "LLI-2";
 iSession.CurrentIrradiationDate = DateTime.Parse("18.06.2012");

@@ -7,10 +7,28 @@ namespace Measurements.Core.Handlers
         public static event EventHandler<ExceptionEventsArgs> ExceptionEvent;
         private static NLog.Logger _nLogger = SessionControllerSingleton.logger;
 
-        public static void ExceptionNotify(object obj, ExceptionEventsArgs exceptionEventsArgs)
+        public static void ExceptionNotify(object obj, Exception ex, NLog.LogLevel lvl)
         {
-            _nLogger.Log(exceptionEventsArgs.Level, $"Exception in the object {obj?.ToString()} has occurred. The message is {Environment.NewLine}{exceptionEventsArgs.Message}");
-            ExceptionEvent?.Invoke(obj, exceptionEventsArgs);
+            try
+            {
+                if (ex != null && !string.IsNullOrEmpty(ex.Source) && !string.IsNullOrEmpty(ex.TargetSite.Name) && !string.IsNullOrEmpty(ex.StackTrace) && !string.IsNullOrEmpty(ex.Message))
+                {
+
+                    _nLogger.Log(lvl, $"{ex.Source} has generated exception from method {ex.TargetSite.Name}. The message is '{ex.Message}'{Environment.NewLine}Stack trace is:'{ex.StackTrace}'");
+                    ExceptionEvent?.Invoke(obj, new ExceptionEventsArgs { Level = lvl, Message = ex.Message, Source = ex.Source, StackTrace = ex.StackTrace, TargetSite = ex.TargetSite.Name });
+                }
+                else
+                {
+                    _nLogger.Log(lvl, $"App has generated exception. The message is '{ex.Message}'");
+                    ExceptionEvent?.Invoke(obj, new ExceptionEventsArgs { Level = lvl, Message = ex.Message, Source = "", StackTrace = "", TargetSite = "" });
+                }
+            }
+            catch (Exception e)
+            {
+                 _nLogger.Log(NLog.LogLevel.Error, $"{e.Source} has generated exception from method {e.TargetSite.Name}. The message is '{e.Message}'{Environment.NewLine}Stack trace is:'{e.StackTrace}'");
+                ExceptionEvent?.Invoke(null, new ExceptionEventsArgs { Level = NLog.LogLevel.Error, Message = e.Message, Source = e.Source, StackTrace = e.StackTrace, TargetSite = e.TargetSite.Name });
+
+            }
         }
     }
 
@@ -18,5 +36,8 @@ namespace Measurements.Core.Handlers
     {
         public NLog.LogLevel Level;
         public string Message;
+        public string StackTrace;
+        public string Source;
+        public string TargetSite;
     }
 }

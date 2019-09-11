@@ -166,17 +166,17 @@ namespace Measurements.Core
                 );
                 sessionContext.SaveChanges();
             }
-            catch (ArgumentNullException arne)
+            catch (ArgumentNullException are)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = arne.Message, Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, are, NLog.LogLevel.Error);
             }
-            catch (Microsoft.EntityFrameworkCore.DbUpdateException dbu)
+            catch (Microsoft.EntityFrameworkCore.DbUpdateException dbe)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{dbu.InnerException}. The most probably you specified already existing name of session. Name of session should be unique.", Level = NLog.LogLevel.Warn });
+                Handlers.ExceptionHandler.ExceptionNotify(this, dbe, NLog.LogLevel.Warn);
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = e.Message, Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
             }
         }
 
@@ -232,9 +232,9 @@ namespace Measurements.Core
                 writer = new JsonTextWriter(sw);
                 serializer.Serialize(writer, det.CurrentMeasurement);
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = ex.Message, Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
             }
             finally
             {
@@ -253,9 +253,9 @@ namespace Measurements.Core
                 ic.Measurements.Add(det.CurrentMeasurement);
                 ic.SaveChanges();
             }
-            catch (Microsoft.EntityFrameworkCore.DbUpdateException de)
+            catch (Microsoft.EntityFrameworkCore.DbUpdateException dbe)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Error has received:{Environment.NewLine}{de.Message}{de.InnerException.Message}{Environment.NewLine}Local saving has begun", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, dbe, NLog.LogLevel.Error);
                 SaveLocally(ref det);
             }
         }
@@ -281,9 +281,9 @@ namespace Measurements.Core
                     fileStream.Close();
                 }
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Error has received during deserializing of the file '{fileName}':{Environment.NewLine}{ex.Message}{Environment.NewLine}", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
             }
             finally
             {
@@ -308,9 +308,9 @@ namespace Measurements.Core
                 foreach (var file in files)
                     file.Delete();
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Error has received during uploading local files into database:{Environment.NewLine}{ex.Message}", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
             }
         }
     }

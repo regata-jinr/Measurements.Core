@@ -24,17 +24,18 @@ namespace Measurements.Core
                 {
                     var m = mapper.Map<MeasurementInfo>(i);
                     m.Type = Type;
+                    m.Height = Height;
                     m.Assistant = SessionControllerSingleton.ConnectionStringBuilder.UserID;
                     MeasurementList.Add(m);
                 }
             }
             catch (ArgumentNullException ane)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{ane.Message}", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, ane, NLog.LogLevel.Error);
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{e.Message}", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
             }
         }
 
@@ -51,7 +52,7 @@ namespace Measurements.Core
             {
                 CheckExcessionOfDiskSize();
 
-                var NumberOfContainers = IrradiationList.Select(ir => ir.Container).Distinct().OrderBy(ir => ir.Value).ToArray();
+                var NumberOfContainers = IrradiationList.Select(ir => ir.Container).Where(ir => ir.HasValue).Distinct().OrderBy(ir => ir.Value).ToArray();
 
                 if (!NumberOfContainers.Any())
                 {
@@ -74,11 +75,11 @@ namespace Measurements.Core
             }
             catch (ArgumentException ae)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = ae.Message, Level = NLog.LogLevel.Warn });
+                Handlers.ExceptionHandler.ExceptionNotify(this, ae, NLog.LogLevel.Warn);
             }
              catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{e.Message}", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
             }
         }
 
@@ -102,7 +103,7 @@ namespace Measurements.Core
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{e.Message}", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
             }
         }
 
@@ -134,7 +135,7 @@ namespace Measurements.Core
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{e.Message}", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
             }
         }
 
@@ -169,6 +170,9 @@ namespace Measurements.Core
 
                 foreach (var d in ManagedDetectors)
                 {
+                    if (SpreadedSamples[d.Name].Count == 0)
+                        continue;
+
                     d.CurrentSample = SpreadedSamples[d.Name][0];
                     d.CurrentMeasurement = MeasurementList.Where(cm => cm.IrradiationId == d.CurrentSample.Id).First();
                     _nLogger.Info($"Samples [{(string.Join(",", SpreadedSamples[d.Name].OrderBy(ss => $"{ss.SetKey}-{ss.SampleNumber}").Select(ss => $"{ss.SetKey}-{ss.SampleNumber}").ToArray()))}] will measure on the detector {d.Name}");
@@ -177,11 +181,11 @@ namespace Measurements.Core
             }
             catch (ArgumentOutOfRangeException ae)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{ae.Message}", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, ae, NLog.LogLevel.Error);
             }
            catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{e.Message}", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
             }
         }
     }

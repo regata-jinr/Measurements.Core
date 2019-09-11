@@ -23,15 +23,20 @@ namespace Measurements.Core
                 {
                     if (SpreadedSamples[d.Name].Count != 0)
                         d.Start();
+                    else
+                    {
+                        Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"For the detector '{d.Name}' list of samples is empty"), NLog.LogLevel.Warn);
+                        MeasurementDone?.Invoke(d, EventArgs.Empty);
+                    }
                 }
             }
             catch (ArgumentOutOfRangeException are)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = are.Message, Level = NLog.LogLevel.Warn });
+                Handlers.ExceptionHandler.ExceptionNotify(this, are, NLog.LogLevel.Warn);
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Something went wrong when measurement has started:{Environment.NewLine}{e.Message}", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
             }
         
         }
@@ -46,7 +51,7 @@ namespace Measurements.Core
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Something went wrong when measurements has stoped:{Environment.NewLine}{e.Message}", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
             }
         }
 
@@ -60,8 +65,7 @@ namespace Measurements.Core
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Something went wrong when measurement has saved spectra:{Environment.NewLine}{e.Message}", Level = NLog.LogLevel.Error
-    });
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
             };
         }
 
@@ -75,7 +79,7 @@ namespace Measurements.Core
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Something went wrong when measurement has continued:{Environment.NewLine}{e.Message}", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
             };
         }
         public void PauseMeasurements()
@@ -88,7 +92,7 @@ namespace Measurements.Core
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Something went wrong when measurement has paused:{Environment.NewLine}{e.Message}", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
             };
         }
         public void ClearMeasurements()
@@ -101,7 +105,7 @@ namespace Measurements.Core
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Something went wrong when measurement has cleared:{Environment.NewLine}{e.Message}", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
             };
         }
 
@@ -127,18 +131,18 @@ namespace Measurements.Core
                 else
                     throw new ArgumentNullException(dName);
             }
-            catch (ArgumentNullException)
+            catch (ArgumentNullException ae)
             {
                 //TODO: russian language returns "??????? ..."
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Detector '{dName}' was not found in the list of available detectors for the session. Either it already in use or it has hardware error", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, ae, NLog.LogLevel.Error);
             }
-            catch (InvalidOperationException)
+            catch (InvalidOperationException ie)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"All detectors already in use or no-one is not available. Please, check connection with the detector by your hand", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, ie, NLog.LogLevel.Error);
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{ex.Message}", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
             }
         }
         public void DetachDetector(string dName)
@@ -160,17 +164,17 @@ namespace Measurements.Core
                 else
                     throw new ArgumentNullException();
             }
-            catch (ArgumentNullException)
+            catch (ArgumentNullException ae)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Detector '{dName}' was not found in the list of detectors which managed by the session. The most probably you didn't add it", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, ae, NLog.LogLevel.Error);
             }
-            catch (InvalidOperationException)
+            catch (InvalidOperationException ie)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Detector with specified name '{dName}' doesn't exist in the list of detectos which managed by the session", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, ie, NLog.LogLevel.Error);
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{ex.Message}", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
             }
         }
 
@@ -208,13 +212,13 @@ namespace Measurements.Core
                 else
                     throw new ArgumentException("Object has a wrong type");
             }
-            catch (ArgumentException ar)
+            catch (ArgumentException ae)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{ar.Message}", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, ae, NLog.LogLevel.Error);
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{ex.Message}", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
             }
        }
 
@@ -234,18 +238,18 @@ namespace Measurements.Core
                                                             )
                                                             ).
                                                        Select(m => new
-                                                                 {
-                                                                     FileNumber = int.Parse(m.FileSpectra.Substring(3, 4))
-                                                                 }
+                                                       {
+                                                           FileNumber = int.Parse(m.FileSpectra.Substring(3, 4))
+                                                       }
                                                                        ).
                                                        Max(m => m.FileNumber);
 
-                return $"{detName.Substring(1,1)}{typeDict[Type]}{(++maxNumber).ToString("D5")}";
+                return $"{detName.Substring(1, 1)}{typeDict[Type]}{(++maxNumber).ToString("D5")}";
             }
             catch (System.Data.SqlClient.SqlException sqle)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{sqle.InnerException.Message}{Environment.NewLine}Program will try to generate new file name from existing spectra file in 'D:\\Spectra'", Level = NLog.LogLevel.Warn });
-
+                Handlers.ExceptionHandler.ExceptionNotify(this, sqle, NLog.LogLevel.Warn);
+            
                 if (!Directory.Exists(@"D:\Spectra"))
                     throw new Exception("Spectra Directory doesn't exist");
 
@@ -269,11 +273,11 @@ namespace Measurements.Core
             }
             catch (Microsoft.EntityFrameworkCore.DbUpdateException dbe) // for duplicates
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{dbe.InnerException.Message}", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, dbe, NLog.LogLevel.Error);
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"{ex.Message}", Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
             }
             return $"{detName[1]}{typeDict[Type]}{maxNumber}";
         }

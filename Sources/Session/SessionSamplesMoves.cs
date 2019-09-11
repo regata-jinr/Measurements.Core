@@ -21,11 +21,11 @@ namespace Measurements.Core
             }
             catch (IndexOutOfRangeException ie)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = ie.Message, Level = NLog.LogLevel.Warn });
+                Handlers.ExceptionHandler.ExceptionNotify(this, ie, NLog.LogLevel.Warn);
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = ex.Message, Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
             }
 
             return false;
@@ -45,7 +45,7 @@ namespace Measurements.Core
             }
             catch (IndexOutOfRangeException ie)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = ie.Message, Level = NLog.LogLevel.Warn });
+                Handlers.ExceptionHandler.ExceptionNotify(this, ie, NLog.LogLevel.Warn);
             }
         }
 
@@ -67,11 +67,11 @@ namespace Measurements.Core
             }
             catch (IndexOutOfRangeException ie)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = ie.Message, Level = NLog.LogLevel.Warn });
+                Handlers.ExceptionHandler.ExceptionNotify(this, ie, NLog.LogLevel.Warn);
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = ex.Message, Level = NLog.LogLevel.Error });
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
             }
         }
     } // class

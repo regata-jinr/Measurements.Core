@@ -83,7 +83,7 @@ namespace Measurements.Core
                 {
                     Status = DetectorStatus.error;
                     ErrorMessage = $"Detector with name '{value}' wasn't find in the MID wizard list. Status will change to 'error'";
-                    Handlers.ExceptionHandler.ExceptionNotify(this, new Handlers.ExceptionEventsArgs { Message = $"Detector({_name}). {ErrorMessage}", Level = NLog.LogLevel.Error });
+                    Handlers.ExceptionHandler.ExceptionNotify(this, new ArgumentException(ErrorMessage), NLog.LogLevel.Error);
                 }
             }
         }
