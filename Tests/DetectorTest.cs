@@ -166,7 +166,7 @@ namespace Measurements.Core.Tests
             Assert.Equal("0", f1.Param[ParamCodes.CAM_F_SSYSERR].ToString()); // Random sd error (%)
             Assert.Equal("0", f1.Param[ParamCodes.CAM_F_SSYSTERR].ToString()); // Non-random sd error 
             Assert.Equal(_detectors.d1.CurrentMeasurement.Type, f1.Param[ParamCodes.CAM_T_STYPE].ToString());
-            Assert.Equal(_detectors.d1.CurrentMeasurement.Height.ToString(), f1.Param[ParamCodes.CAM_T_SGEOMTRY].ToString());
+            Assert.Equal(_detectors.d1.CurrentMeasurement.Height.Value, decimal.Parse(f1.Param[ParamCodes.CAM_T_SGEOMTRY].ToString()),2);
 
             f1.Close();
 

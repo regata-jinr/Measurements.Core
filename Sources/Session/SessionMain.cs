@@ -21,7 +21,7 @@ namespace Measurements.Core
         public string Name
         {
             get { return _name; }
-            private set
+            set
             {
                 _name = value;
                 _nLogger = SessionControllerSingleton.logger.WithProperty("ParamName", $"{SessionControllerSingleton.ConnectionStringBuilder.UserID}--{Name}");

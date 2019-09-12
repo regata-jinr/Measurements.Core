@@ -31,7 +31,7 @@ namespace Measurements.Core
         SpreadOptions         SpreadOption           { get; set; }
         int                   Counts                 { get; }
         string                Type                   { get; set; }
-        string                Name                   { get; }
+        string                Name                   { get; set; }
         decimal               Height                 { get; set; }
         string                Note                   { get; set; }
         DateTime              CurrentIrradiationDate { get; set; }

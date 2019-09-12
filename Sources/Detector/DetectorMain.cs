@@ -435,7 +435,7 @@ namespace Measurements.Core
                 //FIXME: 2019-09-11 18:09:25.8397--ERROR----Canberra.DeviceAccess.1 has generated exception from method set_Param. The message is 'Error: ece99d7d. Programming error invalid calling argument.' Stack trace is:'   at CanberraDeviceAccessLib.DeviceAccessClass.set_Param(ParamCodes Params, Int32 lRec, Int32 lEntry, Object pVal)
 
                 if (CurrentMeasurement == null || string.IsNullOrEmpty(CurrentMeasurement.Assistant) || string.IsNullOrEmpty(CurrentMeasurement.Type) || string.IsNullOrEmpty(CurrentSample.SampleKey))
-                    throw new ArgumentNullException("Some of principal parameters is null. Probably you don't specify the sample");
+                    throw new ArgumentNullException("Some of principal parameters is null. Probably you didn't specify the list of samples");
 
                 _nLogger.Info($"Filling information about sample: {CurrentMeasurement.ToString()}");
 
@@ -445,11 +445,11 @@ namespace Measurements.Core
                 _device.Param[ParamCodes.CAM_T_SIDENT]      = $"{CurrentMeasurement.SetKey}"; // sample code
 
                 if (CurrentSample.Weight.HasValue)
-                    _device.Param[ParamCodes.CAM_F_SQUANT] = (double)CurrentSample.Weight.Value; // weight
+                    _device.Param[ParamCodes.CAM_F_SQUANT]  = (double)CurrentSample.Weight.Value; // weight
                 else
                 {
                     Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"Weight is empty for {CurrentSample}. Zero will set."), NLog.LogLevel.Warn);
-                    _device.Param[ParamCodes.CAM_F_SQUANT] = 0;
+                    _device.Param[ParamCodes.CAM_F_SQUANT]  = 0;
                 }
 
                 _device.Param[ParamCodes.CAM_F_SQUANTERR]   = 0; // err = 0
@@ -483,7 +483,7 @@ namespace Measurements.Core
                 _device.Param[ParamCodes.CAM_T_STYPE]       = CurrentMeasurement.Type;
 
                 if (CurrentMeasurement.Height.HasValue)
-                    _device.Param[ParamCodes.CAM_T_SGEOMTRY] = (double)CurrentMeasurement.Height.Value; // height
+                    _device.Param[ParamCodes.CAM_T_SGEOMTRY] = CurrentMeasurement.Height.Value.ToString("f"); // height
                 else
                 {
                     Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"Height is empty for {CurrentSample}. Zero will set."), NLog.LogLevel.Warn);

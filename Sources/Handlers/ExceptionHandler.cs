@@ -11,10 +11,15 @@ namespace Measurements.Core.Handlers
         {
             try
             {
+                if (obj is Detector)
+                    _nLogger.WithProperty("ParamName", ((Detector)obj).Name);
+                if (obj is Session)
+                    _nLogger.WithProperty("ParamName", $"{SessionControllerSingleton.ConnectionStringBuilder.UserID}--{((Session)obj).Name}");
+
                 if (ex != null && !string.IsNullOrEmpty(ex.Source) && !string.IsNullOrEmpty(ex.TargetSite.Name) && !string.IsNullOrEmpty(ex.StackTrace) && !string.IsNullOrEmpty(ex.Message))
                 {
 
-                    _nLogger.Log(lvl, $"{ex.Source} has generated exception from method {ex.TargetSite.Name}. The message is '{ex.Message}'{Environment.NewLine}Stack trace is:'{ex.StackTrace}'");
+                    _nLogger.Log(lvl, $"{ex.Source} has generated exception in [{ex.TargetSite.DeclaringType}--{ex.TargetSite.MemberType}--{ex.TargetSite.Name}]. The message is '{ex.Message}'{Environment.NewLine}Stack trace is:'{ex.StackTrace}'");
                     ExceptionEvent?.Invoke(obj, new ExceptionEventsArgs { Level = lvl, Message = ex.Message, Source = ex.Source, StackTrace = ex.StackTrace, TargetSite = ex.TargetSite.Name });
                 }
                 else

@@ -70,8 +70,6 @@ namespace Measurements.Core
                     if (i >= ManagedDetectors.Count())
                         i = 0;
                 }
-
-                MakeSamplesCurrentOnAllDetectorsByNumber();
             }
             catch (ArgumentException ae)
             {
@@ -98,8 +96,6 @@ namespace Measurements.Core
                     if (i >= ManagedDetectors.Count())
                         i = 0;
                 }
-
-                MakeSamplesCurrentOnAllDetectorsByNumber();
             }
             catch (Exception e)
             {
@@ -130,8 +126,6 @@ namespace Measurements.Core
                         n = 0;
                     }
                 }
-
-                MakeSamplesCurrentOnAllDetectorsByNumber();
             }
             catch (Exception e)
             {
@@ -168,12 +162,13 @@ namespace Measurements.Core
                     throw new Exception("Type of spreaded options doesn't recognize. Spreaded by container has done.");
                 }
 
+                MakeSamplesCurrentOnAllDetectorsByNumber();
+
                 foreach (var d in ManagedDetectors)
                 {
                     if (SpreadedSamples[d.Name].Count == 0)
                         continue;
 
-                    d.CurrentSample = SpreadedSamples[d.Name][0];
                     d.CurrentMeasurement = MeasurementList.Where(cm => cm.IrradiationId == d.CurrentSample.Id).First();
                     _nLogger.Info($"Samples [{(string.Join(",", SpreadedSamples[d.Name].OrderBy(ss => $"{ss.SetKey}-{ss.SampleNumber}").Select(ss => $"{ss.SetKey}-{ss.SampleNumber}").ToArray()))}] will measure on the detector {d.Name}");
                 }
