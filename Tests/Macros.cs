@@ -17,71 +17,6 @@ namespace Measurements.Core.Tests
             this.output = output;
         }
 
-        //TODO: extend test for random data, read and compare files content
-        [Fact]
-        public void FastMeasurements()
-        {
-            SessionControllerSingleton.InitializeDBConnectionString(@"Server=RUMLAB\REGATALOCAL;Database=NAA_DB_TEST;Trusted_Connection=True;");
-            SessionControllerSingleton.ConnectionStringBuilder.UserID = "bdrum";
-
-            var iSession = SessionControllerSingleton.Create();
-            iSession.AttachDetector("D1");
-            iSession.AttachDetector("D5");
-            iSession.AttachDetector("D7");
-            iSession.Type = "LLI-2";
-            iSession.CurrentIrradiationDate = DateTime.Parse("18.06.2012");
-            iSession.Height = 2.5m;
-            foreach (var m in iSession.MeasurementList)
-                m.Note = "TEST!";
-            iSession.SetAcquireDurationAndMode(3);
-            iSession.ClearMeasurements();
-            iSession.StartMeasurements();
-
-            System.Threading.Thread.Sleep(iSession.Counts*iSession.IrradiationList.Count*1000 + iSession.IrradiationList.Count*1000);
-
-            var ic = new InfoContext();
-
-            Assert.Equal(iSession.IrradiationList.Count, ic.Measurements.Where(m => m.DateTimeStart.Value.Date == DateTime.Now.Date && m.Type == iSession.Type).Count());
-        }
-
-        [Fact]
-        void FewSessionInParallel()
-        {
-            SessionControllerSingleton.InitializeDBConnectionString(@"Server=RUMLAB\REGATALOCAL;Database=NAA_DB_TEST;Trusted_Connection=True;");
-            SessionControllerSingleton.ConnectionStringBuilder.UserID = "bdrum";
-
-            var iSession = SessionControllerSingleton.Create();
-            iSession.AttachDetector("D6");
-            iSession.AttachDetector("D7");
-            iSession.Type = "LLI-2";
-            iSession.CurrentIrradiationDate = DateTime.Parse("18.06.2012");
-            iSession.Height = 2.5m;
-            foreach (var m in iSession.MeasurementList)
-                m.Note = "TEST!Session1";
-            iSession.SetAcquireDurationAndMode(5);
-            iSession.ClearMeasurements();
-            iSession.StartMeasurements();
-
-
-            var iSession1 = SessionControllerSingleton.Load("bdrum-test");
-            iSession1.Type = "SLI";
-            iSession1.CurrentIrradiationDate = DateTime.Parse("19.12.2014");
-            iSession1.Height = 5m;
-            foreach (var m in iSession1.MeasurementList)
-                m.Note = "TEST!Session2";
-            iSession1.SetAcquireDurationAndMode(3);
-            iSession1.ClearMeasurements();
-            iSession1.StartMeasurements();
-
-            System.Threading.Thread.Sleep(iSession.Counts*iSession.IrradiationList.Count*1000 + iSession.IrradiationList.Count*1000);
-            System.Threading.Thread.Sleep(iSession1.Counts*iSession1.IrradiationList.Count*1000 + iSession1.IrradiationList.Count*1000);
-
-            var ic = new InfoContext();
-
-
-        }
-
-
         [Fact]
         void MainFunctionalTest()
         {
@@ -131,9 +66,7 @@ namespace Measurements.Core.Tests
                 session.CurrentIrradiationDate = session.IrradiationDateList[(int)((session.IrradiationDateList.Count - 1) * r.NextDouble())].Value;
                 session.Height = Math.Round((decimal)(20 * r.NextDouble() + 1),2);
                 session.SetAcquireDurationAndMode((int)(4 * r.NextDouble() + 2));
-               
             }
-
 
             foreach (var session in sessionList)
             {
@@ -142,7 +75,6 @@ namespace Measurements.Core.Tests
                 foreach (var file in dir.GetFiles("*.json"))
                     file.Delete();
             }
-
 
             foreach (var session in sessionList)
             {
@@ -190,7 +122,6 @@ namespace Measurements.Core.Tests
 
                     fileSpectra.Close();
 
-
                     output.WriteLine($"Checking of measurement for irradiated sample with id {m.IrradiationId}");
                     Assert.Single(ic.Measurements.Where(me =>
                                                                     me.IrradiationId == m.IrradiationId &&
@@ -207,10 +138,8 @@ namespace Measurements.Core.Tests
                                                                     //me.Note == m.Note
                                                          ).ToArray());
                 }
-
             }
 
-        }
-
-    }
-}
+        }// MainFunctionalTest(
+    } // test class
+} // test namespace

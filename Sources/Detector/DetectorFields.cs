@@ -4,7 +4,6 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using CanberraDeviceAccessLib;
-using AutoMapper;
 
 //TODO: set up db target to logger https://knightcodes.com/.net/2016/05/25/logging-to-a-database-wth-nlog.html
 
@@ -62,9 +61,6 @@ namespace Measurements.Core
             {
                 _nLogger.Info($"Set sample {value} as current");
                 _currentSample = value;
-                //var configuration = new MapperConfiguration(cfg => cfg.AddMaps("MeasurementsCore"));
-                //var mapper = new Mapper(configuration);
-                //CurrentMeasurement = mapper.Map<MeasurementInfo>(_currentSample);
             }
         }
 

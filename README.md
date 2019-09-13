@@ -1,7 +1,9 @@
 ﻿# Software core for control of the measurements process
 
 ## Introduction
-This is the core of basic [regata](http://regata.jinr.ru/) software designed for control measurements process.
+This is the core of basic [regata](http://regata.jinr.ru/) software designed for control measurements process. We don't have plans to provide the general software. 
+
+> **This core was implemented for exactly structure of experiment that we have. If you would like to use it, please, but the most probably you will need make plenty of changes.**
 
 Our measurement process involved plenty internal processes:
 * Loading information about the sample prepared for the measurement
@@ -64,7 +66,7 @@ TBA
 
 ### Session
 
-Session is the whole measurement process. In the frame of one session you able to controll certain detectors and samples. You can create few session and measure different samples on different detectors.
+Session is the whole measurement process. In the frame of one session you able to controll certain detectors and samples. You can create few session and measure different samples on diffeMULTICHANNELrent detectors.
 
 ### SessionControllerSingleton
 
@@ -101,3 +103,28 @@ We use NLog framework to keep information about internal processes. This allows 
 ### Testing
 
 For testing we use Xunit framework. We have unit testa that controls each method and functional tests for controls the process in general.
+
+## Design of the core
+
+Here we take a closer look to internal logic of the core.
+
+First of all, the core has main controller class whick implemented singleton pattern. It has a name **SessionControllerSingleton** and provides to user opportunity to create or load session. Also it determines a connection string builder that other classes use for any manipulations with data base. This class possessed by the list of available detectors, which obtained from the MultiChannel Analyzer(MCA) databases of devices.
+
+> Concerning of all terms corresponding with Gamma spectrometry or Canberra devices see any kinds of tutorial in your Genie2K folder, for example 'Genie2000 Tutorials Manual', etc.
+
+
+The next class for logic order is **Session**. Session allows users to control any part of measurement process: start, stop, continue, pause, save spectra files, load info in database, serialize measurements, change samples on devices using sample changer(*has not implemented yet*). **Pay your attention: one session able to control any number of devices and user could create any number of session in order to make measurements in parallel**
+
+For managing of devices Session uses Detector class. This is high level wrapper for the Canberra DeviceAccessClass. 
+
+
+## Open problems
+
+Here we will be keep the list of problems, which we would like to implement during the nearest time:
+
+1. Now log files are creating on the disk storage, but in this way it impossible to create web-monitor for the tracking measurements state. Now the idea is to port logs from files into database and create simple web-monitor based on this data bases transactions
+
+
+2. We think that the good idea is implement our own exception class that allow us to reach the better understanding in case of errors
+
+3. S560 already has async structure, but the details are hidden. E.g. we cannot add timeout to connection, only via custom events (in case device ready message has not got during 10 sec  timeout exception will throw)

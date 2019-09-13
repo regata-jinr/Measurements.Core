@@ -274,3 +274,6 @@ doxygen
 
 *.cnf
 *.CNF
+*.xsd
+
+FodyWeavers.xml

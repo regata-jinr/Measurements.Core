@@ -39,8 +39,6 @@ namespace Measurements.Core
         List<IrradiationInfo> IrradiationList        { get; }
         List<MeasurementInfo> MeasurementList        { get; }
         List<IDetector>       ManagedDetectors       { get; }
-        IrradiationInfo       CurrentSample          { get; }
-        MeasurementInfo       CurrentMeasurement     { get; } 
 
         Dictionary<string, List<IrradiationInfo>> SpreadedSamples { get; }
  

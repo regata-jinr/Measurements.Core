@@ -211,7 +211,6 @@
       <SubType>Designer</SubType>
     </Content>
     <None Include="App.config" />
-    <None Include="appsettings.json" />
     <None Include="NLog.xsd">
       <SubType>Designer</SubType>
     </None>

@@ -1,32 +1,74 @@
-﻿using System.Collections.Generic;
+﻿/***************************************************************************
+ *                                                                         *
+ *                                                                         *
+ * Copyright(c) 2018-2019, REGATA Experiment at FLNP|JINR                  *
+ * Author: [Boris Rumyantsev](mailto:bdrum@jinr.ru)                        *
+ * All rights reserved                                                     *
+ *                                                                         *
+ *                                                                         *
+ ***************************************************************************/
+
+using System.Collections.Generic;
 using System.Data.SqlClient;
 using CanberraDeviceAccessLib;
 using System;
 using System.Threading.Tasks;
 using System.Linq;
 
+// TODO:  add pin code instead of password. use windows credentials accounts
+//        in case of connection falling but pin is correct local mode should be available
+//        deny running of appliaction in case it already running
+
+// FIXME: adding costura for merging dlls, but pay attention that it will break tests.
+//        find out how to exclude test. exclude assemblies with xunit didn't help
+
+/// <summary>
+/// More information about the design of this core, general schemas and content see in the readme file of this repository:
+/// https://github.com/regata-jinr/MeasurementsCore
+/// </summary>
 namespace Measurements.Core
 {
-    // TODO:  add docs
-    // TODO:  improve readability of logs
-    // TODO:  add local mode for windows credentials accounts
-    // TODO:  deny running of appliaction in case it already running
-    // FIXME: adding costura for merging dlls, but pay attention that it will break tests.
-    //        find out how to exclude test. exclude assemblies with xunit didn't help
-
+    /// <summary>
+    /// SessionControllerSingleton is the class that implemented singleton pattern and is used for control <seealso cref="Session"/> of measurements 
+    /// </summary>
     public static class SessionControllerSingleton
     {
+        /// <summary>
+        /// For the logging we use NLog framework. Now we keep logs in the directory of application. 
+        /// Logger creates 'MeasurementsLogs' folder nad file with name {short-date}.log.
+        /// Also we consider implementation of web-monitor based on keeping logs in the data base.
+        /// </summary>
+        /// <see>
         public static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        /// <summary>
+        /// The list of created session managed by SessionController
+        /// </summary>
         public static List<ISession>              ManagedSessions         { get; private set; }
+        /// <summary>
+        /// The list of MCA devices available for usage. This list forms via MCA databases provided by Canberra DeviceAccessClass
+        /// </summary>
         public static List<IDetector>             AvailableDetectors      { get; private set; }
 
-        public static bool LocalMode;
+        /// <summary>
+        /// We consider the opportunity to have two modes of measurement (local and remote). Now remote mode by default, but in case of errors
+        /// local mode will turn on and keep measurement process till connection will restore. All data save to the local storage with the usage of serialization process.
+        /// </summary>
+        private static bool LocalMode;
 
         private static SqlConnectionStringBuilder _connectionStringBuilder; 
+        /// <summary>
+        /// Connection string builder allows to get all information via connection string: DBName, UserID, so on.
+        /// UserID is used for getting assistant name
+        /// </summary>
         public static SqlConnectionStringBuilder ConnectionStringBuilder
         {
             get { return _connectionStringBuilder; }
         }
+        /// <summary>
+        /// Here is the starting point of the application. Before the calling any method of this class, you have to call this one
+        /// It will initialize all field of this class and allow you to go further
+        /// </summary>
+        /// <param name="connectionString"></param>
         public static void InitializeDBConnectionString(string connectionString)
         {
             _connectionStringBuilder.ConnectionString = connectionString;
@@ -34,6 +76,10 @@ namespace Measurements.Core
             logger.WithProperty("ParamName", ConnectionStringBuilder.UserID);
         }
 
+        /// <summary>
+        /// This additional method for the checking the connection state. In case of returning false local mode will turn on
+        /// </summary>
+        /// <returns>True in case of connection with specified db is success</returns>
         public static bool TestDBConnection()
         {
             CheckSessionControllerInitialisation();
@@ -65,12 +111,15 @@ namespace Measurements.Core
             return isConnected;
         }
 
+        /// <summary>
+        /// This event will occur when connection will be restore after falling
+        /// </summary>
         public static event Action ConectionRestoreEvent;
 
-        private static void WaiterWrapper()
-        {
-        }
-
+        /// <summary>
+        /// This internal action for the checking connection. Every 10 seconds it runs TestDBConnection
+        /// in case of true it invoke ConnectionRestoreEvent
+        /// </summary>
         private static void ConnectionWaiter()
         {
             logger.Info("Try to connect to db asynchronously");
@@ -86,6 +135,9 @@ namespace Measurements.Core
             else ConnectionWaiter();
         }
 
+        /// <summary>
+        /// This internal method deny to use this class till InitializeDBConnectionString() has called
+        /// </summary>
         private static void CheckSessionControllerInitialisation()
         {
             if (string.IsNullOrEmpty(_connectionStringBuilder.ConnectionString))
@@ -94,7 +146,11 @@ namespace Measurements.Core
                 throw new ArgumentNullException("First of all call InitializeDBConnection method!");
             }
         }
-
+        /// <summary>
+        /// This internal method add detector to the list of available detectors for usage
+        /// with all checkings
+        /// </summary>
+        /// <param name="name">Name of the detector. You can see detectors name in MCA Input Defenition Editor</param>
         private static void AddDetectorToList(string name)
         {
             IDetector d = null;
@@ -112,6 +168,9 @@ namespace Measurements.Core
             }
         }
 
+        /// <summary>
+        /// Add available detectors to list using internal MCA database
+        /// </summary>
         private static void DetectorsInititalisation()
         {
             try
@@ -131,6 +190,9 @@ namespace Measurements.Core
             }
         }
 
+        /// <summary>
+        /// Static constructor for initialization of all fields of the class
+        /// </summary>
         static SessionControllerSingleton()
         {
             logger.Info("Inititalization of Session Controller instance has began");
@@ -147,6 +209,10 @@ namespace Measurements.Core
         }
 
 
+        /// <summary>
+        /// Allows user to create session from the scratch
+        /// </summary>
+        /// <returns></returns>
         public static ISession Create()
         {
             CheckSessionControllerInitialisation();
@@ -157,6 +223,11 @@ namespace Measurements.Core
             return session;
         }
 
+        /// <summary>
+        /// Allow users to load saved session from db
+        /// </summary>
+        /// <param name="sName">Name of saved session</param>
+        /// <returns>Session object with filled information such as: Name of session, List of detectors, type of measurement, spreaded option, counts, countmode, height, assistant, note</returns>
         public static ISession Load(string sName)
         {
             CheckSessionControllerInitialisation();
@@ -187,9 +258,40 @@ namespace Measurements.Core
             return null;
         }
 
+        /// <summary>
+        /// Allows users to close session, remove it from the list of session managed by the SessionControllerSingleton and free resources correctly 
+        /// </summary>
+        /// <param name="session"></param>
         public static void CloseSession(ISession session)
         {
-            session.Dispose();
+            try
+            {
+                if (session == null)
+                {
+                    logger.Info($"Session is null. Please, provide instance of Session type");
+                    throw new ArgumentNullException("You try to remove null object instead of instanced session");
+                }
+
+                if (!ManagedSessions.Contains(session))
+                {
+                    logger.Info($"List of managed session doesn't contain such session - {session.Name}");
+                    throw new InvalidOperationException($"Such session {session.Name} doesn't exist in the list of managed session by SessionControllerSingleton");
+                }
+                ManagedSessions.Remove(session);
+                session.Dispose();
+            }
+            catch (ArgumentNullException ae)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(null, ae, NLog.LogLevel.Warn);
+            }
+            catch (InvalidOperationException ie)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(null, ie, NLog.LogLevel.Error);
+            }
+            catch (Exception e)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(null, e, NLog.LogLevel.Error);
+            }
         }
 
         private static bool _isDisposed;
