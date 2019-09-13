@@ -1,7 +1,7 @@
 ﻿/***************************************************************************
  *                                                                         *
  *                                                                         *
- * Copyright(c) 2018-2019, REGATA Experiment at FLNP|JINR                  *
+ * Copyright(c) 2017-2019, REGATA Experiment at FLNP|JINR                  *
  * Author: [Boris Rumyantsev](mailto:bdrum@jinr.ru)                        *
  * All rights reserved                                                     *
  *                                                                         *
@@ -16,7 +16,14 @@ using System.IO;
 
 namespace Measurements.Core
 {
-    //TODO: add docs
+    // this file contains general fields and methods of the Session class.
+    // Session class divided by few files:
+    // ├── ISession.cs                - interface of Session class
+    // ├── SessionDetectorsControl.cs - contains methods that related with managing of detector
+    // ├── SessionInfo.cs             - contains fields of Session for EF core interaction
+    // ├── SessionLists.cs            - contains method that forms list of samples and measurements
+    // ├── SessionMain.cs --> opened
+    // └── SessionSamplesMoves.cs     - contins method for changing and setting sample to detectors
 
     /// <summary>
     /// Before start the measurement process one of principal thing that user should define is 
@@ -142,12 +149,12 @@ namespace Measurements.Core
         /// <summary>
         /// This event will occur after all detectors complete measurements of all samples
         /// </summary>
-        public event EventHandler SessionComplete;
+        public event Action<ISession> SessionComplete;
 
         /// <summary>
         /// This event will occur after one of managed detector by the session complete measurements of all samples
         /// </summary>
-        public event EventHandler MeasurementDone;
+        public event Action<IDetector> MeasurementDone;
 
         /// <summary>
         /// Allows user to specify duration of measurement and the mode of acqusition for each detector controlled by the session. <seealso cref="CanberraDeviceAccessLib.AcquisitionModes"/>

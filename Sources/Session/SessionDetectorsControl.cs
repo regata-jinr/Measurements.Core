@@ -1,13 +1,34 @@
-﻿using System;
+﻿/***************************************************************************
+ *                                                                         *
+ *                                                                         *
+ * Copyright(c) 2017-2019, REGATA Experiment at FLNP|JINR                  *
+ * Author: [Boris Rumyantsev](mailto:bdrum@jinr.ru)                        *
+ * All rights reserved                                                     *
+ *                                                                         *
+ *                                                                         *
+ ***************************************************************************/
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 
 namespace Measurements.Core
 {
+    // this file contains methods that related with managing of detector
+    // Session class divided by few files:
+    // ├── ISession.cs                - interface of Session class
+    // ├── SessionDetectorsControl.cs --> opened
+    // ├── SessionInfo.cs             - contains fields of Session for EF core interaction
+    // ├── SessionLists.cs            - contains method that forms list of samples and measurements 
+    // ├── SessionMain.cs             - contains general fields and methods of the Session class.
+    // └── SessionSamplesMoves.cs     - contains method for changing and setting sample to detectors
+
     public partial class Session : ISession, IDisposable
     {
-
+        /// <summary>
+        /// Start asquisition process on all managed detectors by the session
+        /// </summary>
         public void StartMeasurements()
         {
             _nLogger.Info($"starts measurements of the sample sets");
@@ -26,7 +47,7 @@ namespace Measurements.Core
                     else
                     {
                         Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"For the detector '{d.Name}' list of samples is empty"), NLog.LogLevel.Warn);
-                        MeasurementDone?.Invoke(d, EventArgs.Empty);
+                        MeasurementDone?.Invoke(d);
                     }
                 }
             }
@@ -40,7 +61,11 @@ namespace Measurements.Core
             }
         
         }
-        //TODO: wrap all operation to try - catch. In the other case it will be not possible to continue working with application.
+
+        ///<summary>
+        /// Stops asquisition process on all managed detectors by the session. 
+        /// **This generate acqusition done event**
+        /// </summary>.
         public void StopMeasurements()
         {
             try
@@ -55,6 +80,10 @@ namespace Measurements.Core
             }
         }
 
+        ///<summary>
+        /// Save asquisition process on all managed detectors by the session into the cnf file
+        /// Name of file will generate automatically <see cref="GenerateFileSpectraName(string)"/>
+        /// </summary>.
         public void SaveSpectra(ref IDetector d)
         {
             try
@@ -69,7 +98,10 @@ namespace Measurements.Core
             };
         }
 
-       public void ContinueMeasurements()
+        ///<summary>
+        /// Continue asquisition process on all managed detectors by the session
+        /// </summary>.
+        public void ContinueMeasurements()
         {
             try
             {
@@ -82,6 +114,11 @@ namespace Measurements.Core
                 Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
             };
         }
+       
+        ///<summary>
+        /// Pause asquisition process on all managed detectors by the session
+        /// In case you just stop acquisition and then continue use this method
+        /// </summary>.
         public void PauseMeasurements()
         {
             try
@@ -95,6 +132,10 @@ namespace Measurements.Core
                 Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
             };
         }
+
+        ///<summary>
+        /// Clear asquisition process on all managed detectors by the session
+        /// </summary>.
         public void ClearMeasurements()
         {
             try
@@ -109,9 +150,13 @@ namespace Measurements.Core
             };
         }
 
-       public void AttachDetector(string dName)
+        /// <summary>
+        /// Attach detector defined by the name to the session
+        /// Chosen detector will remove from available detectors list that SessionControllerSingleton controled
+        /// </summary>
+        /// <param name="dName">Name of detector</param>
+        public void AttachDetector(string dName)
         {
-
             _nLogger.Info($"will take a control for detector '{dName}'");
             try
             {
@@ -133,7 +178,6 @@ namespace Measurements.Core
             }
             catch (ArgumentNullException ae)
             {
-                //TODO: russian language returns "??????? ..."
                 Handlers.ExceptionHandler.ExceptionNotify(this, ae, NLog.LogLevel.Error);
             }
             catch (InvalidOperationException ie)
@@ -145,6 +189,11 @@ namespace Measurements.Core
                 Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
             }
         }
+        /// <summary>
+        /// Remove detector given by name from list of managed detectors by the session
+        /// Such detector will add to the list of available detectors that controlled by SessionControllerSingleton
+        /// </summary>
+        /// <param name="dName">Name of detector</param>
         public void DetachDetector(string dName)
         {
             _nLogger.Info($"will detach detector 'dName'");
@@ -178,20 +227,31 @@ namespace Measurements.Core
             }
         }
 
-        private void MeasurementDoneHandler(Object detObj, EventArgs eventArgs)
+        /// <summary>
+        /// This is the handler of MeasurementDone events. In case of detector has done measurements process, 
+        /// this method add counter <see cref="_countOfDetectorsWichDone"/> and will check it with number of managed detectors.
+        /// In case of matching <see cref="SessionComplete"/> will invoke.
+        /// </summary>
+        /// <param name="det">Detector that generated event of measurements has done</param>
+        /// <param name="eventArgs"></param>
+        private void MeasurementDoneHandler(IDetector det)
         {
-
-                _nLogger.Info($"Detector {((Detector)detObj).Name} has done measurement process");
-                _countOfDetectorsWichDone++;
+            _nLogger.Info($"Detector {det.Name} has done measurement process");
+            _countOfDetectorsWichDone++;
 
             if (_countOfDetectorsWichDone == ManagedDetectors.Count)
             {
                 _nLogger.Info($"All detectors [{(string.Join(",", ManagedDetectors.Select(d => d.Name).ToArray()))}] has done measurement process");
                 _countOfDetectorsWichDone = 0;
-                SessionComplete?.Invoke(this, eventArgs);
+                SessionComplete?.Invoke(this);
             }
         }
 
+        /// <summary>
+        /// This internal method process message from the detector. <see cref="Detector.ProcessDeviceMessages(int, int, int)"/>
+        /// </summary>
+        /// <param name="o">Boxed detector</param>
+        /// <param name="args"><see cref="DetectorEventsArgs"/></param>
        private void ProcessAcquiringMessage(object o, DetectorEventsArgs args)
        {
             try
@@ -206,7 +266,7 @@ namespace Measurements.Core
                         SaveMeasurement(ref d);
                         if (NextSample(ref d))
                             d.Start();
-                        else MeasurementDone?.Invoke(d, EventArgs.Empty);
+                        else MeasurementDone?.Invoke(d);
                     }
                 }
                 else
@@ -222,6 +282,23 @@ namespace Measurements.Core
             }
        }
 
+        /// <summary>
+        /// Generator of unique name of file spectra
+        /// Name of file spectra should be unique and it has constraint in data base
+        /// There is an algorithm:
+        /// For the specified type it determines maximum of spectra number from the numbers that might be converted to integer number
+        /// Then it choose the max number and convert it to string using next code:
+        /// First digit of name spectra is the digit from the name of detector
+        /// Second digit is number of type - {SLI - 0} {LLI-1 - 1} {LLI-2 - 2}
+        /// The next five digits is number of spectra
+        /// Typical name of spectra file: 1006261 means
+        /// The spectra was acquried on detector 'D1' it was SLI type and it has a number 6261.
+        /// **Pay attention that beside FileSpectra filed in MeasurementInfo**
+        /// **each Detector has a property with FullName that included path on local storage**
+        /// <see cref="Detector.FullFileSpectraName"/>
+        /// </summary>
+        /// <param name="detName">Name of detector which save acquiring session to file</param>
+        /// <returns>Name of spectra file</returns>
         private string GenerateFileSpectraName(string detName)
         {
             _nLogger.Info($"will generate file spectra name for the detector {detName}");

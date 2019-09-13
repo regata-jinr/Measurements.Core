@@ -16,7 +16,6 @@ namespace Measurements.Core
         /// <summary>Constructor of Detector class.</summary>
         /// <param name="name">Name of detector. Without path.</param>
         /// <param name="option">CanberraDeviceAccessLib.ConnectOptions {aReadWrite, aContinue, aNoVerifyLicense, aReadOnly, aTakeControl, aTakeOver}.By default ConnectOptions is ReadWrite.</param>
-        /// 
         public Detector(string name, ConnectOptions option = ConnectOptions.aReadWrite, int timeOutLimitSeconds = 10)
         {
             try
@@ -34,8 +33,10 @@ namespace Measurements.Core
                 _device            = new DeviceAccessClass();
                 _currentSample     = new IrradiationInfo();
                 CurrentMeasurement = new MeasurementInfo();
-                
-                Name = name;
+
+                if (CheckNameOfDetector(name))
+                    _name = name;
+
                 _device.DeviceMessages += ProcessDeviceMessages;
                 _timeOutLimitSeconds = timeOutLimitSeconds * 1000;
                 IsPaused = false;
@@ -48,7 +49,6 @@ namespace Measurements.Core
         }
 
         /// <summary>
-        ///
         ///
         ///  |Advise Mask        |Description                                        |int value(lParam)|
         ///  |:-----------------:|:-------------------------------------------------:|:---------------:|
@@ -208,7 +208,7 @@ namespace Measurements.Core
         }
 
         /// <summary>
-        /// Save current session on device.
+        /// Save current measurement session on the device.
         /// </summary>
         public void Save()
         {
@@ -248,7 +248,7 @@ namespace Measurements.Core
         }
 
         /// <summary>
-        /// Disconnects from detector. Change status to off. Reset ErrorMessage. Not clearing the detector.
+        /// Disconnect from detector. Change status to off. Reset ErrorMessage. Not clearing the detector.
         /// </summary>
         public void Disconnect()
         {
@@ -272,7 +272,7 @@ namespace Measurements.Core
         /// </summary>
         public void Reset()
         {
-            //TODO: test it
+            //FIXME: not tested
             try
             {
                 _nLogger.Info($"Attempt to reset the detector");
@@ -500,6 +500,11 @@ namespace Measurements.Core
             }
        }
 
+        /// <summary>
+        /// In spectra file we have four row for notes, Each row allows to keep 64 charatcer.
+        /// This method divide a big string to these rows
+        /// </summary>
+        /// <param name="iStr"></param>
         private void DivideString(string iStr)
         {
             if (string.IsNullOrEmpty(iStr)) return;
@@ -536,6 +541,9 @@ namespace Measurements.Core
 
     }
 
+    /// <summary>
+    /// This class shared information about events occured on the detector between callers.
+    /// </summary>
      public class DetectorEventsArgs : EventArgs
     {
         public string         Name;

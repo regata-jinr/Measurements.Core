@@ -31,8 +31,8 @@ namespace Measurements.Core
     //TODO: save logs to db
     public partial class Detector : IDetector, IDisposable
     {
-        private DeviceAccessClass  _device;
-        private string             _name;
+        private readonly DeviceAccessClass  _device;
+        private readonly string    _name;
         private int                _timeOutLimitSeconds;
         private bool               _isDisposed;
         private DetectorStatus     _status;
@@ -51,9 +51,15 @@ namespace Measurements.Core
             //AcquiringStatusChanged?.Invoke(this, e);
         //}
 
-
+       /// <summary>
+       /// The reason of this field that stop method generates acquire done event, this means
+       /// that we should distinguish stop and pause. That's why this field exist
+       /// </summary>
         public bool IsPaused { get; private set; }
 
+        /// <summary>
+        /// Irradiated sample spectra of which is acquiring
+        /// </summary>
         public IrradiationInfo CurrentSample
         {
             get { return _currentSample; }
@@ -64,25 +70,38 @@ namespace Measurements.Core
             }
         }
 
+        /// <summary>
+        /// Name of detector
+        /// </summary>
         public string Name
         {
             get { return _name; }
-            private set
+        }
+        private  bool CheckNameOfDetector(string name)
+        {
+            try
             {
                 var detsList = (IEnumerable<object>)_device.ListSpectroscopyDevices;
-                if (detsList.Contains(value))
+                if (detsList.Contains(name))
                 {
-                    _name = value;
-                    _nLogger.Info($"Detector with name '{value}' was found in the MID wizard list and will be used");
+                    _nLogger.Info($"Detector with name '{name}' was found in the MID wizard list and will be used");
+                    return true;
                 }
                 else
                 {
                     Status = DetectorStatus.error;
-                    ErrorMessage = $"Detector with name '{value}' wasn't find in the MID wizard list. Status will change to 'error'";
+                    ErrorMessage = $"Detector with name '{name}' wasn't find in the MID wizard list. Status will change to 'error'";
                     Handlers.ExceptionHandler.ExceptionNotify(this, new ArgumentException(ErrorMessage), NLog.LogLevel.Error);
+                    return false;
                 }
             }
+            catch (Exception e)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
+                return false;
+            }
         }
+        
 
         public int CountToRealTime =>  int.Parse(GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_PREAL)); 
         public int CountToLiveTime =>  int.Parse(GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_PLIVE)); 

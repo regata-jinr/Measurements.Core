@@ -6,6 +6,8 @@ using Xunit;
 
 namespace Measurements.Core.Tests
 {
+    //TODO: add sequence of tests
+    //      now test passed only in case of handle running one by one
     public class SessionControllerSingletonTest
     {
         [Fact]

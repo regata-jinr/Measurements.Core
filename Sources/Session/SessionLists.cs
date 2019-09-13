@@ -1,12 +1,35 @@
-﻿using System;
+﻿/***************************************************************************
+ *                                                                         *
+ *                                                                         *
+ * Copyright(c) 2017-2019, REGATA Experiment at FLNP|JINR                  *
+ * Author: [Boris Rumyantsev](mailto:bdrum@jinr.ru)                        *
+ * All rights reserved                                                     *
+ *                                                                         *
+ *                                                                         *
+ ***************************************************************************/
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using AutoMapper;
 
 namespace Measurements.Core
 {
+    // this file  contains method that forms list of samples and measurements 
+    // Session class divided by few files:
+    // ├── ISession.cs                - interface of Session class
+    // ├── SessionDetectorsControl.cs - contains methods that related with managing of detector
+    // ├── SessionInfo.cs             - contains fields of Session for EF core interaction
+    // ├── SessionLists.cs            --> opened
+    // ├── SessionMain.cs             - contains general fields and methods of the Session class.
+    // └── SessionSamplesMoves.cs     - contains method for changing and setting sample to detectors
+
     public partial class Session : ISession, IDisposable
     {
+        /// <summary>
+        /// Formes list of samples that were irradiated in chosen date
+        /// </summary>
+        /// <param name="date">Date of irradiation samples</param>
         private void SetIrradiationsList(DateTime date)
         {
             _nLogger.Info($"List of samples from irradiations journal will be loaded. Then list of measurements will be prepare");
@@ -39,13 +62,26 @@ namespace Measurements.Core
             }
         }
 
+        /// <summary>
+        /// Sometimes we have more samples than the disk might contain. In this case
+        /// Event of disk overflow should be generate
+        /// </summary>
         private void CheckExcessionOfDiskSize()
         {
                 //if ((IrradiationList.Count / ManagedDetectors.Count) > SampleChanger.SizeOfDisk)
                 //ExcessTheSizeOfDiskEvent?.Invoke(this, EventArgs.Empty);
         }
 
-        //TODO: add event in case of sample number increase the size of disk, but user should decide break the measurements or not!
+        //TODO: add event that occures when sample number increase the size of disk, but user should decide break the measurements or not!
+        //      also in case of continue of measurements in the end of measurements user should accept that sample were changed on the disk
+        /// <summary>
+        /// This mode of spreading related with distribution sample to the detectors according to their containers.
+        /// There is an algorithm:
+        /// 1. Get ordered list of unique container numbers (not necessary one by one (1,3,4,5) also is possible)
+        /// 2. Then it starts to asign samples from first container number to first detector, so on till iteration by detectors  is over
+        /// 3. When iteration by detectors is over, but container numbers is not, continue assign samples from next container numbers
+        ///    to first detector.
+        /// </summary>
         private void SpreadSamplesByContainer()
         {
             try
@@ -81,6 +117,9 @@ namespace Measurements.Core
             }
         }
 
+        /// <summary>
+        /// This option allows merely divide all samples to detectors in the same portions.
+        /// </summary>
         private void SpreadSamplesUniform()
         {
             try
@@ -103,6 +142,10 @@ namespace Measurements.Core
             }
         }
 
+        /// <summary>
+        /// When this option has chosen samples will divide to the detector by the order:
+        /// First sample to first detector, second to second, so on...
+        /// </summary>
         private void SpreadSamplesByTheOrder()
         {
             try
@@ -133,6 +176,12 @@ namespace Measurements.Core
             }
         }
 
+        /// <summary>
+        /// This method allows user to divide samples to detectors according with chosen SpreadedOption with requred checks
+        /// <seealso cref="SpreadSamplesByContainer"/>
+        /// <seealso cref="SpreadSamplesUniform"/>
+        /// <seealso cref="SpreadSamplesByTheOrder"/>
+        /// </summary>
         public void SpreadSamplesToDetectors()
         {
             _nLogger.Info($"Spreading samples to detectors has began");

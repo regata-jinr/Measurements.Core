@@ -26,6 +26,8 @@ namespace Measurements.Core.Tests
             var r = new Random();
             var numberOfSession = (int)(4*r.NextDouble()+1);
 
+            numberOfSession = 1;
+
             var sessionList = new List<ISession>();
 
             for (var i = 0; i < numberOfSession; ++i)
@@ -61,9 +63,11 @@ namespace Measurements.Core.Tests
 
             foreach (var session in sessionList)
             {
-                session.Type = typesDict[(int)(2 * r.NextDouble() + 1)];
+                //session.Type = typesDict[(int)(2 * r.NextDouble() + 1)];
+                session.Type = "SLI";
                 session.SpreadOption = spreadedOptionDict[(int)(3 * r.NextDouble())];
-                session.CurrentIrradiationDate = session.IrradiationDateList[(int)((session.IrradiationDateList.Count - 1) * r.NextDouble())].Value;
+                //session.CurrentIrradiationDate = session.IrradiationDateList[(int)((session.IrradiationDateList.Count - 1) * r.NextDouble())].Value;
+                session.CurrentIrradiationDate = DateTime.Parse("09.12.2011");
                 session.Height = Math.Round((decimal)(20 * r.NextDouble() + 1),2);
                 session.SetAcquireDurationAndMode((int)(4 * r.NextDouble() + 2));
             }
@@ -92,12 +96,15 @@ namespace Measurements.Core.Tests
             {
                 var dir = new DirectoryInfo($"D:\\Spectra\\{DateTime.Now.Year}\\{DateTime.Now.Month.ToString("D2")}\\{session.Type.ToLower()}");
                 DataAccess fileSpectra = new DataAccess();
+
                 foreach (var m in session.MeasurementList)
                 {
-                    output.WriteLine($"Checking of file spectra {m.FileSpectra}");
-                    var i = session.IrradiationList.Where(ir => ir.Id == m.IrradiationId).First();
+                    output.WriteLine($"Current measurement is {m} with id {m.IrradiationId}");
+                    output.WriteLine($"Checking of file spectra {dir.FullName}\\{m.FileSpectra} -- {File.Exists($"{dir.FullName}\\{m.FileSpectra}.cnf")}");
 
-                    Assert.Single(dir.GetFiles($"{m.FileSpectra}.cnf"));
+                    var i = session.IrradiationList.Where(ir => ir.Id == m.IrradiationId).Last();
+
+                    Assert.True(File.Exists($"{dir.FullName}\\{m.FileSpectra}.cnf"));
 
                     fileSpectra.Open(dir.GetFiles($"{m.FileSpectra}.cnf")[0].FullName);
 

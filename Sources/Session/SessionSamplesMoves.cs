@@ -1,10 +1,33 @@
-﻿using System;
+﻿/***************************************************************************
+ *                                                                         *
+ *                                                                         *
+ * Copyright(c) 2017-2019, REGATA Experiment at FLNP|JINR                  *
+ * Author: [Boris Rumyantsev](mailto:bdrum@jinr.ru)                        *
+ * All rights reserved                                                     *
+ *                                                                         *
+ *                                                                         *
+ ***************************************************************************/
+
+using System;
 using System.Linq;
 
 namespace Measurements.Core
 {
+    // this file contains method for changing and setting sample to detectors
+    // Session class divided by few files:
+    // ├── ISession.cs                - interface of Session class
+    // ├── SessionDetectorsControl.cs - contains methods that related with managing of detector
+    // ├── SessionInfo.cs             - contains fields of Session for EF core interaction
+    // ├── SessionLists.cs            - contains method that forms list of samples and measurements 
+    // ├── SessionMain.cs             - contains general fields and methods of the Session class.
+    // └── SessionSamplesMoves.cs     --> opened
     public partial class Session : ISession, IDisposable
     {
+        /// <summary>
+        /// Change sample on chosen detector to the next one by the order in SpreadedSamples dictionary
+        /// </summary>
+        /// <paramref name="d">Reference to the detector object</paramref>
+        /// <returns>True in case of next sample exist and was changed successfuly</returns>
         public bool NextSample(ref IDetector d)
         {
             try
@@ -31,6 +54,11 @@ namespace Measurements.Core
             return false;
         }
 
+        // TODO: add option to set first, last, in case of number on one of the detector more than exist on another set last
+        /// <summary>
+        /// Allows user to set samples on all detectors by the number
+        /// </summary>
+        /// <param name="n"></param>
         public void MakeSamplesCurrentOnAllDetectorsByNumber(int n = 0)
         {
             try
@@ -49,13 +77,22 @@ namespace Measurements.Core
             }
         }
 
+        /// <summary>
+        /// Allows user to set certain sample to certain detector
+        /// </summary>
+        /// <paramref name="ii">Irradiated sample<see cref="IrradiationInfo"/></paramref>
+        /// <paramref name="d">Reference to the Detector instance</paramref>
         public void MakeSampleCurrentOnDetector(ref IrradiationInfo ii, ref IDetector d)
         {
             _nLogger.Info($"Make sample {ii.ToString()} current on detector {d.Name}");
             d.CurrentSample = ii;
         }
 
-       public void PrevSample(ref IDetector d)
+        /// <summary>
+        /// Change sample on chosen detector to the previous one by the order in SpreadedSamples dictionary 
+        /// </summary>
+        /// <param name="d"></param>
+        public void PrevSample(ref IDetector d)
         {
             try
             {
