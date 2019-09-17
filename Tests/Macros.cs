@@ -17,6 +17,13 @@ namespace Measurements.Core.Tests
             this.output = output;
         }
 
+        private int NumberSessionWhichHasDone = 0;
+
+        private void CallWhenSessionHasDone()
+        {
+            NumberSessionWhichHasDone++;
+        }
+
         [Fact]
         void MainFunctionalTest()
         {
@@ -26,14 +33,13 @@ namespace Measurements.Core.Tests
             var r = new Random();
             var numberOfSession = (int)(4*r.NextDouble()+1);
 
-            numberOfSession = 1;
-
             var sessionList = new List<ISession>();
 
             for (var i = 0; i < numberOfSession; ++i)
             {
                 sessionList.Add(new Session());
                 sessionList[i].Name = $"Session{i}";
+                sessionList[i].SessionComplete += CallWhenSessionHasDone;
             }
 
             var numberOfDetectorsForSessions = new List<int>();
@@ -63,11 +69,9 @@ namespace Measurements.Core.Tests
 
             foreach (var session in sessionList)
             {
-                //session.Type = typesDict[(int)(2 * r.NextDouble() + 1)];
-                session.Type = "SLI";
+                session.Type = typesDict[(int)(2 * r.NextDouble() + 1)];
                 session.SpreadOption = spreadedOptionDict[(int)(3 * r.NextDouble())];
-                //session.CurrentIrradiationDate = session.IrradiationDateList[(int)((session.IrradiationDateList.Count - 1) * r.NextDouble())].Value;
-                session.CurrentIrradiationDate = DateTime.Parse("09.12.2011");
+                session.CurrentIrradiationDate = session.IrradiationDateList[(int)((session.IrradiationDateList.Count - 1) * r.NextDouble())].Value;
                 session.Height = Math.Round((decimal)(20 * r.NextDouble() + 1),2);
                 session.SetAcquireDurationAndMode((int)(4 * r.NextDouble() + 2));
             }
@@ -86,9 +90,8 @@ namespace Measurements.Core.Tests
                 session.StartMeasurements();
             }
 
-            var maxCounts = sessionList.Max(s => s.IrradiationList.Count);
-            var maxSession = sessionList.Where( s=> s.IrradiationList.Count == maxCounts).First();
-            System.Threading.Thread.Sleep(maxSession.IrradiationList.Count*1000 + maxSession.IrradiationList.Count*1000);
+            while (NumberSessionWhichHasDone != sessionList.Count)
+            { }
 
             var ic = new InfoContext();
 
@@ -117,7 +120,8 @@ namespace Measurements.Core.Tests
                         Assert.Equal(i.Note, fileSpectra.Param[ParamCodes.CAM_T_SDESC1].ToString());
 
                     Assert.Equal(i.SetKey, fileSpectra.Param[ParamCodes.CAM_T_SIDENT].ToString()); // sd code
-                    Assert.Equal(i.Weight.Value, Decimal.Parse(fileSpectra.Param[ParamCodes.CAM_F_SQUANT].ToString()),2); // weight
+                    if (i.Weight.HasValue)
+                        Assert.Equal(i.Weight.Value, Decimal.Parse(fileSpectra.Param[ParamCodes.CAM_F_SQUANT].ToString()),2); // weight
                     Assert.Equal("0", fileSpectra.Param[ParamCodes.CAM_F_SQUANTERR].ToString()); // err, 0
                     Assert.Equal("gram", fileSpectra.Param[ParamCodes.CAM_T_SUNITS].ToString()); // units, gram
                     Assert.Equal(i.DateTimeStart.ToString().Replace(" ", ""), fileSpectra.Param[ParamCodes.CAM_X_SDEPOSIT].ToString().Replace(" ", "")); // irr start date time

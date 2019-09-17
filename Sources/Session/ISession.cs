@@ -24,7 +24,7 @@ namespace Measurements.Core
         void   SpreadSamplesToDetectors();
         void   SetAcquireDurationAndMode(int duration, AcquisitionModes acqm = AcquisitionModes.aCountToRealTime);
 
-        event Action<ISession>    SessionComplete;
+        event Action    SessionComplete;
         event Action<IDetector>   MeasurementDone;
 
         AcquisitionModes      CountMode              { get; }

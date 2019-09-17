@@ -226,6 +226,7 @@ namespace Measurements.Core
             catch (ArgumentOutOfRangeException ae)
             {
                 Handlers.ExceptionHandler.ExceptionNotify(this, ae, NLog.LogLevel.Error);
+                SessionComplete?.Invoke();
             }
            catch (Exception e)
             {

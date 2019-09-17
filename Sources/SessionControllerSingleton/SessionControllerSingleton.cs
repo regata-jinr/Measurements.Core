@@ -15,6 +15,8 @@ using System;
 using System.Threading.Tasks;
 using System.Linq;
 
+// TODO:  add static analyzers
+// TODO:  add license
 // TODO:  add pin code instead of password. use windows credentials accounts
 //        in case of connection falling but pin is correct local mode should be available
 //        deny running of appliaction in case it already running
@@ -39,7 +41,7 @@ namespace Measurements.Core
         /// Also we consider implementation of web-monitor based on keeping logs in the data base.
         /// </summary>
         /// <see>
-        public static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        public static NLog.Logger logger;
         /// <summary>
         /// The list of created session managed by SessionController
         /// </summary>
@@ -72,8 +74,9 @@ namespace Measurements.Core
         public static void InitializeDBConnectionString(string connectionString)
         {
             _connectionStringBuilder.ConnectionString = connectionString;
+            logger.SetProperty("Assistant", ConnectionStringBuilder.UserID);
+            logger.SetProperty("ParamName", "SessionController");
             TestDBConnection();
-            logger.WithProperty("ParamName", ConnectionStringBuilder.UserID);
         }
 
         /// <summary>
@@ -195,6 +198,9 @@ namespace Measurements.Core
         /// </summary>
         static SessionControllerSingleton()
         {
+            var conf = new Measurements.Core.Configurator.ConfigManager();
+            NLog.GlobalDiagnosticsContext.Set("LogConnectionString", conf.LogConnectionString);
+            logger = NLog.LogManager.GetCurrentClassLogger();
             logger.Info("Inititalization of Session Controller instance has began");
 
             _isDisposed              = false;

@@ -243,7 +243,7 @@ namespace Measurements.Core
             {
                 _nLogger.Info($"All detectors [{(string.Join(",", ManagedDetectors.Select(d => d.Name).ToArray()))}] has done measurement process");
                 _countOfDetectorsWichDone = 0;
-                SessionComplete?.Invoke(this);
+                SessionComplete?.Invoke();
             }
         }
 

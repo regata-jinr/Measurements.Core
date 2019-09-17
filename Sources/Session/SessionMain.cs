@@ -69,8 +69,10 @@ namespace Measurements.Core
             get { return _name; }
             set
             {
+                if (!string.IsNullOrEmpty(Name))
+                    _nLogger.Info($"Session '{Name}' will rename to '{value}'");
                 _name = value;
-                _nLogger = SessionControllerSingleton.logger.WithProperty("ParamName", $"{SessionControllerSingleton.ConnectionStringBuilder.UserID}--{Name}");
+                _nLogger = SessionControllerSingleton.logger.WithProperty("ParamName", Name);
             }
         }
         private string _type;
@@ -149,7 +151,7 @@ namespace Measurements.Core
         /// <summary>
         /// This event will occur after all detectors complete measurements of all samples
         /// </summary>
-        public event Action<ISession> SessionComplete;
+        public event Action SessionComplete;
 
         /// <summary>
         /// This event will occur after one of managed detector by the session complete measurements of all samples

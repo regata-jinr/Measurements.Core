@@ -14,7 +14,7 @@ namespace Measurements.Core.Handlers
                 if (obj is Detector)
                     _nLogger.WithProperty("ParamName", ((Detector)obj).Name);
                 if (obj is Session)
-                    _nLogger.WithProperty("ParamName", $"{SessionControllerSingleton.ConnectionStringBuilder.UserID}--{((Session)obj).Name}");
+                    _nLogger.WithProperty("ParamName", ((Session)obj).Name);
 
                 if (ex != null && !string.IsNullOrEmpty(ex.Source) && !string.IsNullOrEmpty(ex.TargetSite.Name) && !string.IsNullOrEmpty(ex.StackTrace) && !string.IsNullOrEmpty(ex.Message))
                 {
