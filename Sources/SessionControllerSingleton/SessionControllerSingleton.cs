@@ -17,8 +17,7 @@ using System.Linq;
 
 // TODO:  add static analyzers
 // TODO:  add license
-// TODO:  add pin code instead of password. use windows credentials accounts
-//        in case of connection falling but pin is correct local mode should be available
+// TODO:  in case of connection falling but pin is correct local mode should be available
 //        deny running of appliaction in case it already running
 
 // FIXME: adding costura for merging dlls, but pay attention that it will break tests.
@@ -46,6 +45,30 @@ namespace Measurements.Core
         /// The list of created session managed by SessionController
         /// </summary>
         public static List<ISession>              ManagedSessions         { get; private set; }
+        /// <summary>
+        /// The list of available session for loading
+        /// </summary>
+        public static List<SessionInfo> AvailableSessions
+        {
+            get
+            {
+                CheckSessionControllerInitialisation();
+                try
+                {
+                    logger.Info("Getting list of available session parameters for usage");
+                    var ic = new InfoContext();
+
+                    var list = ic.Sessions.Where(s => string.IsNullOrEmpty(s.Assistant) || s.Assistant == ConnectionStringBuilder.UserID).ToList();
+
+                    return list;
+                }
+                catch (Exception e)
+                {
+                    Handlers.ExceptionHandler.ExceptionNotify(null, e, NLog.LogLevel.Error);
+                }
+                return new List<SessionInfo>();
+            }
+        }
         /// <summary>
         /// The list of MCA devices available for usage. This list forms via MCA databases provided by Canberra DeviceAccessClass
         /// </summary>
