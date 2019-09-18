@@ -18,8 +18,16 @@ namespace Measurements.Core.Handlers
 
                 if (ex != null && !string.IsNullOrEmpty(ex.Source) && !string.IsNullOrEmpty(ex.TargetSite.Name) && !string.IsNullOrEmpty(ex.StackTrace) && !string.IsNullOrEmpty(ex.Message))
                 {
+                    System.Text.StringBuilder currentMessage = new System.Text.StringBuilder($"{ex.Source} has generated exception in [{ex.TargetSite.DeclaringType}--{ex.TargetSite.MemberType}--{ex.TargetSite.Name}]. The message is '{ex.Message}'{Environment.NewLine}Stack trace is:'{ex.StackTrace}'");
+                    var currentMessageString = "";
 
-                    _nLogger.Log(lvl, $"{ex.Source} has generated exception in [{ex.TargetSite.DeclaringType}--{ex.TargetSite.MemberType}--{ex.TargetSite.Name}]. The message is '{ex.Message}'{Environment.NewLine}Stack trace is:'{ex.StackTrace}'");
+                    if (currentMessage.Length <= 1998)
+                        currentMessageString = currentMessage.ToString();
+                    else
+                        currentMessageString = currentMessage.ToString(0, 1998);
+
+
+                    _nLogger.Log(lvl, currentMessageString);
                     ExceptionEvent?.Invoke(obj, new ExceptionEventsArgs { Level = lvl, Message = ex.Message, Source = ex.Source, StackTrace = ex.StackTrace, TargetSite = ex.TargetSite.Name });
                 }
                 else
