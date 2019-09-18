@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Measurements.Core.Handlers
 {
+    public enum ExceptionLevel { error, info, warning }
     public static class ExceptionHandler
     {
+        private static Dictionary<NLog.LogLevel, ExceptionLevel> LogLevel_ExceptionLevel = new Dictionary<NLog.LogLevel, ExceptionLevel>{ {NLog.LogLevel.Error, ExceptionLevel.error },  {NLog.LogLevel.Warn, ExceptionLevel.warning },  {NLog.LogLevel.Info, ExceptionLevel.info }  }; 
         public static event EventHandler<ExceptionEventsArgs> ExceptionEvent;
         private static NLog.Logger _nLogger = SessionControllerSingleton.logger;
 
@@ -28,18 +31,18 @@ namespace Measurements.Core.Handlers
 
 
                     _nLogger.Log(lvl, currentMessageString);
-                    ExceptionEvent?.Invoke(obj, new ExceptionEventsArgs { Level = lvl, Message = ex.Message, Source = ex.Source, StackTrace = ex.StackTrace, TargetSite = ex.TargetSite.Name });
+                    ExceptionEvent?.Invoke(obj, new ExceptionEventsArgs { Level = LogLevel_ExceptionLevel[lvl], Message = ex.Message, Source = ex.Source, StackTrace = ex.StackTrace, TargetSite = ex.TargetSite.Name });
                 }
                 else
                 {
                     _nLogger.Log(lvl, $"App has generated exception. The message is '{ex.Message}'");
-                    ExceptionEvent?.Invoke(obj, new ExceptionEventsArgs { Level = lvl, Message = ex.Message, Source = "", StackTrace = "", TargetSite = "" });
+                    ExceptionEvent?.Invoke(obj, new ExceptionEventsArgs { Level = LogLevel_ExceptionLevel[lvl], Message = ex.Message, Source = "", StackTrace = "", TargetSite = "" });
                 }
             }
             catch (Exception e)
             {
                  _nLogger.Log(NLog.LogLevel.Error, $"{e.Source} has generated exception from method {e.TargetSite.Name}. The message is '{e.Message}'{Environment.NewLine}Stack trace is:'{e.StackTrace}'");
-                ExceptionEvent?.Invoke(null, new ExceptionEventsArgs { Level = NLog.LogLevel.Error, Message = e.Message, Source = e.Source, StackTrace = e.StackTrace, TargetSite = e.TargetSite.Name });
+                ExceptionEvent?.Invoke(null, new ExceptionEventsArgs { Level = ExceptionLevel.error, Message = e.Message, Source = e.Source, StackTrace = e.StackTrace, TargetSite = e.TargetSite.Name });
 
             }
         }
@@ -47,7 +50,7 @@ namespace Measurements.Core.Handlers
 
     public class ExceptionEventsArgs : EventArgs
     {
-        public NLog.LogLevel Level;
+        public ExceptionLevel Level;
         public string Message;
         public string StackTrace;
         public string Source;

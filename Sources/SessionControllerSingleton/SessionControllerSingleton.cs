@@ -18,7 +18,6 @@ using System.Linq;
 // TODO:  add static analyzers
 // TODO:  add license
 // TODO:  in case of connection falling but pin is correct local mode should be available
-//        deny running of appliaction in case it already running
 
 // FIXME: adding costura for merging dlls, but pay attention that it will break tests.
 //        find out how to exclude test. exclude assemblies with xunit didn't help
