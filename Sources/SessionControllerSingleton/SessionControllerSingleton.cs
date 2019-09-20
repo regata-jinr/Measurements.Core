@@ -63,7 +63,7 @@ namespace Measurements.Core
                 }
                 catch (Exception e)
                 {
-                    Handlers.ExceptionHandler.ExceptionNotify(null, e, NLog.LogLevel.Error);
+                    Handlers.ExceptionHandler.ExceptionNotify(null, e, Handlers.ExceptionLevel.Error);
                 }
                 return new List<SessionInfo>();
             }
@@ -123,7 +123,7 @@ namespace Measurements.Core
 
             catch (SqlException sqle)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(null, sqle, NLog.LogLevel.Warn);
+                Handlers.ExceptionHandler.ExceptionNotify(null, sqle, Handlers.ExceptionLevel.Warn);
                 sqlCon.Dispose();
                 if (!LocalMode)
                     Task.Run(() => ConnectionWaiter());
@@ -167,7 +167,7 @@ namespace Measurements.Core
         {
             if (string.IsNullOrEmpty(_connectionStringBuilder.ConnectionString))
             {
-                Handlers.ExceptionHandler.ExceptionNotify(null, new ArgumentNullException("First of all call InitializeDBConnection method!"), NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(null, new ArgumentNullException("First of all call InitializeDBConnection method!"), Handlers.ExceptionLevel.Error);
                 throw new ArgumentNullException("First of all call InitializeDBConnection method!");
             }
         }
@@ -188,7 +188,7 @@ namespace Measurements.Core
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(null, e, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(null, e, Handlers.ExceptionLevel.Error);
                 d?.Dispose(); 
             }
         }
@@ -211,7 +211,7 @@ namespace Measurements.Core
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(null, e, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(null, e, Handlers.ExceptionLevel.Error);
             }
         }
 
@@ -220,7 +220,7 @@ namespace Measurements.Core
         /// </summary>
         static SessionControllerSingleton()
         {
-            var conf = new Measurements.Core.Configurator.ConfigManager();
+            var conf = new Measurements.Configurator.ConfigManager();
             NLog.GlobalDiagnosticsContext.Set("LogConnectionString", conf.LogConnectionString);
             logger = NLog.LogManager.GetCurrentClassLogger();
             logger.Info("Inititalization of Session Controller instance has began");
@@ -277,11 +277,11 @@ namespace Measurements.Core
             }
             catch (ArgumentException ae)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(null, ae, NLog.LogLevel.Warn );
+                Handlers.ExceptionHandler.ExceptionNotify(null, ae, Handlers.ExceptionLevel.Warn );
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(null, e, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(null, e, Handlers.ExceptionLevel.Error);
             }
             return null;
         }
@@ -310,15 +310,15 @@ namespace Measurements.Core
             }
             catch (ArgumentNullException ae)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(null, ae, NLog.LogLevel.Warn);
+                Handlers.ExceptionHandler.ExceptionNotify(null, ae, Handlers.ExceptionLevel.Warn);
             }
             catch (InvalidOperationException ie)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(null, ie, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(null, ie, Handlers.ExceptionLevel.Error);
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(null, e, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(null, e, Handlers.ExceptionLevel.Error);
             }
         }
 

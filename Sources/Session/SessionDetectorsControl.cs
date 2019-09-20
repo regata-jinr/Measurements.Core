@@ -46,18 +46,18 @@ namespace Measurements.Core
                         d.Start();
                     else
                     {
-                        Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"For the detector '{d.Name}' list of samples is empty"), NLog.LogLevel.Warn);
+                        Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"For the detector '{d.Name}' list of samples is empty"), Handlers.ExceptionLevel.Warn);
                         MeasurementDone?.Invoke(d);
                     }
                 }
             }
             catch (ArgumentOutOfRangeException are)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, are, NLog.LogLevel.Warn);
+                Handlers.ExceptionHandler.ExceptionNotify(this, are, Handlers.ExceptionLevel.Warn);
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
             }
         
         }
@@ -76,7 +76,7 @@ namespace Measurements.Core
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
             }
         }
 
@@ -94,7 +94,7 @@ namespace Measurements.Core
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
             };
         }
 
@@ -111,7 +111,7 @@ namespace Measurements.Core
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
             };
         }
        
@@ -129,7 +129,7 @@ namespace Measurements.Core
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
             };
         }
 
@@ -146,7 +146,7 @@ namespace Measurements.Core
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
             };
         }
 
@@ -166,7 +166,6 @@ namespace Measurements.Core
                 var det = SessionControllerSingleton.AvailableDetectors.Find(d => d.Name == dName);
                 if (det != null)
                 {
-
                     ManagedDetectors.Add(det);
                     SpreadedSamples.Add(det.Name, new List<IrradiationInfo>());
                     SessionControllerSingleton.AvailableDetectors.Remove(det);
@@ -174,19 +173,19 @@ namespace Measurements.Core
                     _nLogger.Info($"successfuly attached detector {det.Name}");
                 }
                 else
-                    throw new ArgumentNullException(dName);
+                    throw new ArgumentNullException($"{dName}. The most probably you are already use this detector");
             }
             catch (ArgumentNullException ae)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, ae, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, ae, Handlers.ExceptionLevel.Error);
             }
             catch (InvalidOperationException ie)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, ie, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, ie, Handlers.ExceptionLevel.Error);
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
             }
         }
         /// <summary>
@@ -215,15 +214,15 @@ namespace Measurements.Core
             }
             catch (ArgumentNullException ae)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, ae, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, ae, Handlers.ExceptionLevel.Error);
             }
             catch (InvalidOperationException ie)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, ie, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, ie, Handlers.ExceptionLevel.Error);
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
             }
         }
 
@@ -274,11 +273,11 @@ namespace Measurements.Core
             }
             catch (ArgumentException ae)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, ae, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, ae, Handlers.ExceptionLevel.Error);
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
             }
        }
 
@@ -325,7 +324,7 @@ namespace Measurements.Core
             }
             catch (System.Data.SqlClient.SqlException sqle)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, sqle, NLog.LogLevel.Warn);
+                Handlers.ExceptionHandler.ExceptionNotify(this, sqle, Handlers.ExceptionLevel.Warn);
             
                 if (!Directory.Exists(@"D:\Spectra"))
                     throw new Exception("Spectra Directory doesn't exist");
@@ -350,11 +349,11 @@ namespace Measurements.Core
             }
             catch (Microsoft.EntityFrameworkCore.DbUpdateException dbe) // for duplicates
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, dbe, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, dbe, Handlers.ExceptionLevel.Error);
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
             }
             return $"{detName[1]}{typeDict[Type]}{maxNumber}";
         }

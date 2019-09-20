@@ -13,7 +13,7 @@
     <ProjectGuid>{31C9CCB9-ABA7-4AB9-AC65-0A2A32DC9AE2}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Measurements</RootNamespace>
+    <RootNamespace>Measurements.Core</RootNamespace>
     <AssemblyName>MeasurementsCore</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>

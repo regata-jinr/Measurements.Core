@@ -99,11 +99,11 @@ namespace Measurements.Core
                 }
                 catch (ArgumentException ae)
                 {
-                    Handlers.ExceptionHandler.ExceptionNotify(this, ae, NLog.LogLevel.Warn);
+                    Handlers.ExceptionHandler.ExceptionNotify(this, ae, Handlers.ExceptionLevel.Warn);
                 }
                 catch (Exception e)
                 {
-                    Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
+                    Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
                 }
             }
         }
@@ -307,15 +307,15 @@ namespace Measurements.Core
             }
             catch (ArgumentNullException are)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, are, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, are, Handlers.ExceptionLevel.Error);
             }
             catch (Microsoft.EntityFrameworkCore.DbUpdateException dbe)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, dbe, NLog.LogLevel.Warn);
+                Handlers.ExceptionHandler.ExceptionNotify(this, dbe, Handlers.ExceptionLevel.Warn);
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
             }
         }
 
@@ -383,7 +383,7 @@ namespace Measurements.Core
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
             }
             finally
             {
@@ -408,7 +408,7 @@ namespace Measurements.Core
             }
             catch (Microsoft.EntityFrameworkCore.DbUpdateException dbe)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, dbe, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, dbe, Handlers.ExceptionLevel.Error);
                 SaveLocally(ref det);
             }
         }
@@ -441,7 +441,7 @@ namespace Measurements.Core
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
             }
             finally
             {
@@ -472,7 +472,7 @@ namespace Measurements.Core
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
             }
         }
     }

@@ -54,11 +54,11 @@ namespace Measurements.Core
             }
             catch (ArgumentNullException ane)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, ane, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, ane, Handlers.ExceptionLevel.Error);
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
             }
         }
 
@@ -109,11 +109,11 @@ namespace Measurements.Core
             }
             catch (ArgumentException ae)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, ae, NLog.LogLevel.Warn);
+                Handlers.ExceptionHandler.ExceptionNotify(this, ae, Handlers.ExceptionLevel.Warn);
             }
              catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
             }
         }
 
@@ -138,7 +138,7 @@ namespace Measurements.Core
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
             }
         }
 
@@ -172,7 +172,7 @@ namespace Measurements.Core
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
             }
         }
 
@@ -225,12 +225,12 @@ namespace Measurements.Core
             }
             catch (ArgumentOutOfRangeException ae)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, ae, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, ae, Handlers.ExceptionLevel.Error);
                 SessionComplete?.Invoke();
             }
            catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
             }
         }
     }

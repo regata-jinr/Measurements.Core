@@ -44,11 +44,11 @@ namespace Measurements.Core
             }
             catch (IndexOutOfRangeException ie)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, ie, NLog.LogLevel.Warn);
+                Handlers.ExceptionHandler.ExceptionNotify(this, ie, Handlers.ExceptionLevel.Warn);
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
             }
 
             return false;
@@ -73,7 +73,7 @@ namespace Measurements.Core
             }
             catch (IndexOutOfRangeException ie)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, ie, NLog.LogLevel.Warn);
+                Handlers.ExceptionHandler.ExceptionNotify(this, ie, Handlers.ExceptionLevel.Warn);
             }
         }
 
@@ -104,11 +104,11 @@ namespace Measurements.Core
             }
             catch (IndexOutOfRangeException ie)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, ie, NLog.LogLevel.Warn);
+                Handlers.ExceptionHandler.ExceptionNotify(this, ie, Handlers.ExceptionLevel.Warn);
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
             }
         }
     } // class

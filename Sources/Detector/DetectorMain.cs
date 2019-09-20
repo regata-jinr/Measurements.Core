@@ -5,8 +5,6 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using System.Threading;
-using System.Linq;
-using System.Collections.Generic;
 using CanberraDeviceAccessLib;
 
 namespace Measurements.Core
@@ -44,7 +42,7 @@ namespace Measurements.Core
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this,e, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this,e, Handlers.ExceptionLevel.Error);
             }
         }
 
@@ -53,17 +51,17 @@ namespace Measurements.Core
         ///  |Advise Mask        |Description                                        |int value(lParam)|
         ///  |:-----------------:|:-------------------------------------------------:|:---------------:|
         ///  |DisplaySetting     | Display settings have changed                     |  1              |
-        ///  |ExternalStart      | Acquisition has been started externall            |	1048608        |
-        ///  |CalibrationChange  | A calibration parameter has changed               |	4              |
+        ///  |ExternalStart      | Acquisition has been started externall            |  1048608        |
+        ///  |CalibrationChange  | A calibration parameter has changed               |  4              |
         ///  |AcquireStart       | Acquisition has been started                      |  134217728      |
         ///  |AcquireDone        | Acquisition has been stopped                      | -2147483648     |
-        ///  |DataChange         | Data has been changes (occurs after AcquireClear) |	67108864       |
-        ///  |HardwareError      | Hardware error                                    |	2097152        |
-        ///  |HardwareChange     | Hardware setting has changed                      |	268435456      |
-        ///  |HardwareAttention  | Hardware is requesting attention                  |	16777216       |
-        ///  |DeviceUpdate       | Device settings have been updated                 |	8388608        |
-        ///  |SampleChangerSet   | Sample changer set                                |	1073741824     |
-        ///  |SampleChangeAdvance| Sample changer advanced                           |	4194304        |
+        ///  |DataChange         | Data has been changes (occurs after AcquireClear) |  67108864       |
+        ///  |HardwareError      | Hardware error                                    |  2097152        |
+        ///  |HardwareChange     | Hardware setting has changed                      |  268435456      |
+        ///  |HardwareAttention  | Hardware is requesting attention                  |  16777216       |
+        ///  |DeviceUpdate       | Device settings have been updated                 |  8388608        |
+        ///  |SampleChangerSet   | Sample changer set                                |  1073741824     |
+        ///  |SampleChangeAdvance| Sample changer advanced                           |  4194304        |
 
         /// </summary>
         /// <param name="message">DeviceMessages type from CanberraDeviceAccessLib</param>
@@ -110,7 +108,7 @@ namespace Measurements.Core
             }
             catch (Exception e)
             {
-                    Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
+                    Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
             }
         }
 
@@ -128,7 +126,7 @@ namespace Measurements.Core
                 }
                 catch (Exception e)
                 {
-                    Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
+                    Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
                     if (e.Message.Contains("278e2a")) Status = DetectorStatus.busy;
 
                 }
@@ -167,11 +165,11 @@ namespace Measurements.Core
             }
             catch (TimeoutException te)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, te, NLog.LogLevel.Warn );
+                Handlers.ExceptionHandler.ExceptionNotify(this, te, Handlers.ExceptionLevel.Warn );
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
             }
 
         }
@@ -190,7 +188,7 @@ namespace Measurements.Core
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
                 if (e.Message.Contains("278e2a")) Status = DetectorStatus.busy;
 
             }
@@ -235,15 +233,15 @@ namespace Measurements.Core
             }
             catch (ArgumentNullException ae)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, ae, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, ae, Handlers.ExceptionLevel.Error);
             }
             catch (InvalidOperationException ie)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, ie, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, ie, Handlers.ExceptionLevel.Error);
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
             }
         }
 
@@ -263,7 +261,7 @@ namespace Measurements.Core
             }
             catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
             }
         }
 
@@ -285,7 +283,7 @@ namespace Measurements.Core
             }
             catch (Exception e) 
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
             }
 
         }
@@ -321,7 +319,7 @@ namespace Measurements.Core
             }
             catch (Exception e) 
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
             }
 
         }
@@ -344,7 +342,7 @@ namespace Measurements.Core
             }
             catch (Exception e) 
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
             }
 
         }
@@ -366,7 +364,7 @@ namespace Measurements.Core
             }
             catch (Exception e) 
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
             }
 
         }
@@ -383,7 +381,7 @@ namespace Measurements.Core
             }
             catch (Exception e) 
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
             }
         }
 
@@ -448,7 +446,7 @@ namespace Measurements.Core
                     _device.Param[ParamCodes.CAM_F_SQUANT]  = (double)CurrentSample.Weight.Value; // weight
                 else
                 {
-                    Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"Weight is empty for {CurrentSample}. Zero will set."), NLog.LogLevel.Warn);
+                    Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"Weight is empty for {CurrentSample}. Zero will set."), Handlers.ExceptionLevel.Warn);
                     _device.Param[ParamCodes.CAM_F_SQUANT]  = 0;
                 }
 
@@ -460,7 +458,7 @@ namespace Measurements.Core
                     _device.Param[ParamCodes.CAM_X_SDEPOSIT] = CurrentSample.DateTimeStart.Value; // irr start date time
                 else
                 {
-                    Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"DateTimeStart is empty for {CurrentSample}. DateTime.Now will set."), NLog.LogLevel.Warn);
+                    Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"DateTimeStart is empty for {CurrentSample}. DateTime.Now will set."), Handlers.ExceptionLevel.Warn);
                     _device.Param[ParamCodes.CAM_X_SDEPOSIT] = DateTime.Now;
                 }
 
@@ -468,12 +466,12 @@ namespace Measurements.Core
                     _device.Param[ParamCodes.CAM_X_STIME] = CurrentSample.DateTimeFinish.Value; // irr finish date time
                 else
                 {
-                    Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"DateTimeFinish is empty for {CurrentSample}. DateTime.Now + duration will set."), NLog.LogLevel.Warn);
+                    Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"DateTimeFinish is empty for {CurrentSample}. DateTime.Now + duration will set."), Handlers.ExceptionLevel.Warn);
                     if (CurrentMeasurement.Duration.HasValue)
                         _device.Param[ParamCodes.CAM_X_STIME] = DateTime.Now.AddSeconds(CurrentMeasurement.Duration.Value);
                     else
                     {
-                        Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"Duration also is empty. A counts to real time will add"), NLog.LogLevel.Warn);
+                        Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"Duration also is empty. A counts to real time will add"), Handlers.ExceptionLevel.Warn);
                         _device.Param[ParamCodes.CAM_X_STIME] = DateTime.Now.AddSeconds(CountToRealTime);
                     }
                 }
@@ -486,17 +484,17 @@ namespace Measurements.Core
                     _device.Param[ParamCodes.CAM_T_SGEOMTRY] = CurrentMeasurement.Height.Value.ToString("f"); // height
                 else
                 {
-                    Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"Height is empty for {CurrentSample}. Zero will set."), NLog.LogLevel.Warn);
+                    Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"Height is empty for {CurrentSample}. Zero will set."), Handlers.ExceptionLevel.Warn);
                     _device.Param[ParamCodes.CAM_T_SGEOMTRY] = 0;
                 }
             }
             catch (ArgumentNullException ae)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, ae, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, ae, Handlers.ExceptionLevel.Error);
             }
              catch (Exception e)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, NLog.LogLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
             }
        }
 
