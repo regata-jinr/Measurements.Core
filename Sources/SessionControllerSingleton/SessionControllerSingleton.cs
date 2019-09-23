@@ -193,6 +193,10 @@ namespace Measurements.Core
             }
         }
 
+        public static event Action AvailableDetectorsListHasChanged;
+
+        public static void AvailableDetectorsChangesHaveOccurred() => AvailableDetectorsListHasChanged?.Invoke();
+
         /// <summary>
         /// Add available detectors to list using internal MCA database
         /// </summary>

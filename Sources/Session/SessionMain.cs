@@ -227,16 +227,17 @@ namespace Measurements.Core
 
             _nLogger.Info("Initialisation of session has began");
 
-            _height             = 2.5m;
-            _infoContext        = new InfoContext();
-            IrradiationDateList = new List<DateTime?>();
-            IrradiationList     = new List<IrradiationInfo>();
-            MeasurementList     = new List<MeasurementInfo>();
-            ManagedDetectors    = new List<IDetector>();
-            SpreadedSamples     = new Dictionary<string, List<IrradiationInfo>>();
-            CountMode           = CanberraDeviceAccessLib.AcquisitionModes.aCountToRealTime;
-            MeasurementDone     += MeasurementDoneHandler;
-            SpreadOption        = SpreadOptions.container;
+            _height                                       = 2.5m;
+            _infoContext                                  = new InfoContext();
+            IrradiationDateList                           = new List<DateTime?>();
+            IrradiationList                               = new List<IrradiationInfo>();
+            MeasurementList                               = new List<MeasurementInfo>();
+            ManagedDetectors                              = new List<IDetector>();
+            SpreadedSamples                               = new Dictionary<string, List<IrradiationInfo>>();
+            CountMode                                     = CanberraDeviceAccessLib.AcquisitionModes.aCountToRealTime;
+            MeasurementDone                               += MeasurementDoneHandler;
+            DetectorsListsChanged                          += SessionControllerSingleton.AvailableDetectorsChangesHaveOccurred;
+            SpreadOption                                  = SpreadOptions.container;
             SessionControllerSingleton.ConectionRestoreEvent += UploadLocalDataToDB;
         }
 

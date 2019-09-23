@@ -150,6 +150,8 @@ namespace Measurements.Core
             };
         }
 
+        private event Action DetectorsListsChanged;
+
         /// <summary>
         /// Attach detector defined by the name to the session
         /// Chosen detector will remove from available detectors list that SessionControllerSingleton controled
@@ -171,6 +173,7 @@ namespace Measurements.Core
                     SessionControllerSingleton.AvailableDetectors.Remove(det);
                     det.AcquiringStatusChanged += ProcessAcquiringMessage;
                     _nLogger.Info($"successfuly attached detector {det.Name}");
+                    DetectorsListsChanged?.Invoke();
                 }
                 else
                     throw new ArgumentNullException($"{dName}. The most probably you are already use this detector");
@@ -208,6 +211,7 @@ namespace Measurements.Core
                     SpreadedSamples.Remove(det.Name);
                     ManagedDetectors.Remove(det);
                     _nLogger.Info($"Successfuly detached detector {det.Name}");
+                    DetectorsListsChanged?.Invoke();
                 }
                 else
                     throw new ArgumentNullException();

@@ -27,8 +27,6 @@ namespace Measurements.Core
     /// <seealso cref="https://www.mirion.com/products/genie-2000-basic-spectroscopy-software"/>
 
 
-    //TODO: improve logs readability
-    //TODO: save logs to db
     public partial class Detector : IDetector, IDisposable
     {
         private readonly DeviceAccessClass  _device;
