@@ -25,9 +25,6 @@ namespace Measurements.Core
                 Status = DetectorStatus.off;
                 ErrorMessage = "";
 
-                if (!Directory.Exists(_baseDir))
-                    Directory.CreateDirectory(_baseDir);
-
                 _device            = new DeviceAccessClass();
                 _currentSample     = new IrradiationInfo();
                 CurrentMeasurement = new MeasurementInfo();

@@ -123,6 +123,7 @@ namespace Measurements.Core
 
             catch (SqlException sqle)
             {
+                ConnectionFallen?.Invoke();
                 Handlers.ExceptionHandler.ExceptionNotify(null, sqle, Handlers.ExceptionLevel.Warn);
                 sqlCon.Dispose();
                 if (!LocalMode)
@@ -140,6 +141,8 @@ namespace Measurements.Core
         /// This event will occur when connection will be restore after falling
         /// </summary>
         public static event Action ConectionRestoreEvent;
+
+        public static event Action ConnectionFallen;
 
         /// <summary>
         /// This internal action for the checking connection. Every 10 seconds it runs TestDBConnection

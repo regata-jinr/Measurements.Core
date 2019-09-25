@@ -39,6 +39,7 @@ namespace Measurements.Core
                     throw new ArgumentException($"Either some of principal arguments doesnt assign: Duration={Counts}, type of measurements={Type} or list of samples is empty {IrradiationList.Count}");
 
                 SpreadSamplesToDetectors();
+                SetAcquireDurationAndMode(Counts, CountMode);
 
                 foreach (var d in ManagedDetectors)
                 {

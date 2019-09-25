@@ -37,7 +37,6 @@ namespace Measurements.Core
         private ConnectOptions     _conOption;
         private NLog.Logger        _nLogger;
         private IrradiationInfo    _currentSample;
-        private const string       _baseDir = @"C:\GENIE2K\CAMFILES";
 
         public MeasurementInfo CurrentMeasurement { get; set; }
         public event EventHandler  StatusChanged;

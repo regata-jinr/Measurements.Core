@@ -26,7 +26,7 @@ namespace Measurements.Core.Tests
             session.AttachDetector("D1");
             session.AttachDetector("D5");
 
-            session.SetAcquireDurationAndMode(20);
+            session.Counts = 20;
         }
     }
 

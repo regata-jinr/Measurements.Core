@@ -27,8 +27,7 @@ namespace Measurements.Core.Tests
         [Fact]
         void MainFunctionalTest()
         {
-            SessionControllerSingleton.InitializeDBConnectionString(@"Server=RUMLAB\REGATALOCAL;Database=NAA_DB_TEST;Trusted_Connection=True;");
-            SessionControllerSingleton.ConnectionStringBuilder.UserID = "bdrum";
+            SessionControllerSingleton.InitializeDBConnectionString(@"Server=RUMLAB\REGATALOCAL;Database=NAA_DB_TEST;Trusted_Connection=True;User Id=bdrum;");
 
             var r = new Random();
             var numberOfSession = (int)(4*r.NextDouble()+1);
@@ -73,7 +72,7 @@ namespace Measurements.Core.Tests
                 session.SpreadOption = spreadedOptionDict[(int)(3 * r.NextDouble())];
                 session.CurrentIrradiationDate = session.IrradiationDateList[(int)((session.IrradiationDateList.Count - 1) * r.NextDouble())].Value;
                 session.Height = Math.Round((decimal)(20 * r.NextDouble() + 1),2);
-                session.SetAcquireDurationAndMode((int)(4 * r.NextDouble() + 2));
+                session.Counts = (int)(4 * r.NextDouble() + 2);
             }
 
             foreach (var session in sessionList)

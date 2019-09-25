@@ -159,22 +159,29 @@ namespace Measurements.Core
         public event Action<IDetector> MeasurementDone;
 
         /// <summary>
-        /// Allows user to specify duration of measurement and the mode of acqusition for each detector controlled by the session. <seealso cref="CanberraDeviceAccessLib.AcquisitionModes"/>
+        /// Sets duration of measurement and the mode of acqusition for each detector controlled by the session. <seealso cref="CanberraDeviceAccessLib.AcquisitionModes"/>
         /// </summary>
         /// <param name="duration">Characterize number of counts for certain mode of acquisition</param>
         /// <param name="acqm">Characterize mode of spectra acquisition. By default is aCountToRealTime</param>
-        public void SetAcquireDurationAndMode(int duration, CanberraDeviceAccessLib.AcquisitionModes acqm = CanberraDeviceAccessLib.AcquisitionModes.aCountToRealTime)
+        private void SetAcquireDurationAndMode(int duration, CanberraDeviceAccessLib.AcquisitionModes acqm)
         {
             foreach (var d in ManagedDetectors)
-                d.SetAcqureCountsAndMode(duration, acqm);
-            CountMode = acqm;
-            Counts = duration;
+                d.SetAcqureCountsAndMode(Counts, CountMode);
         }
 
         /// <summary>
         /// Allows user to get chosen acqusition mode specified via <seealso cref="SetAcquireDurationAndMode(int, CanberraDeviceAccessLib.AcquisitionModes)"/>
         /// </summary>
-        public CanberraDeviceAccessLib.AcquisitionModes CountMode { get; private set; }
+        private CanberraDeviceAccessLib.AcquisitionModes _countMode;
+        public CanberraDeviceAccessLib.AcquisitionModes CountMode
+        {
+            get { return _countMode; }
+            set
+            {
+                _nLogger.Info($"Acquisition mode of measurements is setted to {value}");
+                _countMode = value;
+            }
+        }
         private int _counts;
         /// <summary>
         /// Allows user to get the number of counts(duration) specified via <seealso cref="SetAcquireDurationAndMode(int, CanberraDeviceAccessLib.AcquisitionModes)"
@@ -182,9 +189,10 @@ namespace Measurements.Core
         public int Counts
         {
             get { return _counts; }
-            private set
+            set
             {
-                _counts = value;
+                _nLogger.Info($"Duration of measurements is setted to {value}");
+               _counts = value;
                foreach (var m in MeasurementList)
                     m.Duration = value;
             }
@@ -209,7 +217,7 @@ namespace Measurements.Core
         /// <summary>
         /// List of detectors that controlled by the session
         /// </summary>
-        public List<IDetector> ManagedDetectors { get; }
+        public List<IDetector> ManagedDetectors { get; private set; }
         private bool _isDisposed = false;
         /// <summary>
         /// This is the simple counter which increment when one of detectors complete the measurement process. When all detectors are done measurement process, this number should be the same with number of managed detector by the session. When matching occur SessionComplete event will invoke. <seealso cref="SessionComplete"/>

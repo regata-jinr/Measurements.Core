@@ -22,14 +22,13 @@ namespace Measurements.Core
         void   AttachDetector(string dName);
         void   DetachDetector(string dName);
         void   SpreadSamplesToDetectors();
-        void   SetAcquireDurationAndMode(int duration, AcquisitionModes acqm = AcquisitionModes.aCountToRealTime);
 
         event Action    SessionComplete;
         event Action<IDetector>   MeasurementDone;
 
-        AcquisitionModes      CountMode              { get; }
+        AcquisitionModes      CountMode              { get; set; }
         SpreadOptions         SpreadOption           { get; set; }
-        int                   Counts                 { get; }
+        int                   Counts                 { get; set; }
         string                Type                   { get; set; }
         string                Name                   { get; set; }
         decimal               Height                 { get; set; }
