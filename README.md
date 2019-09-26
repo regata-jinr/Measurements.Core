@@ -83,14 +83,13 @@ SessionControllerSingleton.InitializeDBConnectionString("YourConnectionString");
 //here you can load session from db or you can create the new one
 var iSession = SessionControllerSingleton.Load("name of saved session");
 iSession.Type = "LLI-2";
+iSession.Counts = 5;
 iSession.CurrentIrradiationDate = DateTime.Parse("18.06.2012");
+iSession.SpreadOption = SpreadOptions.container;
 foreach(var m in iSession.MeasurementList)
     m.Note = "TEST!";
 
-iSession.SetAcquireDurationAndMode(5);
 iSession.StartMeasurements();
-// here we are using pause, because measurements process has async nature inside. 
-System.Threading.Thread.Sleep(iSession.Counts*iSession.IrradiationList.Count*1000 + iSession.IrradiationList.Count*1000);
 ~~~
 
 

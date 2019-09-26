@@ -55,10 +55,21 @@ namespace Measurements.Core
         /// </summary>
         public static readonly string[] MeasurementTypes = {"SLI", "LLI-1", "LLI-2", "FON" };
 
+        private SpreadOptions _spreadOption;
         /// <summary>
         /// Allows to specify SpreadOption. <see cref="SpreadOptions"/>
         /// </summary>
-        public SpreadOptions SpreadOption { get; set; }
+        public SpreadOptions SpreadOption 
+        {
+            get { return _spreadOption; }
+            set
+            {
+                _nLogger.Info($"Spread option has setted to {value}");
+                _spreadOption = value;
+                if (ManagedDetectors.Any() && IrradiationList.Any())
+                    SpreadSamplesToDetectors();
+            }
+        }
 
         private string _name;
         /// <summary>
@@ -94,8 +105,9 @@ namespace Measurements.Core
                         throw new ArgumentException($"Type of measurement should contained in this list [{string.Join(",", MeasurementTypes)}]");
 
                     _type = value;
-                    // TODO: perhaps here is better to use view with data has already agregated
-                    IrradiationDateList.AddRange(_infoContext.Irradiations.Where(i => i.Type == value).Select(i => i.DateTimeStart).Distinct().ToList());
+
+                    IrradiationDateList.Clear();
+                    IrradiationDateList.AddRange(_infoContext.Irradiations.Where(i => i.DateTimeStart.HasValue && i.Type == _type).Select(i => i.DateTimeStart.Value.Date).Distinct().OrderByDescending(d => d.Date).ToList());
                 }
                 catch (ArgumentException ae)
                 {
@@ -111,7 +123,7 @@ namespace Measurements.Core
         /// <summary>
         /// List of the unique irradiation date that is used for getting samples which were irradiate in this date
         /// </summary>
-        public List<DateTime?> IrradiationDateList { get; private set; }
+        public List<DateTime> IrradiationDateList { get; private set; }
         private DateTime _currentIrradiationDate;
 
         /// <summary>
@@ -237,7 +249,7 @@ namespace Measurements.Core
 
             _height                                       = 2.5m;
             _infoContext                                  = new InfoContext();
-            IrradiationDateList                           = new List<DateTime?>();
+            IrradiationDateList                           = new List<DateTime>();
             IrradiationList                               = new List<IrradiationInfo>();
             MeasurementList                               = new List<MeasurementInfo>();
             ManagedDetectors                              = new List<IDetector>();
@@ -348,6 +360,9 @@ namespace Measurements.Core
                 foreach (var d in ManagedDetectors)
                         SessionControllerSingleton.AvailableDetectors.Add(d);
                 ManagedDetectors.Clear();
+                MeasurementDone -= MeasurementDoneHandler;
+                DetectorsListsChanged -= SessionControllerSingleton.AvailableDetectorsChangesHaveOccurred;
+                SessionControllerSingleton.ConectionRestoreEvent -= UploadLocalDataToDB;
                 SessionControllerSingleton.ManagedSessions.Remove(this);
             }
             _isDisposed = true;

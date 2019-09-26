@@ -119,7 +119,7 @@ namespace Measurements.Core.Tests
                         mi.SetIndex           = (string)   sqr.GetValue(6);
                         mi.SampleNumber       = (string)   sqr.GetValue(7);
                         mi.Type               = (string)   sqr.GetValue(8);
-                        mi.DateTimeStart      = (DateTime) sqr.GetValue(9);
+                        mi.DateTimeStart      = (DateTime)  sqr.GetValue(9);
 
                         if (!DBNull.Value.Equals(sqr.GetValue(10)))
                             mi.Duration       = (int)      sqr.GetValue(10);

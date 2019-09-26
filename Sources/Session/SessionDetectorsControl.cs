@@ -38,7 +38,7 @@ namespace Measurements.Core
                 if (Counts <= 0 || string.IsNullOrEmpty(Type) || IrradiationList.Count == 0)
                     throw new ArgumentException($"Either some of principal arguments doesnt assign: Duration={Counts}, type of measurements={Type} or list of samples is empty {IrradiationList.Count}");
 
-                SpreadSamplesToDetectors();
+                //SpreadSamplesToDetectors();
                 SetAcquireDurationAndMode(Counts, CountMode);
 
                 foreach (var d in ManagedDetectors)
@@ -211,6 +211,7 @@ namespace Measurements.Core
                     SessionControllerSingleton.AvailableDetectors.Add(det);
                     SpreadedSamples.Remove(det.Name);
                     ManagedDetectors.Remove(det);
+                    det.AcquiringStatusChanged -= ProcessAcquiringMessage;
                     _nLogger.Info($"Successfuly detached detector {det.Name}");
                     DetectorsListsChanged?.Invoke();
                 }

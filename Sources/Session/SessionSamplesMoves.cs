@@ -41,6 +41,7 @@ namespace Measurements.Core
                     d.CurrentMeasurement = MeasurementList.Where(cm => cm.IrradiationId == IrId).First();
                     return true;
                 }
+                _nLogger.Info($"Sample {d.CurrentSample.ToString()} was the last sample on detector {d.Name}. Detector will send signal that measurements has completed");
             }
             catch (IndexOutOfRangeException ie)
             {
@@ -66,7 +67,8 @@ namespace Measurements.Core
                 foreach (var d in ManagedDetectors)
                 {
                     if (n < 0 || n >= SpreadedSamples[d.Name].Count)
-                        throw new IndexOutOfRangeException($"For detector '{d.Name}' index out of range");
+                        continue;
+                        //throw new IndexOutOfRangeException($"For detector '{d.Name}' index out of range");
 
                     d.CurrentSample = SpreadedSamples[d.Name][n];
                 }

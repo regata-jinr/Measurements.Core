@@ -37,7 +37,7 @@ namespace Measurements.Core
             {
                 if (string.IsNullOrEmpty(Type))
                     throw new ArgumentNullException("Before choosing date of irradiations you should choose type of irradiations");
-
+                IrradiationList.Clear();
                 IrradiationList.AddRange(_infoContext.Irradiations.Where(i => i.DateTimeStart.HasValue && i.DateTimeStart.Value.Date == date.Date && i.Type == Type).ToList());
 
                 var configuration = new MapperConfiguration(cfg => cfg.AddMaps("MeasurementsCore"));
@@ -51,6 +51,8 @@ namespace Measurements.Core
                     m.Assistant = SessionControllerSingleton.ConnectionStringBuilder.UserID;
                     MeasurementList.Add(m);
                 }
+
+                SpreadSamplesToDetectors();
             }
             catch (ArgumentNullException ane)
             {
@@ -159,7 +161,7 @@ namespace Measurements.Core
                 {
 
                     if (i >= ManagedDetectors.Count())
-                        throw new Exception("Count of samples more then disk can contains");
+                        throw new IndexOutOfRangeException("Count of samples more then disk can contains");
                     SpreadedSamples[ManagedDetectors[i].Name].Add(sample);
                     n++;
 
@@ -170,6 +172,10 @@ namespace Measurements.Core
                     }
                 }
             }
+            catch (IndexOutOfRangeException ie)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, ie, Handlers.ExceptionLevel.Warn);
+            }
             catch (Exception e)
             {
                 Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
@@ -177,12 +183,12 @@ namespace Measurements.Core
         }
 
         /// <summary>
-        /// This method allows user to divide samples to detectors according with chosen SpreadedOption with requred checks
+        /// This method describes the division of samples to detectors according with chosen SpreadedOption with requred checks
         /// <seealso cref="SpreadSamplesByContainer"/>
         /// <seealso cref="SpreadSamplesUniform"/>
         /// <seealso cref="SpreadSamplesByTheOrder"/>
         /// </summary>
-        public void SpreadSamplesToDetectors()
+        private void SpreadSamplesToDetectors()
         {
             _nLogger.Info($"Spreading samples to detectors has began");
             try
@@ -191,7 +197,7 @@ namespace Measurements.Core
                     throw new ArgumentOutOfRangeException("Session has managed no-one detector");
 
                 if (!IrradiationList.Any())
-                    throw new ArgumentOutOfRangeException("Session doesn't contain sample to measure");
+                    throw new ArgumentOutOfRangeException("Session doesn't contain samples to measure");
 
                 foreach (var dName in ManagedDetectors.Select(d => d.Name).ToArray())
                 {

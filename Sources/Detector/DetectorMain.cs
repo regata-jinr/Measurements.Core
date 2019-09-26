@@ -18,6 +18,8 @@ namespace Measurements.Core
         {
             try
             {
+                
+                //_nLogger.SetProperty("Assistant", SessionControllerSingleton.ConnectionStringBuilder.UserID);
                 _nLogger = SessionControllerSingleton.logger.WithProperty("ParamName", name);
                 _nLogger.Info($"Initialisation of the detector {name} with mode {option.ToString()} and timeout limit {timeOutLimitSeconds}");
                 _conOption = option;

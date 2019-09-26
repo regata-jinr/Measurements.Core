@@ -21,7 +21,6 @@ namespace Measurements.Core
         void   Dispose();
         void   AttachDetector(string dName);
         void   DetachDetector(string dName);
-        void   SpreadSamplesToDetectors();
 
         event Action    SessionComplete;
         event Action<IDetector>   MeasurementDone;
@@ -34,7 +33,7 @@ namespace Measurements.Core
         decimal               Height                 { get; set; }
         string                Note                   { get; set; }
         DateTime              CurrentIrradiationDate { get; set; }
-        List<DateTime?>       IrradiationDateList    { get; }
+        List<DateTime>       IrradiationDateList    { get; }
         List<IrradiationInfo> IrradiationList        { get; }
         List<MeasurementInfo> MeasurementList        { get; }
         List<IDetector>       ManagedDetectors       { get; }

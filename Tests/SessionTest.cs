@@ -16,15 +16,16 @@ namespace Measurements.Core.Tests
             SessionControllerSingleton.InitializeDBConnectionString(@"Server=RUMLAB\REGATALOCAL;Database=NAA_DB_TEST;Trusted_Connection=True;");
             SessionControllerSingleton.ConnectionStringBuilder.UserID = "bdrum";
             session = new Session();
-
-            session.Type = "LLI-1";
-
-            session.CurrentIrradiationDate = DateTime.Parse("24.05.2019");
-
-            // TODO: here I break the order of measurement. Assign count mode and counts number before creation detectors. Add extension for such case!
-
             session.AttachDetector("D1");
             session.AttachDetector("D5");
+            session.Type = "LLI-1";
+            session.Counts = 3;
+
+            session.CurrentIrradiationDate = DateTime.Parse("24.05.2019");
+            session.SpreadOption = SpreadOptions.container;
+            // TODO: here I break the order of measurement. Assign count mode and counts number before creation detectors. Add extension for such case!
+
+
 
             session.Counts = 20;
         }
@@ -119,16 +120,7 @@ namespace Measurements.Core.Tests
         {
             Assert.True(sessionFixture.session.ManagedDetectors.Any());
 
-            foreach (var d in sessionFixture.session.ManagedDetectors)
-            {
-                Assert.Null(d.CurrentSample.Assistant);
-                Assert.Null(d.CurrentMeasurement.Assistant);
-                Assert.False(sessionFixture.session.SpreadedSamples[d.Name].Any());
-            }
-
             Assert.Equal(SpreadOptions.container, sessionFixture.session.SpreadOption);
-
-            sessionFixture.session.SpreadSamplesToDetectors();            
 
             foreach (var d in sessionFixture.session.ManagedDetectors)
             {
@@ -164,16 +156,7 @@ namespace Measurements.Core.Tests
         {
             Assert.True(sessionFixture.session.ManagedDetectors.Any());
 
-            foreach (var d in sessionFixture.session.ManagedDetectors)
-            {
-                Assert.Null(d.CurrentSample.Assistant);
-                Assert.Null(d.CurrentMeasurement.Assistant);
-                Assert.False(sessionFixture.session.SpreadedSamples[d.Name].Any());
-            }
-
             Assert.Equal(SpreadOptions.container, sessionFixture.session.SpreadOption);
-
-            sessionFixture.session.SpreadSamplesToDetectors();            
 
             sessionFixture.session.MakeSamplesCurrentOnAllDetectorsByNumber(1);            
 
@@ -207,16 +190,7 @@ namespace Measurements.Core.Tests
         {
             Assert.True(sessionFixture.session.ManagedDetectors.Any());
 
-            foreach (var d in sessionFixture.session.ManagedDetectors)
-            {
-                Assert.Null(d.CurrentSample.Assistant);
-                Assert.Null(d.CurrentMeasurement.Assistant);
-                Assert.False(sessionFixture.session.SpreadedSamples[d.Name].Any());
-            }
-
             Assert.Equal(SpreadOptions.container, sessionFixture.session.SpreadOption);
-
-            sessionFixture.session.SpreadSamplesToDetectors();
 
             IDetector det = null;
 
@@ -225,7 +199,6 @@ namespace Measurements.Core.Tests
                 det = d;
                 var ii = sessionFixture.session.SpreadedSamples[d.Name][10];
                 sessionFixture.session.MakeSampleCurrentOnDetector(ref ii, ref det);
-                Assert.NotNull(d.CurrentSample.Assistant);
                 Assert.True(sessionFixture.session.SpreadedSamples[d.Name].Any());
                 Assert.Equal(10, sessionFixture.session.SpreadedSamples[d.Name].IndexOf(d.CurrentSample));
             }
@@ -328,8 +301,6 @@ namespace Measurements.Core.Tests
             var irD1 = ic.Irradiations.Where(ir1 => ir1.DateTimeStart.HasValue && ir1.DateTimeStart.Value.Date.ToShortDateString() == "24.05.2019" && ir1.Type == "LLI-1" &&  (ir1.Container.Value == 1 || ir1.Container.Value == 3 || ir1.Container.Value == 5)).ToList();
             var irD5 = ic.Irradiations.Where(ir5 => ir5.DateTimeStart.HasValue && ir5.DateTimeStart.Value.Date.ToShortDateString() == "24.05.2019" && ir5.Type == "LLI-1" &&  (ir5.Container.Value == 2 || ir5.Container.Value == 4 || ir5.Container.Value == 6)).ToList();
 
-            sessionFixture.session.SpreadSamplesToDetectors();
-
             foreach (var id1 in irD1)
                 Assert.True(sessionFixture.session.SpreadedSamples["D1"].Exists(idr1 => $"{idr1.SetKey}-{idr1.SampleNumber}" == $"{id1.SetKey}-{id1.SampleNumber}"));
 
@@ -357,7 +328,6 @@ namespace Measurements.Core.Tests
                 else d5List.Add(i);
             }
 
-            sessionFixture.session.SpreadSamplesToDetectors();
             foreach (var id1 in d1List)
                 Assert.True(sessionFixture.session.SpreadedSamples["D1"].Exists(idr1 => $"{idr1.SetKey}-{idr1.SampleNumber}" == $"{id1.SetKey}-{id1.SampleNumber}"));
 
@@ -386,7 +356,6 @@ namespace Measurements.Core.Tests
                 else d5List.Add(i);
             }
 
-            sessionFixture.session.SpreadSamplesToDetectors();
             foreach (var id1 in d1List)
                 Assert.True(sessionFixture.session.SpreadedSamples["D1"].Exists(idr1 => $"{idr1.SetKey}-{idr1.SampleNumber}" == $"{id1.SetKey}-{id1.SampleNumber}"));
 
