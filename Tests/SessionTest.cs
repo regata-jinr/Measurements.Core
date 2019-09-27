@@ -125,8 +125,8 @@ namespace Measurements.Core.Tests
             foreach (var d in sessionFixture.session.ManagedDetectors)
             {
                 Assert.NotNull(d.CurrentSample.Assistant);
-                Assert.True(sessionFixture.session.SpreadedSamples[d.Name].Any());
-                Assert.Equal(0, sessionFixture.session.SpreadedSamples[d.Name].IndexOf(d.CurrentSample));
+                Assert.True(sessionFixture.session.SpreadSamples[d.Name].Any());
+                Assert.Equal(0, sessionFixture.session.SpreadSamples[d.Name].IndexOf(d.CurrentSample));
             }
 
             IDetector det = null;
@@ -135,8 +135,8 @@ namespace Measurements.Core.Tests
                 det = d;
                 sessionFixture.session.NextSample(ref det);
                 Assert.NotNull(d.CurrentSample.Assistant);
-                Assert.True(sessionFixture.session.SpreadedSamples[d.Name].Any());
-                Assert.Equal(1, sessionFixture.session.SpreadedSamples[d.Name].IndexOf(d.CurrentSample));
+                Assert.True(sessionFixture.session.SpreadSamples[d.Name].Any());
+                Assert.Equal(1, sessionFixture.session.SpreadSamples[d.Name].IndexOf(d.CurrentSample));
             }
 
             foreach (IDetector d in sessionFixture.session.ManagedDetectors)
@@ -146,8 +146,8 @@ namespace Measurements.Core.Tests
                 sessionFixture.session.NextSample(ref det);
                 sessionFixture.session.NextSample(ref det);
                 Assert.NotNull(d.CurrentSample.Assistant);
-                Assert.True(sessionFixture.session.SpreadedSamples[d.Name].Any());
-                Assert.Equal(4, sessionFixture.session.SpreadedSamples[d.Name].IndexOf(d.CurrentSample));
+                Assert.True(sessionFixture.session.SpreadSamples[d.Name].Any());
+                Assert.Equal(4, sessionFixture.session.SpreadSamples[d.Name].IndexOf(d.CurrentSample));
             }
         }
 
@@ -163,8 +163,8 @@ namespace Measurements.Core.Tests
             foreach (var d in sessionFixture.session.ManagedDetectors)
             {
                 Assert.NotNull(d.CurrentSample.Assistant);
-                Assert.True(sessionFixture.session.SpreadedSamples[d.Name].Any());
-                Assert.Equal(1, sessionFixture.session.SpreadedSamples[d.Name].IndexOf(d.CurrentSample));
+                Assert.True(sessionFixture.session.SpreadSamples[d.Name].Any());
+                Assert.Equal(1, sessionFixture.session.SpreadSamples[d.Name].IndexOf(d.CurrentSample));
             }
 
             IDetector det = null;
@@ -173,15 +173,15 @@ namespace Measurements.Core.Tests
                 det = d;
                 sessionFixture.session.PrevSample(ref det);
                 Assert.NotNull(d.CurrentSample.Assistant);
-                Assert.True(sessionFixture.session.SpreadedSamples[d.Name].Any());
-                Assert.Equal(0, sessionFixture.session.SpreadedSamples[d.Name].IndexOf(d.CurrentSample));
+                Assert.True(sessionFixture.session.SpreadSamples[d.Name].Any());
+                Assert.Equal(0, sessionFixture.session.SpreadSamples[d.Name].IndexOf(d.CurrentSample));
             }
 
             foreach (IDetector d in sessionFixture.session.ManagedDetectors)
             {
                 det = d;
                 sessionFixture.session.PrevSample(ref det);
-                Assert.Equal(0, sessionFixture.session.SpreadedSamples[d.Name].IndexOf(d.CurrentSample));
+                Assert.Equal(0, sessionFixture.session.SpreadSamples[d.Name].IndexOf(d.CurrentSample));
             }
         }
 
@@ -197,10 +197,10 @@ namespace Measurements.Core.Tests
             foreach (IDetector d in sessionFixture.session.ManagedDetectors)
             {
                 det = d;
-                var ii = sessionFixture.session.SpreadedSamples[d.Name][10];
+                var ii = sessionFixture.session.SpreadSamples[d.Name][10];
                 sessionFixture.session.MakeSampleCurrentOnDetector(ref ii, ref det);
-                Assert.True(sessionFixture.session.SpreadedSamples[d.Name].Any());
-                Assert.Equal(10, sessionFixture.session.SpreadedSamples[d.Name].IndexOf(d.CurrentSample));
+                Assert.True(sessionFixture.session.SpreadSamples[d.Name].Any());
+                Assert.Equal(10, sessionFixture.session.SpreadSamples[d.Name].IndexOf(d.CurrentSample));
             }
         }
 
@@ -302,10 +302,10 @@ namespace Measurements.Core.Tests
             var irD5 = ic.Irradiations.Where(ir5 => ir5.DateTimeStart.HasValue && ir5.DateTimeStart.Value.Date.ToShortDateString() == "24.05.2019" && ir5.Type == "LLI-1" &&  (ir5.Container.Value == 2 || ir5.Container.Value == 4 || ir5.Container.Value == 6)).ToList();
 
             foreach (var id1 in irD1)
-                Assert.True(sessionFixture.session.SpreadedSamples["D1"].Exists(idr1 => $"{idr1.SetKey}-{idr1.SampleNumber}" == $"{id1.SetKey}-{id1.SampleNumber}"));
+                Assert.True(sessionFixture.session.SpreadSamples["D1"].Exists(idr1 => $"{idr1.SetKey}-{idr1.SampleNumber}" == $"{id1.SetKey}-{id1.SampleNumber}"));
 
             foreach (var id5 in irD5)
-                Assert.True(sessionFixture.session.SpreadedSamples["D5"].Exists(idr5 => $"{idr5.SetKey}-{idr5.SampleNumber}" == $"{id5.SetKey}-{id5.SampleNumber}"));
+                Assert.True(sessionFixture.session.SpreadSamples["D5"].Exists(idr5 => $"{idr5.SetKey}-{idr5.SampleNumber}" == $"{id5.SetKey}-{id5.SampleNumber}"));
 
         }
 
@@ -329,10 +329,10 @@ namespace Measurements.Core.Tests
             }
 
             foreach (var id1 in d1List)
-                Assert.True(sessionFixture.session.SpreadedSamples["D1"].Exists(idr1 => $"{idr1.SetKey}-{idr1.SampleNumber}" == $"{id1.SetKey}-{id1.SampleNumber}"));
+                Assert.True(sessionFixture.session.SpreadSamples["D1"].Exists(idr1 => $"{idr1.SetKey}-{idr1.SampleNumber}" == $"{id1.SetKey}-{id1.SampleNumber}"));
 
             foreach (var id5 in d5List)
-                Assert.True(sessionFixture.session.SpreadedSamples["D5"].Exists(idr5 => $"{idr5.SetKey}-{idr5.SampleNumber}" == $"{id5.SetKey}-{id5.SampleNumber}"));
+                Assert.True(sessionFixture.session.SpreadSamples["D5"].Exists(idr5 => $"{idr5.SetKey}-{idr5.SampleNumber}" == $"{id5.SetKey}-{id5.SampleNumber}"));
 
 
         }
@@ -357,10 +357,10 @@ namespace Measurements.Core.Tests
             }
 
             foreach (var id1 in d1List)
-                Assert.True(sessionFixture.session.SpreadedSamples["D1"].Exists(idr1 => $"{idr1.SetKey}-{idr1.SampleNumber}" == $"{id1.SetKey}-{id1.SampleNumber}"));
+                Assert.True(sessionFixture.session.SpreadSamples["D1"].Exists(idr1 => $"{idr1.SetKey}-{idr1.SampleNumber}" == $"{id1.SetKey}-{id1.SampleNumber}"));
 
             foreach (var id5 in d5List)
-                Assert.True(sessionFixture.session.SpreadedSamples["D5"].Exists(idr5 => $"{idr5.SetKey}-{idr5.SampleNumber}" == $"{id5.SetKey}-{id5.SampleNumber}"));
+                Assert.True(sessionFixture.session.SpreadSamples["D5"].Exists(idr5 => $"{idr5.SetKey}-{idr5.SampleNumber}" == $"{id5.SetKey}-{id5.SampleNumber}"));
 
         }
 

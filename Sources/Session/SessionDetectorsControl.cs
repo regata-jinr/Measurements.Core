@@ -43,7 +43,7 @@ namespace Measurements.Core
 
                 foreach (var d in ManagedDetectors)
                 {
-                    if (SpreadedSamples[d.Name].Count != 0)
+                    if (SpreadSamples[d.Name].Count != 0)
                         d.Start();
                     else
                     {
@@ -170,7 +170,7 @@ namespace Measurements.Core
                 if (det != null)
                 {
                     ManagedDetectors.Add(det);
-                    SpreadedSamples.Add(det.Name, new List<IrradiationInfo>());
+                    SpreadSamples.Add(det.Name, new List<IrradiationInfo>());
                     SessionControllerSingleton.AvailableDetectors.Remove(det);
                     det.AcquiringStatusChanged += ProcessAcquiringMessage;
                     _nLogger.Info($"successfuly attached detector {det.Name}");
@@ -209,7 +209,7 @@ namespace Measurements.Core
                 if (det != null)
                 {
                     SessionControllerSingleton.AvailableDetectors.Add(det);
-                    SpreadedSamples.Remove(det.Name);
+                    SpreadSamples.Remove(det.Name);
                     ManagedDetectors.Remove(det);
                     det.AcquiringStatusChanged -= ProcessAcquiringMessage;
                     _nLogger.Info($"Successfuly detached detector {det.Name}");

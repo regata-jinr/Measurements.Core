@@ -4,6 +4,7 @@ namespace Measurements.Core
 {
     public class SessionInfo
     {
+      
         [Key]
         public string  Name           { get; set; }
         public string  DetectorsNames { get; set; }

@@ -64,7 +64,7 @@ namespace Measurements.Core
             get { return _spreadOption; }
             set
             {
-                _nLogger.Info($"Spread option has setted to {value}");
+                _nLogger.Info($"Spread option has set to {value}");
                 _spreadOption = value;
                 if (ManagedDetectors.Any() && IrradiationList.Any())
                     SpreadSamplesToDetectors();
@@ -190,7 +190,7 @@ namespace Measurements.Core
             get { return _countMode; }
             set
             {
-                _nLogger.Info($"Acquisition mode of measurements is setted to {value}");
+                _nLogger.Info($"Acquisition mode of measurements is set to {value}");
                 _countMode = value;
             }
         }
@@ -203,7 +203,7 @@ namespace Measurements.Core
             get { return _counts; }
             set
             {
-                _nLogger.Info($"Duration of measurements is setted to {value}");
+                _nLogger.Info($"Duration of measurements is set to {value}");
                _counts = value;
                foreach (var m in MeasurementList)
                     m.Duration = value;
@@ -225,7 +225,7 @@ namespace Measurements.Core
         /// <summary>
         /// Allows user to get the list of samples spreaded to the detector with certain name
         /// </summary>
-        public Dictionary<string, List<IrradiationInfo>> SpreadedSamples { get; }
+        public Dictionary<string, List<IrradiationInfo>> SpreadSamples { get; }
         /// <summary>
         /// List of detectors that controlled by the session
         /// </summary>
@@ -245,7 +245,7 @@ namespace Measurements.Core
         {
             Name = "Untitled session";
 
-            _nLogger.Info("Initialisation of session has began");
+            _nLogger.Info("Initialisation of session has begun");
 
             _height                                       = 2.5m;
             _infoContext                                  = new InfoContext();
@@ -253,7 +253,7 @@ namespace Measurements.Core
             IrradiationList                               = new List<IrradiationInfo>();
             MeasurementList                               = new List<MeasurementInfo>();
             ManagedDetectors                              = new List<IDetector>();
-            SpreadedSamples                               = new Dictionary<string, List<IrradiationInfo>>();
+            SpreadSamples                               = new Dictionary<string, List<IrradiationInfo>>();
             CountMode                                     = CanberraDeviceAccessLib.AcquisitionModes.aCountToRealTime;
             MeasurementDone                               += MeasurementDoneHandler;
             DetectorsListsChanged                          += SessionControllerSingleton.AvailableDetectorsChangesHaveOccurred;
@@ -275,9 +275,12 @@ namespace Measurements.Core
             CountMode               = (CanberraDeviceAccessLib.AcquisitionModes)Enum.Parse(typeof(CanberraDeviceAccessLib.AcquisitionModes), session.CountMode);
             SpreadOption            = (SpreadOptions)Enum.Parse(typeof(SpreadOptions), session.SpreadOption);
             Note                    = session.Note;
-            
-            foreach (var dName in session.DetectorsNames.Split(','))
-                AttachDetector(dName);                
+
+            if (!string.IsNullOrEmpty(session.DetectorsNames))
+            {
+                foreach (var dName in session.DetectorsNames.Split(','))
+                    AttachDetector(dName);
+            }
 
         }
 
@@ -297,21 +300,48 @@ namespace Measurements.Core
         /// </summary>
         /// <param name="nameOfSession"></param>
         /// <param name="isBasic"></param>
-        public void SaveSession(string nameOfSession, bool isBasic=false)
+        public void SaveSession(string nameOfSession, bool isPublic = false)
         {
-            _nLogger.Info($"Session with parameters {this} will be save into DB {(isBasic ? "as basic" : "as customed" )} session with name '{nameOfSession}'");
+            _nLogger.Info($"Session with parameters {this} will save into DB {(isPublic ? "as public" : "as private" )} session with name '{nameOfSession}'");
 
             try
             {
                 if (string.IsNullOrEmpty(nameOfSession))
                     throw new ArgumentNullException("Name of session must be specified");
                 Name = nameOfSession;
+                var sc = new InfoContext();
+
+                if (sc.Sessions.Where(s => s.Name == Name).Any())
+                    UpdateExistingSession(isPublic);
+                else
+                    SaveNewSession(isPublic);
+
+            }
+            catch (ArgumentNullException are)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, are, Handlers.ExceptionLevel.Error);
+            }
+            catch (Microsoft.EntityFrameworkCore.DbUpdateException dbe)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, dbe, Handlers.ExceptionLevel.Warn);
+            }
+            catch (Exception e)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
+            }
+        }
+
+
+        private void SaveNewSession(bool isPublic)
+        {
+            try
+            {
                 var sessionContext = new InfoContext();
 
                 string assistant = null;
-                if (!isBasic) assistant = SessionControllerSingleton.ConnectionStringBuilder.UserID;
+                if (!isPublic) assistant = SessionControllerSingleton.ConnectionStringBuilder.UserID;
 
-                sessionContext.Add(new SessionInfo
+                sessionContext.Sessions.Add(new SessionInfo
                 {
                     CountMode = this.CountMode.ToString(),
                     Duration = this.Counts,
@@ -322,13 +352,42 @@ namespace Measurements.Core
                     Assistant = assistant,
                     Note = this.Note,
                     DetectorsNames = string.Join(",", ManagedDetectors.Select(n => n.Name).ToArray())
-                }
-                );
+                });
+
                 sessionContext.SaveChanges();
             }
-            catch (ArgumentNullException are)
+            catch (Microsoft.EntityFrameworkCore.DbUpdateException dbe)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, are, Handlers.ExceptionLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, dbe, Handlers.ExceptionLevel.Warn);
+            }
+            catch (Exception e)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
+            };
+        }
+
+        private void UpdateExistingSession(bool isPublic)
+        {
+            try 
+            { 
+                string assistant = null;
+                if (!isPublic) assistant = SessionControllerSingleton.ConnectionStringBuilder.UserID;
+
+                var sc = new InfoContext();
+                var si = sc.Sessions.Where(s => s.Name == Name).First();
+
+                si.CountMode = this.CountMode.ToString();
+                si.Duration = this.Counts;
+                si.Height = this.Height;
+                si.Name = this.Name;
+                si.Type = this.Type;
+                si.SpreadOption = this.SpreadOption.ToString();
+                si.Assistant = assistant;
+                si.Note = this.Note;
+                si.DetectorsNames = string.Join(",", ManagedDetectors.Select(n => n.Name).ToArray());
+           
+                sc.Sessions.Update(si);
+                sc.SaveChanges();
             }
             catch (Microsoft.EntityFrameworkCore.DbUpdateException dbe)
             {
@@ -353,7 +412,7 @@ namespace Measurements.Core
 
         private void CleanUp()
         {
-            _nLogger.Info($"Disposing session has began");
+            _nLogger.Info($"Disposing session has begun");
 
             if (!_isDisposed)
             {

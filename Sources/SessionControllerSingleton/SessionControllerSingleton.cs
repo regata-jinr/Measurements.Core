@@ -196,6 +196,9 @@ namespace Measurements.Core
             }
         }
 
+        public static event Action SessionsInfoListHasChanged;
+        public static void SessionsInfoListsChangedHaveOccurred() => SessionsInfoListHasChanged?.Invoke();
+
         public static event Action AvailableDetectorsListHasChanged;
 
         public static void AvailableDetectorsChangesHaveOccurred() => AvailableDetectorsListHasChanged?.Invoke();
@@ -230,7 +233,7 @@ namespace Measurements.Core
             var conf = new Measurements.Configurator.ConfigManager();
             NLog.GlobalDiagnosticsContext.Set("LogConnectionString", conf.LogConnectionString);
             logger = NLog.LogManager.GetCurrentClassLogger();
-            logger.Info("Inititalization of Session Controller instance has began");
+            logger.Info("Inititalization of Session Controller instance has begun");
 
             _isDisposed              = false;
             LocalMode                = false;

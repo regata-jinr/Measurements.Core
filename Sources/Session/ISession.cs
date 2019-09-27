@@ -15,7 +15,7 @@ namespace Measurements.Core
         void   StopMeasurements(); //Pause and Clear
         void   SaveMeasurement(ref IDetector d);
         void   SaveSpectra(ref IDetector d);
-        void   SaveSession(string nameOfSession, bool isBasic = false);
+        void   SaveSession(string nameOfSession, bool isPublic = false);
         void   ContinueMeasurements();
         void   ClearMeasurements();
         void   Dispose();
@@ -38,7 +38,7 @@ namespace Measurements.Core
         List<MeasurementInfo> MeasurementList        { get; }
         List<IDetector>       ManagedDetectors       { get; }
 
-        Dictionary<string, List<IrradiationInfo>> SpreadedSamples { get; }
+        Dictionary<string, List<IrradiationInfo>> SpreadSamples { get; }
  
     }
 }

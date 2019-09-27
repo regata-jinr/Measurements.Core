@@ -103,7 +103,7 @@ namespace Measurements.Core
                 foreach (var conNum in NumberOfContainers)
                 {
                     var sampleList = new List<IrradiationInfo> (IrradiationList.Where(ir => ir.Container == conNum).ToList());
-                    SpreadedSamples[ManagedDetectors[i].Name].AddRange(sampleList);
+                    SpreadSamples[ManagedDetectors[i].Name].AddRange(sampleList);
                     i++;
                     if (i >= ManagedDetectors.Count())
                         i = 0;
@@ -132,7 +132,7 @@ namespace Measurements.Core
 
                 foreach (var sample in IrradiationList)
                 {
-                    SpreadedSamples[ManagedDetectors[i].Name].Add(sample);
+                    SpreadSamples[ManagedDetectors[i].Name].Add(sample);
                     i++;
                     if (i >= ManagedDetectors.Count())
                         i = 0;
@@ -162,7 +162,7 @@ namespace Measurements.Core
 
                     if (i >= ManagedDetectors.Count())
                         throw new IndexOutOfRangeException("Count of samples more then disk can contains");
-                    SpreadedSamples[ManagedDetectors[i].Name].Add(sample);
+                    SpreadSamples[ManagedDetectors[i].Name].Add(sample);
                     n++;
 
                     if (n >= SampleChanger.SizeOfDisk)
@@ -190,7 +190,7 @@ namespace Measurements.Core
         /// </summary>
         private void SpreadSamplesToDetectors()
         {
-            _nLogger.Info($"Spreading samples to detectors has began");
+            _nLogger.Info($"Spreading samples to detectors has begun");
             try
             {
                 if (!ManagedDetectors.Any())
@@ -201,8 +201,8 @@ namespace Measurements.Core
 
                 foreach (var dName in ManagedDetectors.Select(d => d.Name).ToArray())
                 {
-                    if (SpreadedSamples[dName].Any())
-                        SpreadedSamples[dName].Clear();
+                    if (SpreadSamples[dName].Any())
+                        SpreadSamples[dName].Clear();
                 }
 
                 if (SpreadOption == SpreadOptions.container)
@@ -221,11 +221,12 @@ namespace Measurements.Core
 
                 foreach (var d in ManagedDetectors)
                 {
-                    if (SpreadedSamples[d.Name].Count == 0)
+                    if (SpreadSamples[d.Name].Count == 0)
                         continue;
 
                     d.CurrentMeasurement = MeasurementList.Where(cm => cm.IrradiationId == d.CurrentSample.Id).First();
-                    _nLogger.Info($"Samples [{(string.Join(",", SpreadedSamples[d.Name].OrderBy(ss => $"{ss.SetKey}-{ss.SampleNumber}").Select(ss => $"{ss.SetKey}-{ss.SampleNumber}").ToArray()))}] will measure on the detector {d.Name}");
+
+                    _nLogger.Info($"Samples [{(string.Join(",", SpreadSamples[d.Name].OrderBy(ss => $"{ss.SetKey}-{ss.SampleNumber}").Select(ss => $"{ss.SetKey}-{ss.SampleNumber}").ToArray()))}] will measure on the detector {d.Name}");
                 }
 
             }

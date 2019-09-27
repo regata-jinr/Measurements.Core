@@ -24,7 +24,7 @@ namespace Measurements.Core
     public partial class Session : ISession, IDisposable
     {
         /// <summary>
-        /// Change sample on chosen detector to the next one by the order in SpreadedSamples dictionary
+        /// Change sample on chosen detector to the next one by the order in SpreadSamples dictionary
         /// </summary>
         /// <paramref name="d">Reference to the detector object</paramref>
         /// <returns>True in case of next sample exist and was changed successfuly</returns>
@@ -33,10 +33,10 @@ namespace Measurements.Core
             try
             { 
                 _nLogger.Info($"Change sample {d.CurrentSample.ToString()} to the next one for detector {d.Name}");
-                int currentIndex = SpreadedSamples[d.Name].IndexOf(d.CurrentSample);
-                if (currentIndex != SpreadedSamples[d.Name].Count - 1)
+                int currentIndex = SpreadSamples[d.Name].IndexOf(d.CurrentSample);
+                if (currentIndex != SpreadSamples[d.Name].Count - 1)
                 {
-                    d.CurrentSample = SpreadedSamples[d.Name][++currentIndex];
+                    d.CurrentSample = SpreadSamples[d.Name][++currentIndex];
                     int IrId = d.CurrentSample.Id;
                     d.CurrentMeasurement = MeasurementList.Where(cm => cm.IrradiationId == IrId).First();
                     return true;
@@ -66,11 +66,11 @@ namespace Measurements.Core
             {
                 foreach (var d in ManagedDetectors)
                 {
-                    if (n < 0 || n >= SpreadedSamples[d.Name].Count)
+                    if (n < 0 || n >= SpreadSamples[d.Name].Count)
                         continue;
                         //throw new IndexOutOfRangeException($"For detector '{d.Name}' index out of range");
 
-                    d.CurrentSample = SpreadedSamples[d.Name][n];
+                    d.CurrentSample = SpreadSamples[d.Name][n];
                 }
             }
             catch (IndexOutOfRangeException ie)
@@ -91,7 +91,7 @@ namespace Measurements.Core
         }
 
         /// <summary>
-        /// Change sample on chosen detector to the previous one by the order in SpreadedSamples dictionary 
+        /// Change sample on chosen detector to the previous one by the order in SpreadSamples dictionary 
         /// </summary>
         /// <param name="d"></param>
         public void PrevSample(ref IDetector d)
@@ -99,10 +99,10 @@ namespace Measurements.Core
             try
             {
                 _nLogger.Info($"Change sample {d.CurrentSample.ToString()} to the previous one for dtector {d.Name}");
-                int currentIndex = SpreadedSamples[d.Name].IndexOf(d.CurrentSample);
+                int currentIndex = SpreadSamples[d.Name].IndexOf(d.CurrentSample);
                 if (currentIndex == 0)
                     throw new IndexOutOfRangeException($"Current sample on detector {d.Name} has 0 index. Can't go to the previous sample");
-                d.CurrentSample = SpreadedSamples[d.Name][--currentIndex];
+                d.CurrentSample = SpreadSamples[d.Name][--currentIndex];
             }
             catch (IndexOutOfRangeException ie)
             {
