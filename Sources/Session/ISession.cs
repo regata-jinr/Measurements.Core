@@ -23,7 +23,8 @@ namespace Measurements.Core
         void   DetachDetector(string dName);
 
         event Action    SessionComplete;
-        event Action<IDetector>   MeasurementDone;
+        event Action<MeasurementInfo>    MeasurementOfSampleDone;
+        event Action<string>   MeasurementDone;
 
         AcquisitionModes      CountMode              { get; set; }
         SpreadOptions         SpreadOption           { get; set; }

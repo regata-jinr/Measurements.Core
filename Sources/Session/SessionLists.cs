@@ -38,6 +38,7 @@ namespace Measurements.Core
                 if (string.IsNullOrEmpty(Type))
                     throw new ArgumentNullException("Before choosing date of irradiations you should choose type of irradiations");
                 IrradiationList.Clear();
+                MeasurementList.Clear();
                 IrradiationList.AddRange(_infoContext.Irradiations.Where(i => i.DateTimeStart.HasValue && i.DateTimeStart.Value.Date == date.Date && i.Type == Type).ToList());
 
                 var configuration = new MapperConfiguration(cfg => cfg.AddMaps("MeasurementsCore"));
@@ -104,6 +105,12 @@ namespace Measurements.Core
                 {
                     var sampleList = new List<IrradiationInfo> (IrradiationList.Where(ir => ir.Container == conNum).ToList());
                     SpreadSamples[ManagedDetectors[i].Name].AddRange(sampleList);
+
+                    foreach (var s in sampleList)
+                        MeasurementList.Where(m => m.IrradiationId == s.Id).First().Detector = ManagedDetectors[i].Name;
+
+                    //System.Threading.Tasks.Parallel.ForEach(sampleList, (s) => { MeasurementList.Where(m => m.IrradiationId == s.Id).First().Detector = ManagedDetectors[i].Name; });
+
                     i++;
                     if (i >= ManagedDetectors.Count())
                         i = 0;
@@ -119,6 +126,8 @@ namespace Measurements.Core
             }
         }
 
+
+
         /// <summary>
         /// This option allows merely divide all samples to detectors in the same portions.
         /// </summary>
@@ -133,6 +142,7 @@ namespace Measurements.Core
                 foreach (var sample in IrradiationList)
                 {
                     SpreadSamples[ManagedDetectors[i].Name].Add(sample);
+                    MeasurementList.Where(m => m.IrradiationId == sample.Id).First().Detector = ManagedDetectors[i].Name;
                     i++;
                     if (i >= ManagedDetectors.Count())
                         i = 0;
@@ -163,6 +173,7 @@ namespace Measurements.Core
                     if (i >= ManagedDetectors.Count())
                         throw new IndexOutOfRangeException("Count of samples more then disk can contains");
                     SpreadSamples[ManagedDetectors[i].Name].Add(sample);
+                    MeasurementList.Where(m => m.IrradiationId == sample.Id).First().Detector = ManagedDetectors[i].Name;
                     n++;
 
                     if (n >= SampleChanger.SizeOfDisk)
@@ -220,6 +231,7 @@ namespace Measurements.Core
                 MakeSamplesCurrentOnAllDetectorsByNumber();
 
                 foreach (var d in ManagedDetectors)
+
                 {
                     if (SpreadSamples[d.Name].Count == 0)
                         continue;

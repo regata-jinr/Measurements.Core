@@ -129,6 +129,10 @@ namespace Measurements.Core
                 if (!LocalMode)
                     Task.Run(() => ConnectionWaiter());
             }
+            catch (Exception e)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(null, e, Handlers.ExceptionLevel.Error);
+            }
             finally
             {
                 sqlCon.Dispose();

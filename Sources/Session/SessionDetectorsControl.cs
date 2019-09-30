@@ -48,7 +48,7 @@ namespace Measurements.Core
                     else
                     {
                         Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"For the detector '{d.Name}' list of samples is empty"), Handlers.ExceptionLevel.Warn);
-                        MeasurementDone?.Invoke(d);
+                        MeasurementDone?.Invoke(d.Name);
                     }
                 }
             }
@@ -239,9 +239,9 @@ namespace Measurements.Core
         /// </summary>
         /// <param name="det">Detector that generated event of measurements has done</param>
         /// <param name="eventArgs"></param>
-        private void MeasurementDoneHandler(IDetector det)
+        private void MeasurementDoneHandler(string detName)
         {
-            _nLogger.Info($"Detector {det.Name} has done measurement process");
+            _nLogger.Info($"Detector {detName} has done measurement process");
             _countOfDetectorsWichDone++;
 
             if (_countOfDetectorsWichDone == ManagedDetectors.Count)
@@ -269,9 +269,10 @@ namespace Measurements.Core
                     {
                         SaveSpectra(ref d);
                         SaveMeasurement(ref d);
+                        MeasurementOfSampleDone?.Invoke(d.CurrentMeasurement);
                         if (NextSample(ref d))
                             d.Start();
-                        else MeasurementDone?.Invoke(d);
+                        else MeasurementDone?.Invoke(d.Name);
                     }
                 }
                 else

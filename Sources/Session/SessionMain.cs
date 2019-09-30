@@ -164,11 +164,12 @@ namespace Measurements.Core
         /// This event will occur after all detectors complete measurements of all samples
         /// </summary>
         public event Action SessionComplete;
+        public event Action<MeasurementInfo> MeasurementOfSampleDone;
 
         /// <summary>
         /// This event will occur after one of managed detector by the session complete measurements of all samples
         /// </summary>
-        public event Action<IDetector> MeasurementDone;
+        public event Action<string> MeasurementDone;
 
         /// <summary>
         /// Sets duration of measurement and the mode of acqusition for each detector controlled by the session. <seealso cref="CanberraDeviceAccessLib.AcquisitionModes"/>
@@ -177,6 +178,7 @@ namespace Measurements.Core
         /// <param name="acqm">Characterize mode of spectra acquisition. By default is aCountToRealTime</param>
         private void SetAcquireDurationAndMode(int duration, CanberraDeviceAccessLib.AcquisitionModes acqm)
         {
+            Counts = duration;
             foreach (var d in ManagedDetectors)
                 d.SetAcqureCountsAndMode(Counts, CountMode);
         }
@@ -491,7 +493,7 @@ namespace Measurements.Core
             }
             catch (Microsoft.EntityFrameworkCore.DbUpdateException dbe)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, dbe, Handlers.ExceptionLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, dbe.InnerException, Handlers.ExceptionLevel.Error);
                 SaveLocally(ref det);
             }
         }
