@@ -486,6 +486,9 @@ namespace Measurements.Core
                     Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"Height is empty for {CurrentSample}. Zero will set."), Handlers.ExceptionLevel.Warn);
                     _device.Param[ParamCodes.CAM_T_SGEOMTRY] = 0;
                 }
+
+                DeadTime = 100 * (1 - decimal.Parse(_device.Param[ParamCodes.CAM_X_ELIVE].ToString()) / decimal.Parse(_device.Param[ParamCodes.CAM_X_EREAL].ToString()));
+
             }
             catch (ArgumentNullException ae)
             {

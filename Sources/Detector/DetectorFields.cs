@@ -54,6 +54,7 @@ namespace Measurements.Core
        /// </summary>
         public bool IsPaused { get; private set; }
 
+        public decimal DeadTime { get; private set; }
         /// <summary>
         /// Irradiated sample spectra of which is acquiring
         /// </summary>

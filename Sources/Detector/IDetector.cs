@@ -7,6 +7,7 @@ namespace Measurements.Core
     {
         string Name { get; }
         string FullFileSpectraName { get; }
+        decimal DeadTime { get; }
         int CountToRealTime { get; }
         int CountToLiveTime { get; }
         void ConnectAsync();
