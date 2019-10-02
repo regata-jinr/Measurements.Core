@@ -417,10 +417,10 @@ namespace Measurements.Core
             _nLogger.Info($"Disposing session has begun");
 
             if (!_isDisposed)
-            {
-                foreach (var d in ManagedDetectors)
-                        SessionControllerSingleton.AvailableDetectors.Add(d);
-                ManagedDetectors.Clear();
+            { 
+                for (var i = ManagedDetectors.Count - 1; i >= 0; --i)
+                    DetachDetector(ManagedDetectors[i].Name);
+            
                 MeasurementDone -= MeasurementDoneHandler;
                 DetectorsListsChanged -= SessionControllerSingleton.AvailableDetectorsChangesHaveOccurred;
                 SessionControllerSingleton.ConectionRestoreEvent -= UploadLocalDataToDB;
