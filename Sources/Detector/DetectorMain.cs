@@ -339,7 +339,7 @@ namespace Measurements.Core
                 _nLogger.Info($"Paused was successful. Detector ready to continue acquire process");
                 IsPaused = true;
             }
-            catch (Exception e) 
+            catch (Exception e)
             {
                 Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
             }
@@ -358,6 +358,7 @@ namespace Measurements.Core
 
                 _nLogger.Info($"Attempt to stop the acquiring");
                 _device.AcquireStop();
+                IsPaused = false;
                 Status = DetectorStatus.ready;
                 _nLogger.Info($"Stop was successful. Acquire done event will be generate. Detector ready to acquire again");
             }

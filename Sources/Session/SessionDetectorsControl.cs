@@ -71,6 +71,7 @@ namespace Measurements.Core
         {
             try
             {
+                
                 _nLogger.Info($"stops measurements by user command");
                 foreach (var d in ManagedDetectors)
                     d.Stop();
