@@ -39,7 +39,7 @@ namespace Measurements.Core
                     throw new ArgumentException($"Either some of principal arguments doesnt assign: Duration={Counts}, type of measurements={Type} or list of samples is empty {IrradiationList.Count}");
 
                 //SpreadSamplesToDetectors();
-                SetAcquireDurationAndMode(Counts, CountMode);
+                //SetAcquireDurationAndMode(Counts, CountMode);
 
                 foreach (var d in ManagedDetectors)
                 {
@@ -266,7 +266,7 @@ namespace Measurements.Core
                 {
                     IDetector d = (Detector) o;
 
-                    if (d.Status == DetectorStatus.ready && args.AcquireMessageParam == (int)CanberraDeviceAccessLib.AdviseMessageMasks.amAcquireDone)
+                    if (d.Status == DetectorStatus.ready && args.AcquireMessageParam == (int)CanberraDeviceAccessLib.AdviseMessageMasks.amAcquireDone && !d.IsPaused)
                     {
                         SaveSpectra(ref d);
                         SaveMeasurement(ref d);

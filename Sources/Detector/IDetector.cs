@@ -28,6 +28,8 @@ namespace Measurements.Core
         void Stop();
         void Clear();
         string GetParameterValue(ParamCodes parCode);
+        void SetParameterValue(ParamCodes parCode, string val);
+        void FillFileInfo();
         MeasurementInfo CurrentMeasurement { get; set; }
         IrradiationInfo CurrentSample { get; set; }
 

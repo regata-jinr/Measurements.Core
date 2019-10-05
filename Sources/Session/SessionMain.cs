@@ -176,12 +176,12 @@ namespace Measurements.Core
         /// </summary>
         /// <param name="duration">Characterize number of counts for certain mode of acquisition</param>
         /// <param name="acqm">Characterize mode of spectra acquisition. By default is aCountToRealTime</param>
-        private void SetAcquireDurationAndMode(int duration, CanberraDeviceAccessLib.AcquisitionModes acqm)
-        {
-            Counts = duration;
-            foreach (var d in ManagedDetectors)
-                d.SetAcqureCountsAndMode(Counts, CountMode);
-        }
+        //private void SetAcquireDurationAndMode(int duration, CanberraDeviceAccessLib.AcquisitionModes acqm)
+        //{
+        //    Counts = duration;
+        //    foreach (var d in ManagedDetectors)
+        //        d.SetAcqureCountsAndMode(Counts, CountMode);
+        //}
 
         /// <summary>
         /// Allows user to get chosen acqusition mode specified via <seealso cref="SetAcquireDurationAndMode(int, CanberraDeviceAccessLib.AcquisitionModes)"/>
@@ -194,6 +194,8 @@ namespace Measurements.Core
             {
                 _nLogger.Info($"Acquisition mode of measurements is set to {value}");
                 _countMode = value;
+                foreach (var d in ManagedDetectors)
+                    d.SetAcqureCountsAndMode(Counts, value);
             }
         }
         private int _counts;
@@ -209,6 +211,9 @@ namespace Measurements.Core
                _counts = value;
                foreach (var m in MeasurementList)
                     m.Duration = value;
+
+                foreach (var d in ManagedDetectors)
+                    d.SetAcqureCountsAndMode(Counts, CountMode);
             }
         }
 

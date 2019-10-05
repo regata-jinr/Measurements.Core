@@ -421,12 +421,17 @@ namespace Measurements.Core
             return _device.Param[parCode].ToString();
         }
 
+        public void SetParameterValue(ParamCodes parCode, string val)
+        {
+            _device.Param[parCode] = val;
+        }
+
         /// <summary>
         /// Fill the sample information
         /// </summary>
         /// <param name="sample"></param>
         /// <param name="type"></param>
-        private void FillFileInfo()
+        public void FillFileInfo()
         {
             try
             {
