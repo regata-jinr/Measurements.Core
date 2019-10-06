@@ -19,7 +19,7 @@ namespace Measurements.Core
         string ErrorMessage { get; }
         void SetAcqureCountsAndMode(int counts, CanberraDeviceAccessLib.AcquisitionModes mode);
         void Reconnect();
-        void Save();
+        void Save(string fullFileName="");
         void Disconnect();
         void Reset();
         void Start();
@@ -28,7 +28,7 @@ namespace Measurements.Core
         void Stop();
         void Clear();
         string GetParameterValue(ParamCodes parCode);
-        void SetParameterValue(ParamCodes parCode, string val);
+        void SetParameterValue<T>(ParamCodes parCode, T val);
         void FillFileInfo();
         MeasurementInfo CurrentMeasurement { get; set; }
         IrradiationInfo CurrentSample { get; set; }

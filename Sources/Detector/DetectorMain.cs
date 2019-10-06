@@ -207,7 +207,7 @@ namespace Measurements.Core
         /// <summary>
         /// Save current measurement session on the device.
         /// </summary>
-        public void Save()
+        public void Save(string fullFileName = "")
         {
             _nLogger.Info($"Starts saving of current session to file");
             try
@@ -215,19 +215,23 @@ namespace Measurements.Core
                 if (!_device.IsConnected || Status == DetectorStatus.off)
                     throw new InvalidOperationException();
 
-                if (string.IsNullOrEmpty(CurrentMeasurement.FileSpectra))
+                if (string.IsNullOrEmpty(CurrentMeasurement.FileSpectra) && string.IsNullOrEmpty(fullFileName))
                     throw new ArgumentNullException();
 
                 FillFileInfo();
 
-                var _currentDir = $"D:\\Spectra\\{DateTime.Now.Year}\\{DateTime.Now.Month.ToString("D2")}\\{CurrentMeasurement.Type.ToLower()}";
-                Directory.CreateDirectory(_currentDir);
+                if (string.IsNullOrEmpty(fullFileName))
+                {
+                    var _currentDir = $"D:\\Spectra\\{DateTime.Now.Year}\\{DateTime.Now.Month.ToString("D2")}\\{CurrentMeasurement.Type.ToLower()}";
+                    Directory.CreateDirectory(_currentDir);
+                    fullFileName = $"{_currentDir}\\{CurrentMeasurement.FileSpectra}.cnf";
+                }
 
-                _device.Save($"{_currentDir}\\{CurrentMeasurement.FileSpectra}.cnf", true);
-                FullFileSpectraName = $"{_currentDir}\\{CurrentMeasurement.FileSpectra}.cnf";
+                _device.Save($"{fullFileName}", true);
+                FullFileSpectraName = fullFileName;
 
-                if (File.Exists($"{_currentDir}\\{CurrentMeasurement.FileSpectra}.cnf"))
-                    _nLogger.Info($"File '{_currentDir}\\{CurrentMeasurement.FileSpectra}.cnf' saved");
+                if (File.Exists(FullFileSpectraName))
+                    _nLogger.Info($"File '{FullFileSpectraName}' was saved");
                 else _nLogger.Error($"Some problems during saving. File {CurrentMeasurement.FileSpectra}.cnf doesn't exist.");
             }
             catch (ArgumentNullException ae)
@@ -421,7 +425,7 @@ namespace Measurements.Core
             return _device.Param[parCode].ToString();
         }
 
-        public void SetParameterValue(ParamCodes parCode, string val)
+        public void SetParameterValue<T>(ParamCodes parCode, T val)
         {
             _device.Param[parCode] = val;
         }
@@ -493,7 +497,10 @@ namespace Measurements.Core
                     _device.Param[ParamCodes.CAM_T_SGEOMTRY] = 0;
                 }
 
-                DeadTime = 100 * (1 - decimal.Parse(_device.Param[ParamCodes.CAM_X_ELIVE].ToString()) / decimal.Parse(_device.Param[ParamCodes.CAM_X_EREAL].ToString()));
+                if (decimal.Parse(_device.Param[ParamCodes.CAM_X_EREAL].ToString()) == 0)
+                    DeadTime = 0;
+                else
+                    DeadTime = 100 * (1 - decimal.Parse(_device.Param[ParamCodes.CAM_X_ELIVE].ToString()) / decimal.Parse(_device.Param[ParamCodes.CAM_X_EREAL].ToString()));
 
             }
             catch (ArgumentNullException ae)
