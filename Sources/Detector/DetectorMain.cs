@@ -215,9 +215,6 @@ namespace Measurements.Core
                 if (!_device.IsConnected || Status == DetectorStatus.off)
                     throw new InvalidOperationException();
 
-                if (string.IsNullOrEmpty(CurrentMeasurement.FileSpectra) && string.IsNullOrEmpty(fullFileName))
-                    throw new ArgumentNullException();
-
                 FillFileInfo();
 
                 if (string.IsNullOrEmpty(fullFileName))
@@ -339,9 +336,9 @@ namespace Measurements.Core
 
                 _nLogger.Info($"Attempt to set pause for the acquiring");
                 _device.AcquirePause();
+                IsPaused = true;
                 Status = DetectorStatus.ready;
                 _nLogger.Info($"Paused was successful. Detector ready to continue acquire process");
-                IsPaused = true;
             }
             catch (Exception e)
             {
@@ -361,7 +358,8 @@ namespace Measurements.Core
                     return;
 
                 _nLogger.Info($"Attempt to stop the acquiring");
-                _device.AcquireStop();
+                _device.SendCommand(DeviceCommands.aStop);
+                //_device.AcquireStop();
                 IsPaused = false;
                 Status = DetectorStatus.ready;
                 _nLogger.Info($"Stop was successful. Acquire done event will be generate. Detector ready to acquire again");
@@ -497,11 +495,6 @@ namespace Measurements.Core
                     Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"Height is empty for {CurrentSample}. Zero will set."), Handlers.ExceptionLevel.Warn);
                     _device.Param[ParamCodes.CAM_T_SGEOMTRY] = 0;
                 }
-
-                if (decimal.Parse(_device.Param[ParamCodes.CAM_X_EREAL].ToString()) == 0)
-                    DeadTime = 0;
-                else
-                    DeadTime = 100 * (1 - decimal.Parse(_device.Param[ParamCodes.CAM_X_ELIVE].ToString()) / decimal.Parse(_device.Param[ParamCodes.CAM_X_EREAL].ToString()));
 
             }
             catch (ArgumentNullException ae)

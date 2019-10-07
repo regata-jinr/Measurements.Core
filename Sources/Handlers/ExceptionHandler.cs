@@ -8,6 +8,8 @@ namespace Measurements.Core.Handlers
     {
         private static Dictionary<ExceptionLevel, NLog.LogLevel> ExceptionLevel_LogLevel = new Dictionary<ExceptionLevel, NLog.LogLevel>{ { ExceptionLevel.Error, NLog.LogLevel.Error  },  { ExceptionLevel.Warn, NLog.LogLevel.Warn },  {ExceptionLevel.Info, NLog.LogLevel.Info }  }; 
 
+        //FIXME: in case of one of the available detector has already opened (e.g. by hand not in read only mode)
+        //       application will not run. The problem related with this static event!
         public static event Action<ExceptionEventsArgs> ExceptionEvent;
         private static NLog.Logger _nLogger = SessionControllerSingleton.logger;
 
@@ -45,6 +47,7 @@ namespace Measurements.Core.Handlers
             }
             catch (Exception e)
             {
+                if (ExceptionEvent == null) return;
                 e.Data.Add("Assembly", "Measurements.Core");
                  _nLogger.Log(NLog.LogLevel.Error, $"{e.Source} has generated exception from method {e.TargetSite.Name}. The message is '{e.Message}'{Environment.NewLine}Stack trace is:'{e.StackTrace}'");
                 ExceptionEvent?.Invoke(new ExceptionEventsArgs { Level = ExceptionLevel.Error, exception = ex});

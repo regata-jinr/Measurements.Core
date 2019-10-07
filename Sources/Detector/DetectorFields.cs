@@ -54,7 +54,17 @@ namespace Measurements.Core
        /// </summary>
         public bool IsPaused { get; private set; }
 
-        public decimal DeadTime { get; private set; }
+        public decimal DeadTime
+        {
+            get
+            {
+                if (decimal.Parse(_device.Param[ParamCodes.CAM_X_EREAL].ToString()) == 0)
+                   return 0;
+                else
+                   return 100 * (1 - decimal.Parse(_device.Param[ParamCodes.CAM_X_ELIVE].ToString()) / decimal.Parse(_device.Param[ParamCodes.CAM_X_EREAL].ToString()));
+            }
+        }
+        
         /// <summary>
         /// Irradiated sample spectra of which is acquiring
         /// </summary>
