@@ -428,6 +428,7 @@ namespace Measurements.Core
         public void SetParameterValue<T>(ParamCodes parCode, T val)
         {
             _device.Param[parCode] = val;
+            _device.Save("", true);
         }
 
         /// <summary>
@@ -549,6 +550,33 @@ namespace Measurements.Core
                     _device.Param[ParamCodes.CAM_T_SDESC3] = iStr.Substring(132, 65);
                     _device.Param[ParamCodes.CAM_T_SDESC4] = iStr.Substring(198, 65);
                     break;
+            }
+        }
+
+        public void AddEfficiencyCalibrationFile(decimal height)
+        {
+            try
+            {
+                string effFileName = $"C:\\GENIE2K\\CALFILES\\Efficiency\\{Name}\\{Name}-eff-{height.ToString().Replace('.', ',')}.CAL";
+
+                if (!File.Exists(effFileName))
+                    throw new FileNotFoundException($"Efficiency file {effFileName} not found!");
+
+                
+                _nLogger.Info($"Efficiency file {effFileName} will add to the detector");
+                var effFile = new CanberraDataAccessLib.DataAccess();
+                effFile.Open(effFileName);
+                effFile.CopyBlock(_device, CanberraDataAccessLib.ClassCodes.CAM_CLS_GEOM);
+                effFile.Close();
+                _device.Save("", true);
+            }
+            catch (FileNotFoundException fnfe)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, fnfe, Handlers.ExceptionLevel.Warn);
+            }
+            catch (Exception e)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
             }
         }
 

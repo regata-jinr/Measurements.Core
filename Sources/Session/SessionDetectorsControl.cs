@@ -271,9 +271,14 @@ namespace Measurements.Core
                         SaveSpectra(ref d);
                         SaveMeasurement(ref d);
                         MeasurementOfSampleDone?.Invoke(d.CurrentMeasurement);
-                        if (NextSample(ref d))
+
+                        var DoesNextSampleExist = NextSample(ref d);
+
+                        if (DoesNextSampleExist && Type.Contains("LLI"))
                             d.Start();
-                        else MeasurementDone?.Invoke(d.Name);
+                        
+                        if (!DoesNextSampleExist)
+                            MeasurementDone?.Invoke(d.Name);
                     }
                 }
                 else

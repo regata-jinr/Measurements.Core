@@ -155,8 +155,12 @@ namespace Measurements.Core
             {
                 _nLogger.Info($"Height {value} has specified");
 
+                _height = value;
                 foreach (var m in MeasurementList)
                     m.Height = value;
+
+                foreach (var d in ManagedDetectors)
+                    d.AddEfficiencyCalibrationFile(value);
             }
         }
 

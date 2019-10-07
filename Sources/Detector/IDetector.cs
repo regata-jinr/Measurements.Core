@@ -27,6 +27,7 @@ namespace Measurements.Core
         void Pause();
         void Stop();
         void Clear();
+        void AddEfficiencyCalibrationFile(decimal height);
         string GetParameterValue(ParamCodes parCode);
         void SetParameterValue<T>(ParamCodes parCode, T val);
         void FillFileInfo();
