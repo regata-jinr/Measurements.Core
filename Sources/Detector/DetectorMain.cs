@@ -356,10 +356,8 @@ namespace Measurements.Core
             {
                 if (Status == DetectorStatus.ready)
                     return;
-
                 _nLogger.Info($"Attempt to stop the acquiring");
-                _device.SendCommand(DeviceCommands.aStop);
-                //_device.AcquireStop();
+                _device.SendCommand(DeviceCommands.aStop); // use command sending because in this case it will generate AcquireDone message
                 IsPaused = false;
                 Status = DetectorStatus.ready;
                 _nLogger.Info($"Stop was successful. Acquire done event will be generate. Detector ready to acquire again");

@@ -37,8 +37,17 @@ namespace Measurements.Core
         private ConnectOptions     _conOption;
         private NLog.Logger        _nLogger;
         private IrradiationInfo    _currentSample;
+        private MeasurementInfo    _currentMeasurement;
 
-        public MeasurementInfo CurrentMeasurement { get; set; }
+        public MeasurementInfo CurrentMeasurement 
+        {
+            get { return _currentMeasurement; }
+            set
+            {
+                _currentMeasurement = value;
+                FillFileInfo();
+            }
+        }
         public event EventHandler  StatusChanged;
         public string FullFileSpectraName { get; private set; }
         public event EventHandler<DetectorEventsArgs>  AcquiringStatusChanged;
@@ -61,7 +70,7 @@ namespace Measurements.Core
                 if (decimal.Parse(_device.Param[ParamCodes.CAM_X_EREAL].ToString()) == 0)
                    return 0;
                 else
-                   return 100 * (1 - decimal.Parse(_device.Param[ParamCodes.CAM_X_ELIVE].ToString()) / decimal.Parse(_device.Param[ParamCodes.CAM_X_EREAL].ToString()));
+                   return Math.Round(100 * (1 - decimal.Parse(_device.Param[ParamCodes.CAM_X_ELIVE].ToString()) / decimal.Parse(_device.Param[ParamCodes.CAM_X_EREAL].ToString())), 2);
             }
         }
         

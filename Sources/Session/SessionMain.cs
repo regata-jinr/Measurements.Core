@@ -169,6 +169,7 @@ namespace Measurements.Core
         /// </summary>
         public event Action SessionComplete;
         public event Action<MeasurementInfo> MeasurementOfSampleDone;
+        public event Action CurrentSampleChanged;
 
         /// <summary>
         /// This event will occur after one of managed detector by the session complete measurements of all samples

@@ -24,6 +24,7 @@ namespace Measurements.Core
 
         event Action    SessionComplete;
         event Action<MeasurementInfo>    MeasurementOfSampleDone;
+        event Action CurrentSampleChanged;
         event Action<string>   MeasurementDone;
 
         AcquisitionModes      CountMode              { get; set; }

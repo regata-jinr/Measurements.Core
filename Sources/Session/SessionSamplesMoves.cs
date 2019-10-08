@@ -39,6 +39,8 @@ namespace Measurements.Core
                     d.CurrentSample = SpreadSamples[d.Name][++currentIndex];
                     int IrId = d.CurrentSample.Id;
                     d.CurrentMeasurement = MeasurementList.Where(cm => cm.IrradiationId == IrId).First();
+                    CurrentSampleChanged?.Invoke();
+                    d.Clear();
                     return true;
                 }
                 _nLogger.Info($"Sample {d.CurrentSample.ToString()} was the last sample on detector {d.Name}. Detector will send signal that measurements has completed");
