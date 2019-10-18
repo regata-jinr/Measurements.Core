@@ -28,7 +28,6 @@ namespace Measurements.Core
                 ErrorMessage = "";
 
                 _device            = new DeviceAccessClass();
-                _currentSample     = new IrradiationInfo();
                 CurrentMeasurement = new MeasurementInfo();
 
                 if (CheckNameOfDetector(name))
@@ -310,7 +309,7 @@ namespace Measurements.Core
 
                 if (Status != DetectorStatus.ready)
                     throw new Exception($"Status of detector '{Name}' is not 'ready'");
-
+                _device.SpectroscopyAcquireSetup(AcquisitionModes.aCountToRealTime, CurrentMeasurement.Duration.Value);
                 _device.AcquireStart(); // already async
                 _nLogger.Info($"Acquiring in process...");
                 Status = DetectorStatus.busy;
@@ -438,21 +437,21 @@ namespace Measurements.Core
             {
                 //FIXME: 2019-09-11 18:09:25.8397--ERROR----Canberra.DeviceAccess.1 has generated exception from method set_Param. The message is 'Error: ece99d7d. Programming error invalid calling argument.' Stack trace is:'   at CanberraDeviceAccessLib.DeviceAccessClass.set_Param(ParamCodes Params, Int32 lRec, Int32 lEntry, Object pVal)
 
-                if (CurrentMeasurement == null || string.IsNullOrEmpty(CurrentMeasurement.Assistant) || string.IsNullOrEmpty(CurrentMeasurement.Type) || string.IsNullOrEmpty(CurrentSample.SampleKey))
+                if (CurrentMeasurement == null || string.IsNullOrEmpty(CurrentMeasurement.Assistant) || string.IsNullOrEmpty(CurrentMeasurement.Type) || RelatedIrradiation == null)
                     throw new ArgumentNullException("Some of principal parameters is null. Probably you didn't specify the list of samples");
 
                 _nLogger.Info($"Filling information about sample: {CurrentMeasurement.ToString()}");
 
-                _device.Param[ParamCodes.CAM_T_STITLE]      = $"{CurrentSample.SampleKey}";// title
+                _device.Param[ParamCodes.CAM_T_STITLE]      = $"{CurrentMeasurement.SampleKey}";// title
                 _device.Param[ParamCodes.CAM_T_SCOLLNAME]   = CurrentMeasurement.Assistant; // operator's name
-                DivideString(CurrentSample.Note);           //filling description field in file
+                DivideString(CurrentMeasurement.Note);           //filling description field in file
                 _device.Param[ParamCodes.CAM_T_SIDENT]      = $"{CurrentMeasurement.SetKey}"; // sample code
 
-                if (CurrentSample.Weight.HasValue)
-                    _device.Param[ParamCodes.CAM_F_SQUANT]  = (double)CurrentSample.Weight.Value; // weight
+                if (RelatedIrradiation.Weight.HasValue)
+                    _device.Param[ParamCodes.CAM_F_SQUANT]  = (double)RelatedIrradiation.Weight.Value; // weight
                 else
                 {
-                    Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"Weight is empty for {CurrentSample}. Zero will set."), Handlers.ExceptionLevel.Warn);
+                    Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"Weight is empty for {CurrentMeasurement}. Zero will set."), Handlers.ExceptionLevel.Warn);
                     _device.Param[ParamCodes.CAM_F_SQUANT]  = 0;
                 }
 
@@ -460,19 +459,19 @@ namespace Measurements.Core
                 _device.Param[ParamCodes.CAM_T_SUNITS]      = "gram"; // units = gram
                 _device.Param[ParamCodes.CAM_T_BUILDUPTYPE] = "IRRAD";
 
-                if (CurrentSample.DateTimeStart.HasValue)
-                    _device.Param[ParamCodes.CAM_X_SDEPOSIT] = CurrentSample.DateTimeStart.Value; // irr start date time
+                if (RelatedIrradiation.DateTimeStart.HasValue)
+                    _device.Param[ParamCodes.CAM_X_SDEPOSIT] = RelatedIrradiation.DateTimeStart.Value; // irr start date time
                 else
                 {
-                    Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"DateTimeStart is empty for {CurrentSample}. DateTime.Now will set."), Handlers.ExceptionLevel.Warn);
+                    Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"DateTimeStart is empty for {RelatedIrradiation}. DateTime.Now will set."), Handlers.ExceptionLevel.Warn);
                     _device.Param[ParamCodes.CAM_X_SDEPOSIT] = DateTime.Now;
                 }
 
-                if (CurrentSample.DateTimeFinish.HasValue)
-                    _device.Param[ParamCodes.CAM_X_STIME] = CurrentSample.DateTimeFinish.Value; // irr finish date time
+                if (RelatedIrradiation.DateTimeFinish.HasValue)
+                    _device.Param[ParamCodes.CAM_X_STIME] = RelatedIrradiation.DateTimeFinish.Value; // irr finish date time
                 else
                 {
-                    Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"DateTimeFinish is empty for {CurrentSample}. DateTime.Now + duration will set."), Handlers.ExceptionLevel.Warn);
+                    //Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"DateTimeFinish is empty for {RelatedIrradiation}. DateTime.Now + duration will set."), Handlers.ExceptionLevel.Warn);
                     if (CurrentMeasurement.Duration.HasValue)
                         _device.Param[ParamCodes.CAM_X_STIME] = DateTime.Now.AddSeconds(CurrentMeasurement.Duration.Value);
                     else
@@ -490,7 +489,7 @@ namespace Measurements.Core
                     _device.Param[ParamCodes.CAM_T_SGEOMTRY] = CurrentMeasurement.Height.Value.ToString("f"); // height
                 else
                 {
-                    Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"Height is empty for {CurrentSample}. Zero will set."), Handlers.ExceptionLevel.Warn);
+                    Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"Height is empty for {RelatedIrradiation}. Zero will set."), Handlers.ExceptionLevel.Warn);
                     _device.Param[ParamCodes.CAM_T_SGEOMTRY] = 0;
                 }
 

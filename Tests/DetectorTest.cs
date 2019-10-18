@@ -103,7 +103,7 @@ namespace Measurements.Core.Tests
             _detectors.d1.Stop();
             Assert.False(_detectors.d1.IsPaused);
             Assert.Equal(DetectorStatus.ready, _detectors.d1.Status);
-            Assert.Equal(0,Double.Parse(_detectors.d1.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_EREAL)),2);
+            Assert.Equal(2,(int)Double.Parse(_detectors.d1.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_EREAL)));
             _detectors.d1.Start();
             Assert.False(_detectors.d1.IsPaused);
             System.Threading.Thread.Sleep(1000);
@@ -128,7 +128,7 @@ namespace Measurements.Core.Tests
                 DateTimeFinish = DateTime.Now.AddSeconds(3)
             };
 
-            _detectors.d1.CurrentSample = sd;
+            _detectors.d1.RelatedIrradiation = sd;
             var configuration = new MapperConfiguration(cfg => cfg.AddMaps("MeasurementsCore"));
             var mapper = new Mapper(configuration);
             var m = mapper.Map<MeasurementInfo>(sd);
@@ -137,6 +137,7 @@ namespace Measurements.Core.Tests
             _detectors.d1.CurrentMeasurement.Type = "SLI";
             _detectors.d1.CurrentMeasurement.FileSpectra = "testD1";
             _detectors.d1.CurrentMeasurement.Assistant = "bdrum";
+            _detectors.d1.CurrentMeasurement.Note = "bdrum-test";
             _detectors.d1.SetAcqureCountsAndMode(3);
 
             _detectors.d1.Start();
@@ -154,15 +155,15 @@ namespace Measurements.Core.Tests
 
             f1.Open(_detectors.d1.FullFileSpectraName);
 
-            Assert.Equal($"{_detectors.d1.CurrentSample.SampleKey}", f1.Param[ParamCodes.CAM_T_STITLE].ToString()); // title
-            Assert.Equal(_detectors.d1.CurrentSample.Assistant, f1.Param[ParamCodes.CAM_T_SCOLLNAME].ToString()); // operator's name
-            Assert.Equal(_detectors.d1.CurrentSample.Note, f1.Param[ParamCodes.CAM_T_SDESC1].ToString());
-            Assert.Equal(_detectors.d1.CurrentSample.SetKey, f1.Param[ParamCodes.CAM_T_SIDENT].ToString()); // sd code
-            Assert.Equal(_detectors.d1.CurrentSample.Weight.ToString(), f1.Param[ParamCodes.CAM_F_SQUANT].ToString()); // weight
+            Assert.Equal($"{_detectors.d1.CurrentMeasurement.SampleKey}", f1.Param[ParamCodes.CAM_T_STITLE].ToString()); // title
+            Assert.Equal(_detectors.d1.CurrentMeasurement.Assistant, f1.Param[ParamCodes.CAM_T_SCOLLNAME].ToString()); // operator's name
+            Assert.Equal(_detectors.d1.CurrentMeasurement.Note, f1.Param[ParamCodes.CAM_T_SDESC1].ToString());
+            Assert.Equal(_detectors.d1.CurrentMeasurement.SetKey, f1.Param[ParamCodes.CAM_T_SIDENT].ToString()); // sd code
+            Assert.Equal(_detectors.d1.RelatedIrradiation.Weight.ToString(), f1.Param[ParamCodes.CAM_F_SQUANT].ToString()); // weight
             Assert.Equal("0", f1.Param[ParamCodes.CAM_F_SQUANTERR].ToString()); // err, 0
             Assert.Equal("gram", f1.Param[ParamCodes.CAM_T_SUNITS].ToString()); // units, gram
-            Assert.Equal(_detectors.d1.CurrentSample.DateTimeStart.ToString().Replace(" ", ""), f1.Param[ParamCodes.CAM_X_SDEPOSIT].ToString().Replace(" ", "")); // irr start date time
-            Assert.Equal(_detectors.d1.CurrentSample.DateTimeFinish.ToString().Replace(" ", ""), f1.Param[ParamCodes.CAM_X_STIME].ToString().Replace(" ", "")); // irr finish date time
+            Assert.Equal(_detectors.d1.RelatedIrradiation.DateTimeStart.ToString().Replace(" ", ""), f1.Param[ParamCodes.CAM_X_SDEPOSIT].ToString().Replace(" ", "")); // irr start date time
+            Assert.Equal(_detectors.d1.RelatedIrradiation.DateTimeFinish.ToString().Replace(" ", ""), f1.Param[ParamCodes.CAM_X_STIME].ToString().Replace(" ", "")); // irr finish date time
             Assert.Equal("0", f1.Param[ParamCodes.CAM_F_SSYSERR].ToString()); // Random sd error (%)
             Assert.Equal("0", f1.Param[ParamCodes.CAM_F_SSYSTERR].ToString()); // Non-random sd error 
             Assert.Equal(_detectors.d1.CurrentMeasurement.Type, f1.Param[ParamCodes.CAM_T_STYPE].ToString());

@@ -211,8 +211,6 @@
     <Compile Include="Sources\Session\ISession.cs" />
     <Compile Include="Sources\Session\SessionInfo.cs" />
     <Compile Include="Sources\Session\SessionMain.cs" />
-    <Compile Include="Sources\Session\SessionLists.cs" />
-    <Compile Include="Sources\Session\SessionSamplesMoves.cs" />
     <Compile Include="Sources\Session\SessionDetectorsControl.cs" />
     <Compile Include="Tests\DetectorTest.cs" />
     <Compile Include="Tests\Macros.cs" />

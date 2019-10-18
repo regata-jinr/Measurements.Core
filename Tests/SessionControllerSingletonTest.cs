@@ -59,13 +59,10 @@ namespace Measurements.Core.Tests
             Assert.False(SessionControllerSingleton.AvailableDetectors.Where(d => d.Name == "D1" || d.Name == "D5").Any());
             Assert.True(SessionControllerSingleton.AvailableDetectors.Where(d => d.Name == "D6").Any());
 
-            Assert.Equal(SpreadOptions.container, iSession.SpreadOption);
             Assert.Equal(AcquisitionModes.aCountToRealTime, iSession.CountMode);
-            Assert.Equal(3, iSession.Counts);
             Assert.Equal("bdrum-test", iSession.Name);
             Assert.Equal("LLI-1", iSession.Type);
             Assert.Equal("for tests", iSession.Note);
-            Assert.Equal(2.5, (double)iSession.Height, 2);
 
             SessionControllerSingleton.Dispose();
         }

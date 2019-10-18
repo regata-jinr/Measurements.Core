@@ -50,27 +50,6 @@ namespace Measurements.Core
         /// </summary>
         private NLog.Logger        _nLogger;
 
-        /// <summary>
-        /// Only this types of measurements are available for the work.
-        /// </summary>
-        public static readonly string[] MeasurementTypes = {"SLI", "LLI-1", "LLI-2", "FON" };
-
-        private SpreadOptions _spreadOption;
-        /// <summary>
-        /// Allows to specify SpreadOption. <see cref="SpreadOptions"/>
-        /// </summary>
-        public SpreadOptions SpreadOption 
-        {
-            get { return _spreadOption; }
-            set
-            {
-                _nLogger.Info($"Spread option has set to {value}");
-                _spreadOption = value;
-                if (ManagedDetectors.Any() && IrradiationList.Any())
-                    SpreadSamplesToDetectors();
-            }
-        }
-
         private string _name;
         /// <summary>
         /// Property for setting of the name of session.
@@ -86,90 +65,17 @@ namespace Measurements.Core
                 _nLogger = SessionControllerSingleton.logger.WithProperty("ParamName", Name);
             }
         }
-        private string _type;
 
         /// <summary>
-        /// Type of measurement characterize some internal working logic for analysis. <seealso cref="MeasurementTypes"/>
-        /// After type will specify. List of the irradiations date become available for the usage.
-        /// </summary>
-        public string Type
-        {
-            get { return _type; }
-            set
-            {
-                try
-                {
-                    _nLogger.Info($"Type of measurement is {value}. List of irradiations dates will be prepare");
-
-                    if (!MeasurementTypes.Contains(value))
-                        throw new ArgumentException($"Type of measurement should contained in this list [{string.Join(",", MeasurementTypes)}]");
-
-                    _type = value;
-
-                    IrradiationDateList.Clear();
-                    IrradiationDateList.AddRange(_infoContext.Irradiations.Where(i => i.DateTimeStart.HasValue && i.Type == _type).Select(i => i.DateTimeStart.Value.Date).Distinct().OrderByDescending(d => d.Date).ToList());
-                }
-                catch (ArgumentException ae)
-                {
-                    Handlers.ExceptionHandler.ExceptionNotify(this, ae, Handlers.ExceptionLevel.Warn);
-                }
-                catch (Exception e)
-                {
-                    Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
-                }
-            }
-        }
-
-        /// <summary>
-        /// List of the unique irradiation date that is used for getting samples which were irradiate in this date
-        /// </summary>
-        public List<DateTime> IrradiationDateList { get; private set; }
-        private DateTime _currentIrradiationDate;
-
-        /// <summary>
-        /// Assignation this date will form list of samples which available for the spectra acquisition
-        /// </summary>
-        public DateTime CurrentIrradiationDate { get { return _currentIrradiationDate; }
-            set
-            {
-                _nLogger.Info($"{value.ToString("dd.MM.yyyy")} has chosen. List of samples will be prepare");
-                _currentIrradiationDate = value;
-                SetIrradiationsList(_currentIrradiationDate); 
-            }
-        }
-
-        /// <summary>
-        /// Contains additional information about session
+        /// Contains additional information about current session
         /// </summary>
         public string Note { get; set; }
-        private decimal _height;
-
-        /// <summary>
-        /// Characterize the distance between head of detector and measurement sample.
-        /// We have a plans for automatically assign this property based on activity of the measurement sample
-        /// </summary>
-        public decimal Height
-        {
-            get { return _height; }
-            set
-            {
-                _nLogger.Info($"Height {value} has specified");
-
-                _height = value;
-                foreach (var m in MeasurementList)
-                    m.Height = value;
-
-                foreach (var d in ManagedDetectors)
-                    d.AddEfficiencyCalibrationFile(value);
-            }
-        }
 
         /// <summary>
         /// This event will occur after all detectors complete measurements of all samples
         /// </summary>
         public event Action SessionComplete;
         public event Action<MeasurementInfo> MeasurementOfSampleDone;
-        public event Action CurrentSampleChanged;
 
         /// <summary>
         /// This event will occur after one of managed detector by the session complete measurements of all samples
@@ -191,53 +97,13 @@ namespace Measurements.Core
         /// <summary>
         /// Allows user to get chosen acqusition mode specified via <seealso cref="SetAcquireDurationAndMode(int, CanberraDeviceAccessLib.AcquisitionModes)"/>
         /// </summary>
-        private CanberraDeviceAccessLib.AcquisitionModes _countMode;
-        public CanberraDeviceAccessLib.AcquisitionModes CountMode
-        {
-            get { return _countMode; }
-            set
-            {
-                _nLogger.Info($"Acquisition mode of measurements is set to {value}");
-                _countMode = value;
-                foreach (var d in ManagedDetectors)
-                    d.SetAcqureCountsAndMode(Counts, value);
-            }
-        }
-        private int _counts;
-        /// <summary>
-        /// Allows user to get the number of counts(duration) specified via <seealso cref="SetAcquireDurationAndMode(int, CanberraDeviceAccessLib.AcquisitionModes)"
-        /// </summary>
-        public int Counts
-        {
-            get { return _counts; }
-            set
-            {
-                _nLogger.Info($"Duration of measurements is set to {value}");
-               _counts = value;
-               foreach (var m in MeasurementList)
-                    m.Duration = value;
-
-                foreach (var d in ManagedDetectors)
-                    d.SetAcqureCountsAndMode(Counts, CountMode);
-            }
-        }
-
+        public CanberraDeviceAccessLib.AcquisitionModes CountMode { get; set; }
+        
         /// <summary>
         /// Internal field allow to control of filling models by the data via EF Core.
         /// </summary>
         private InfoContext _infoContext;
-        /// <summary>
-        /// List of irradiated samples with specified date and type. <see cref="IrradiationInfo"/>
-        /// </summary>
-        public List<IrradiationInfo> IrradiationList { get; private set; }
-        /// <summary>
-        /// This list contains information about measurement samples. <see cref="MeasurementInfo"/>
-        /// </summary>
-        public List<MeasurementInfo> MeasurementList { get; private set; }
-        /// <summary>
-        /// Allows user to get the list of samples spreaded to the detector with certain name
-        /// </summary>
-        public Dictionary<string, List<IrradiationInfo>> SpreadSamples { get; }
+
         /// <summary>
         /// List of detectors that controlled by the session
         /// </summary>
@@ -248,7 +114,9 @@ namespace Measurements.Core
         /// </summary>
         private int _countOfDetectorsWichDone = 0;
 
-        public override string ToString() => $"{Name}-{Type}-{string.Join(",", ManagedDetectors.Select(d => d.Name).ToArray())}-{CountMode}-{Counts}-{SpreadOption}-{Height}-{SessionControllerSingleton.ConnectionStringBuilder.UserID}-{Note}";
+        public string Type { get; set; }
+
+        public override string ToString() => $"{Name}-{Type}-{string.Join(",", ManagedDetectors.Select(d => d.Name).ToArray())}-{CountMode}-{SessionControllerSingleton.ConnectionStringBuilder.UserID}-{Note}";
 
         /// <summary>
         /// Default constructor of the session class. This initialize field and specify some default values. For more details see the code.
@@ -259,17 +127,11 @@ namespace Measurements.Core
 
             _nLogger.Info("Initialisation of session has begun");
 
-            _height                                       = 2.5m;
-            _infoContext                                  = new InfoContext();
-            IrradiationDateList                           = new List<DateTime>();
-            IrradiationList                               = new List<IrradiationInfo>();
-            MeasurementList                               = new List<MeasurementInfo>();
-            ManagedDetectors                              = new List<IDetector>();
-            SpreadSamples                               = new Dictionary<string, List<IrradiationInfo>>();
-            CountMode                                     = CanberraDeviceAccessLib.AcquisitionModes.aCountToRealTime;
-            MeasurementDone                               += MeasurementDoneHandler;
-            DetectorsListsChanged                          += SessionControllerSingleton.AvailableDetectorsChangesHaveOccurred;
-            SpreadOption                                  = SpreadOptions.container;
+            _infoContext                                     = new InfoContext();
+            ManagedDetectors                                 = new List<IDetector>();
+            CountMode                                        = CanberraDeviceAccessLib.AcquisitionModes.aCountToRealTime;
+            MeasurementDone                                  += MeasurementDoneHandler;
+            DetectorsListsChanged                            += SessionControllerSingleton.AvailableDetectorsChangesHaveOccurred;
             SessionControllerSingleton.ConectionRestoreEvent += UploadLocalDataToDB;
         }
 
@@ -282,10 +144,7 @@ namespace Measurements.Core
             _nLogger.Info($"Session with parameters {session} will be created");
             Name                    = session.Name;
             Type                    = session.Type;
-            Counts                  = session.Duration;
-            Height                  = session.Height;
             CountMode               = (CanberraDeviceAccessLib.AcquisitionModes)Enum.Parse(typeof(CanberraDeviceAccessLib.AcquisitionModes), session.CountMode);
-            SpreadOption            = (SpreadOptions)Enum.Parse(typeof(SpreadOptions), session.SpreadOption);
             Note                    = session.Note;
 
             if (!string.IsNullOrEmpty(session.DetectorsNames))
@@ -356,11 +215,8 @@ namespace Measurements.Core
                 sessionContext.Sessions.Add(new SessionInfo
                 {
                     CountMode = this.CountMode.ToString(),
-                    Duration = this.Counts,
-                    Height = this.Height,
                     Name = this.Name,
                     Type = this.Type,
-                    SpreadOption = this.SpreadOption.ToString(),
                     Assistant = assistant,
                     Note = this.Note,
                     DetectorsNames = string.Join(",", ManagedDetectors.Select(n => n.Name).ToArray())
@@ -389,11 +245,8 @@ namespace Measurements.Core
                 var si = sc.Sessions.Where(s => s.Name == Name).First();
 
                 si.CountMode = this.CountMode.ToString();
-                si.Duration = this.Counts;
-                si.Height = this.Height;
                 si.Name = this.Name;
                 si.Type = this.Type;
-                si.SpreadOption = this.SpreadOption.ToString();
                 si.Assistant = assistant;
                 si.Note = this.Note;
                 si.DetectorsNames = string.Join(",", ManagedDetectors.Select(n => n.Name).ToArray());
@@ -459,7 +312,7 @@ namespace Measurements.Core
         /// <paramref name="det">Reference to the instance of detector class</>
         private void SaveLocally(ref IDetector det)
         {
-            _nLogger.Info($"Something wrong with connection to the data base. Information about measurement of current sample {det.CurrentSample} from detector '{det.Name}' will be save locally");
+            _nLogger.Info($"Something wrong with connection to the data base. Information about measurement of current sample {det.CurrentMeasurement} from detector '{det.Name}' will be save locally");
 
             JsonSerializer serializer = new JsonSerializer();
             serializer.NullValueHandling = NullValueHandling.Include;
@@ -472,7 +325,7 @@ namespace Measurements.Core
 
             try
             {
-                sw = new StreamWriter($"D:\\LocalData\\{DateTime.Now.ToString("dd-MM-yyyy_hh-mm")}_{det.CurrentSample}.json");
+                sw = new StreamWriter($"D:\\LocalData\\{DateTime.Now.ToString("dd-MM-yyyy_hh-mm")}_{det.CurrentMeasurement}.json");
                 writer = new JsonTextWriter(sw);
                 serializer.Serialize(writer, det.CurrentMeasurement);
             }
@@ -496,9 +349,9 @@ namespace Measurements.Core
         {
             try
             {
-                _nLogger.Info($"Information about measurement of current sample {det.CurrentSample} from detector '{det.Name}' will be save to the data base");
+                _nLogger.Info($"Information about measurement of current sample {det.CurrentMeasurement} from detector '{det.Name}' will be save to the data base");
                 var ic = new InfoContext();
-                ic.Measurements.Add(det.CurrentMeasurement);
+                ic.Measurements.Update(det.CurrentMeasurement);
                 ic.SaveChanges();
             }
             catch (Microsoft.EntityFrameworkCore.DbUpdateException dbe)

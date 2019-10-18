@@ -16,7 +16,8 @@ namespace Measurements.Core
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<MeasurementInfo>()
-                .HasAlternateKey(c => c.FileSpectra);
+                .HasIndex(c => c.FileSpectra)
+                .IsUnique();
 
             modelBuilder.Entity<SessionInfo>()
                     .HasAlternateKey(c => c.Name);

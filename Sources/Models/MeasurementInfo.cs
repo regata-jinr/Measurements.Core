@@ -43,9 +43,14 @@ namespace Measurements.Core
         public string     Assistant      { get; set; }
         [Ignore]
         public string     Note           { get; set; }
+
         [NotMapped]
         [Ignore]
         public string     SetKey => $"{CountryCode}-{ClientNumber}-{Year}-{SetNumber}-{SetIndex}";
+
+        [NotMapped]
+        [Ignore]
+        public string     SampleKey => $"{SetIndex}-{SampleNumber}";
         public override   string ToString() => $"{SetKey}-{SampleNumber}";
     }
 }

@@ -29,15 +29,14 @@ namespace Measurements.Core
 
     public partial class Detector : IDetector, IDisposable
     {
-        private readonly DeviceAccessClass  _device;
-        private readonly string    _name;
-        private int                _timeOutLimitSeconds;
-        private bool               _isDisposed;
-        private DetectorStatus     _status;
-        private ConnectOptions     _conOption;
-        private NLog.Logger        _nLogger;
-        private IrradiationInfo    _currentSample;
-        private MeasurementInfo    _currentMeasurement;
+        private readonly DeviceAccessClass           _device;
+        private readonly string                      _name;
+        private int                                  _timeOutLimitSeconds;
+        private bool                                 _isDisposed;
+        private DetectorStatus                       _status;
+        private readonly ConnectOptions              _conOption;
+        private readonly NLog.Logger                 _nLogger;
+        private MeasurementInfo                      _currentMeasurement;
 
         public MeasurementInfo CurrentMeasurement 
         {
@@ -46,8 +45,12 @@ namespace Measurements.Core
             {
                 _currentMeasurement = value;
                 FillFileInfo();
+                //SetAcqureCountsAndMode(_currentMeasurement.Duration.Value);
             }
         }
+
+        public IrradiationInfo RelatedIrradiation { get; set; }
+
         public event EventHandler  StatusChanged;
         public string FullFileSpectraName { get; private set; }
         public event EventHandler<DetectorEventsArgs>  AcquiringStatusChanged;
@@ -74,19 +77,6 @@ namespace Measurements.Core
             }
         }
         
-        /// <summary>
-        /// Irradiated sample spectra of which is acquiring
-        /// </summary>
-        public IrradiationInfo CurrentSample
-        {
-            get { return _currentSample; }
-            set
-            {
-                _nLogger.Info($"Set sample {value} as current");
-                _currentSample = value;
-            }
-        }
-
         /// <summary>
         /// Name of detector
         /// </summary>

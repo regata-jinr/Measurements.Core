@@ -32,7 +32,7 @@ namespace Measurements.Core
         void SetParameterValue<T>(ParamCodes parCode, T val);
         void FillFileInfo();
         MeasurementInfo CurrentMeasurement { get; set; }
-        IrradiationInfo CurrentSample { get; set; }
+        IrradiationInfo RelatedIrradiation { get; set; }
 
         event EventHandler StatusChanged;
         event EventHandler<DetectorEventsArgs> AcquiringStatusChanged;

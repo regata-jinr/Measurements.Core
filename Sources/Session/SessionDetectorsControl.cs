@@ -29,27 +29,17 @@ namespace Measurements.Core
         /// <summary>
         /// Start asquisition process on all managed detectors by the session
         /// </summary>
-        public void StartMeasurements()
+        public void StartMeasurements(ref IDetector det, ref MeasurementInfo currentMeasurement, ref IrradiationInfo relatedIrradiation)
         {
-            _nLogger.Info($"starts measurements of the sample sets");
+            _nLogger.Info($"Session will start measurements of the sample {currentMeasurement.ToString()} on detector {det.Name}");
 
             try
             {
-                if (Counts <= 0 || string.IsNullOrEmpty(Type) || IrradiationList.Count == 0)
-                    throw new ArgumentException($"Either some of principal arguments doesnt assign: Duration={Counts}, type of measurements={Type} or list of samples is empty {IrradiationList.Count}");
-
-                //SpreadSamplesToDetectors();
-                //SetAcquireDurationAndMode(Counts, CountMode);
-
-                foreach (var d in ManagedDetectors)
+                if (CheckSamplesParameters(ref currentMeasurement, ref relatedIrradiation))
                 {
-                    if (SpreadSamples[d.Name].Count != 0)
-                        d.Start();
-                    else
-                    {
-                        Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"For the detector '{d.Name}' list of samples is empty"), Handlers.ExceptionLevel.Warn);
-                        MeasurementDone?.Invoke(d.Name);
-                    }
+                    det.RelatedIrradiation = relatedIrradiation;
+                    det.CurrentMeasurement = currentMeasurement;
+                    det.Start();
                 }
             }
             catch (ArgumentOutOfRangeException are)
@@ -63,6 +53,18 @@ namespace Measurements.Core
         
         }
 
+        private bool CheckSamplesParameters(ref MeasurementInfo measurementInfo, ref IrradiationInfo irradiationInfo)
+        {
+            throw new NotImplementedException("Not inplemented yet");
+            bool isCorrect = true;
+
+
+
+
+            return isCorrect;
+            
+        }
+
         ///<summary>
         /// Stops asquisition process on all managed detectors by the session. 
         /// **This generate acqusition done event**
@@ -72,7 +74,7 @@ namespace Measurements.Core
             try
             {
                 
-                _nLogger.Info($"stops measurements by user command");
+                _nLogger.Info($"Session will stop measurements by user command");
                 foreach (var d in ManagedDetectors)
                     d.Stop();
             }
@@ -82,17 +84,43 @@ namespace Measurements.Core
             }
         }
 
+        public void StopMeasurementsOnDetector(ref IDetector det)
+        {
+            try
+            {
+                _nLogger.Info($"Session will stop measurements on detector {det.Name} by user command");
+                    det.Stop();
+            }
+            catch (Exception e)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
+            }
+        }
+
         ///<summary>
-        /// Save asquisition process on all managed detectors by the session into the cnf file
+        /// Save asquisition process on specified detector into the cnf file
         /// Name of file will generate automatically <see cref="GenerateFileSpectraName(string)"/>
         /// </summary>.
-        public void SaveSpectra(ref IDetector d)
+        public void SaveSpectraOnDetectorToFile(ref IDetector d)
         {
             try
             {
                 d.CurrentMeasurement.FileSpectra = GenerateFileSpectraName(d.Name);
             _nLogger.Info($"Detector {d.Name} will save spectra to file with name - '{d.CurrentMeasurement.FileSpectra}'");
                 d.Save();
+            }
+            catch (Exception e)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
+            };
+        }
+
+        public void SaveSpectraOnDetectorToFileAndDataBase(ref IDetector d)
+        {
+            try
+            {
+                SaveSpectraOnDetectorToFile(ref d);
+                SaveMeasurement(ref d);
             }
             catch (Exception e)
             {
@@ -107,7 +135,7 @@ namespace Measurements.Core
         {
             try
             {
-                _nLogger.Info($"will continue measurements by user command");
+                _nLogger.Info($"Session will continue measurements on all detectors by user command");
                 foreach (var d in ManagedDetectors)
                     d.Start();
             }
@@ -125,7 +153,7 @@ namespace Measurements.Core
         {
             try
             {
-                _nLogger.Info($"will pause measurements by user command");
+                _nLogger.Info($"Session will pause measurements on all detectors by user command");
                 foreach (var d in ManagedDetectors)
                     d.Pause();
             }
@@ -142,7 +170,7 @@ namespace Measurements.Core
         {
             try
             {
-                _nLogger.Info($"will clear measurements by user command");
+                _nLogger.Info($"Session will clear measurements on all detectors by user command");
                 foreach (var d in ManagedDetectors)
                     d.Clear();
             }
@@ -171,7 +199,6 @@ namespace Measurements.Core
                 if (det != null)
                 {
                     ManagedDetectors.Add(det);
-                    SpreadSamples.Add(det.Name, new List<IrradiationInfo>());
                     SessionControllerSingleton.AvailableDetectors.Remove(det);
                     det.AcquiringStatusChanged += ProcessAcquiringMessage;
                     _nLogger.Info($"successfuly attached detector {det.Name}");
@@ -210,7 +237,6 @@ namespace Measurements.Core
                 if (det != null)
                 {
                     SessionControllerSingleton.AvailableDetectors.Add(det);
-                    SpreadSamples.Remove(det.Name);
                     ManagedDetectors.Remove(det);
                     det.AcquiringStatusChanged -= ProcessAcquiringMessage;
                     _nLogger.Info($"Successfuly detached detector {det.Name}");
@@ -262,27 +288,13 @@ namespace Measurements.Core
        {
             try
             {
-                if (o is Detector)
+                var d = o as IDetector;
+
+                if (d.Status == DetectorStatus.ready && args.AcquireMessageParam == (int)CanberraDeviceAccessLib.AdviseMessageMasks.amAcquireDone && !d.IsPaused)
                 {
-                    IDetector d = (Detector) o;
-
-                    if (d.Status == DetectorStatus.ready && args.AcquireMessageParam == (int)CanberraDeviceAccessLib.AdviseMessageMasks.amAcquireDone && !d.IsPaused)
-                    {
-                        SaveSpectra(ref d);
-                        SaveMeasurement(ref d);
-                        MeasurementOfSampleDone?.Invoke(d.CurrentMeasurement);
-
-                        var DoesNextSampleExist = NextSample(ref d);
-
-                        if (DoesNextSampleExist && Type.Contains("LLI"))
-                            d.Start();
-                        
-                        if (!DoesNextSampleExist)
-                            MeasurementDone?.Invoke(d.Name);
-                    }
+                    SaveSpectraOnDetectorToFileAndDataBase(ref d);
+                    MeasurementOfSampleDone?.Invoke(d.CurrentMeasurement);
                 }
-                else
-                    throw new ArgumentException("Object has a wrong type");
             }
             catch (ArgumentException ae)
             {
