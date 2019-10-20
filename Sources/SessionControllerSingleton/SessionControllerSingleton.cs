@@ -71,7 +71,7 @@ namespace Measurements.Core
         /// <summary>
         /// The list of MCA devices available for usage. This list forms via MCA databases provided by Canberra DeviceAccessClass
         /// </summary>
-        public static List<IDetector>             AvailableDetectors      { get; private set; }
+        public static List<IDetector> AvailableDetectors { get; private set; }
 
         /// <summary>
         /// We consider the opportunity to have two modes of measurement (local and remote). Now remote mode by default, but in case of errors
