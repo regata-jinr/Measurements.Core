@@ -20,49 +20,33 @@ namespace Measurements.Core
     // ├── ISession.cs                - interface of Session class
     // ├── SessionDetectorsControl.cs --> opened
     // ├── SessionInfo.cs             - contains fields of Session for EF core interaction
-    // ├── SessionLists.cs            - contains method that forms list of samples and measurements 
-    // ├── SessionMain.cs             - contains general fields and methods of the Session class.
-    // └── SessionSamplesMoves.cs     - contains method for changing and setting sample to detectors
+    // └── SessionMain.cs             - contains general fields and methods of the Session class.
 
     public partial class Session : ISession, IDisposable
     {
         /// <summary>
         /// Start asquisition process on all managed detectors by the session
         /// </summary>
-        public void StartMeasurements(ref IDetector det, ref MeasurementInfo currentMeasurement, ref IrradiationInfo relatedIrradiation)
+        public void StartMeasurements()
         {
-            _nLogger.Info($"Session will start measurements of the sample {currentMeasurement.ToString()} on detector {det.Name}");
-
             try
             {
-                if (CheckSamplesParameters(ref currentMeasurement, ref relatedIrradiation))
+                foreach (var det in ManagedDetectors)
                 {
-                    det.RelatedIrradiation = relatedIrradiation;
-                    det.CurrentMeasurement = currentMeasurement;
+                    if (det.CurrentMeasurement == null || det.RelatedIrradiation == null)
+                    {
+                        Handlers.ExceptionHandler.ExceptionNotify(this, new ArgumentNullException($"User should initialize sample on the detector {det.Name} before start of measurement"), Handlers.ExceptionLevel.Warn);
+                        break;
+                    }
+
+                    _nLogger.Info($"Session will start measurements of the sample {det.CurrentMeasurement.ToString()} on detector {det.Name}");
                     det.Start();
                 }
-            }
-            catch (ArgumentOutOfRangeException are)
-            {
-                Handlers.ExceptionHandler.ExceptionNotify(this, are, Handlers.ExceptionLevel.Warn);
             }
             catch (Exception e)
             {
                 Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
             }
-        
-        }
-
-        private bool CheckSamplesParameters(ref MeasurementInfo measurementInfo, ref IrradiationInfo irradiationInfo)
-        {
-            throw new NotImplementedException("Not inplemented yet");
-            bool isCorrect = true;
-
-
-
-
-            return isCorrect;
-            
         }
 
         ///<summary>
@@ -73,7 +57,6 @@ namespace Measurements.Core
         {
             try
             {
-                
                 _nLogger.Info($"Session will stop measurements by user command");
                 foreach (var d in ManagedDetectors)
                     d.Stop();
@@ -105,8 +88,12 @@ namespace Measurements.Core
         {
             try
             {
+                if (!string.IsNullOrEmpty(d.CurrentMeasurement.FileSpectra))
+                    Handlers.ExceptionHandler.ExceptionNotify(this, new ArgumentException($"Current sample '{d.CurrentMeasurement}' from detector {d.Name} already has the name of FileSpectra - '{d.CurrentMeasurement.FileSpectra}'. New file will be create and new record will be added to db, the old one will not modify."), Handlers.ExceptionLevel.Warn);
+
+
                 d.CurrentMeasurement.FileSpectra = GenerateFileSpectraName(d.Name);
-            _nLogger.Info($"Detector {d.Name} will save spectra to file with name - '{d.CurrentMeasurement.FileSpectra}'");
+                _nLogger.Info($"Detector {d.Name} will save spectra to file with name - '{d.CurrentMeasurement.FileSpectra}'");
                 d.Save();
             }
             catch (Exception e)
@@ -327,60 +314,79 @@ namespace Measurements.Core
         {
             _nLogger.Info($"will generate file spectra name for the detector {detName}");
             var typeDict = new Dictionary<string, string> { {"SLI", "0"}, {"LLI-1", "1"}, {"LLI-2", "2"} };
+            int maxNumber = DateTime.Now.Second;
+            using (var ic = new InfoContext())
+            {
+                try
+                {
+                    maxNumber = ic.Measurements.Where(m =>
+                                                                (
+                                                                    m.FileSpectra.Length == 7 &&
+                                                                    m.Type == Type &&
+                                                                    IsNumber(m.FileSpectra) &&
+                                                                    m.FileSpectra.Substring(0, 1) == detName.Substring(1, 1)
+                                                                )
+                                                                ).
+                                                           Select(m => new
+                                                           {
+                                                               FileNumber = int.Parse(m.FileSpectra.Substring(2, 5))
+                                                           }
+                                                                           ).
+                                                           Max(m => m.FileNumber);
+
+                    return $"{detName.Substring(1, 1)}{typeDict[Type]}{(++maxNumber).ToString("D5")}";
+                }
+                catch (System.Data.SqlClient.SqlException sqle)
+                {
+                    Handlers.ExceptionHandler.ExceptionNotify(this, sqle, Handlers.ExceptionLevel.Warn);
+                    return GenerateFileSpectraNameBasedOnLocalStorage(detName);
+                }
+                catch (Microsoft.EntityFrameworkCore.DbUpdateException dbe) // for duplicates
+                {
+                    Handlers.ExceptionHandler.ExceptionNotify(this, dbe, Handlers.ExceptionLevel.Error);
+                    return GenerateFileSpectraNameBasedOnLocalStorage(detName);
+                }
+                catch (Exception e)
+                {
+                    Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
+                }
+            }
+            return $"{detName[1]}{typeDict[Type]}{maxNumber}";
+        }
+
+        private string GenerateFileSpectraNameBasedOnLocalStorage(string detName)
+        {
+            _nLogger.Info($"will generate file spectra name for the detector {detName}");
+            var typeDict = new Dictionary<string, string> { {"SLI", "0"}, {"LLI-1", "1"}, {"LLI-2", "2"} };
             int maxNumber = 0;
             try
             {
-                maxNumber = _infoContext.Measurements.Where(m =>
-                                                            (
-                                                                m.FileSpectra.Length == 7 &&
-                                                                m.Type == Type &&
-                                                                IsNumber(m.FileSpectra) &&
-                                                                m.FileSpectra.Substring(0, 1) == detName.Substring(1, 1)
-                                                            )
-                                                            ).
-                                                       Select(m => new
-                                                       {
-                                                           FileNumber = int.Parse(m.FileSpectra.Substring(3, 4))
-                                                       }
-                                                                       ).
-                                                       Max(m => m.FileNumber);
-
-                return $"{detName.Substring(1, 1)}{typeDict[Type]}{(++maxNumber).ToString("D5")}";
-            }
-            catch (System.Data.SqlClient.SqlException sqle)
-            {
-                Handlers.ExceptionHandler.ExceptionNotify(this, sqle, Handlers.ExceptionLevel.Warn);
-            
                 if (!Directory.Exists(@"D:\Spectra"))
                     throw new Exception("Spectra Directory doesn't exist");
 
                 var dir = new DirectoryInfo(@"D:\Spectra");
                 var files = dir.GetFiles("*.cnf", SearchOption.AllDirectories).Where(f => f.CreationTime >= DateTime.Now.AddDays(-30)).ToList();
 
-                maxNumber = files.Where(f => 
-                                            f.Name.Length == 7 &&
-                                            f.Name.Substring(1,1) == typeDict[Type] &&
-                                            IsNumber(f.Name) &&
-                                            f.Name.Substring(0,1) == detName.Substring(1,1)
+                maxNumber = files.Where(f =>
+                                            f.Name.Length == 11 &&
+                                            f.Name.Substring(1, 1) == typeDict[Type] &&
+                                            IsNumber(Path.GetFileNameWithoutExtension(f.Name))&&
+                                            f.Name.Substring(0, 1) == detName.Substring(1, 1)
                                        ).
                                   Select(f => new
-                                                {
-                                                    FileNumber = int.Parse(f.Name.Substring(3,4))
-                                                }
+                                  {
+                                      FileNumber = int.Parse(f.Name.Substring(2, 5))
+                                  }
                                         ).
                                   Max(f => f.FileNumber);
 
-                return $"{detName.Substring(1,1)}{typeDict[Type]}{(++maxNumber).ToString("D5")}";
-            }
-            catch (Microsoft.EntityFrameworkCore.DbUpdateException dbe) // for duplicates
-            {
-                Handlers.ExceptionHandler.ExceptionNotify(this, dbe, Handlers.ExceptionLevel.Error);
+                return $"{detName.Substring(1, 1)}{typeDict[Type]}{(++maxNumber).ToString("D5")}";
             }
             catch (Exception e)
             {
                 Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
+                return "";
             }
-            return $"{detName[1]}{typeDict[Type]}{maxNumber}";
         }
 
         private bool IsNumber(string str)

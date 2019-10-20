@@ -6,7 +6,7 @@ namespace Measurements.Core
 {
     public interface ISession
     {
-        void StartMeasurements(ref IDetector det, ref MeasurementInfo currentMeasurement, ref IrradiationInfo relatedIrradiation);
+        void   StartMeasurements();
         void   PauseMeasurements();
         void   StopMeasurements(); //Pause and Clear
         void   SaveMeasurement(ref IDetector d);
@@ -19,9 +19,9 @@ namespace Measurements.Core
         void   AttachDetector(string dName);
         void   DetachDetector(string dName);
 
-        event Action    SessionComplete;
+        event Action                     SessionComplete;
         event Action<MeasurementInfo>    MeasurementOfSampleDone;
-        event Action<string>   MeasurementDone;
+        event Action<string>             MeasurementDone;
 
         AcquisitionModes      CountMode              { get; set; }
         string                Type                   { get; set; }

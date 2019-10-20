@@ -2,6 +2,7 @@
 // Basic descriptions see in DetectorFsPs.cs file
 
 using System;
+using System.Linq;
 using System.IO;
 using System.Threading.Tasks;
 using System.Threading;
@@ -22,11 +23,12 @@ namespace Measurements.Core
                 //_nLogger.SetProperty("Assistant", SessionControllerSingleton.ConnectionStringBuilder.UserID);
                 _nLogger = SessionControllerSingleton.logger.WithProperty("ParamName", name);
                 _nLogger.Info($"Initialisation of the detector {name} with mode {option.ToString()} and timeout limit {timeOutLimitSeconds}");
-                _conOption = option;
-                _isDisposed = false;
-                Status = DetectorStatus.off;
-                ErrorMessage = "";
 
+                _conOption         = option;
+                _isDisposed        = false;
+                Status             = DetectorStatus.off;
+                ErrorMessage       = "";
+                AcquisitionMode    = AcquisitionModes.aCountToRealTime;
                 _device            = new DeviceAccessClass();
                 CurrentMeasurement = new MeasurementInfo();
 
@@ -34,8 +36,9 @@ namespace Measurements.Core
                     _name = name;
 
                 _device.DeviceMessages += ProcessDeviceMessages;
-                _timeOutLimitSeconds = timeOutLimitSeconds * 1000;
-                IsPaused = false;
+                _timeOutLimitSeconds   = timeOutLimitSeconds * 1000;
+                IsPaused               = false;
+
                 Connect();
             }
             catch (Exception e)
@@ -214,8 +217,6 @@ namespace Measurements.Core
                 if (!_device.IsConnected || Status == DetectorStatus.off)
                     throw new InvalidOperationException();
 
-                FillFileInfo();
-
                 if (string.IsNullOrEmpty(fullFileName))
                 {
                     var _currentDir = $"D:\\Spectra\\{DateTime.Now.Year}\\{DateTime.Now.Month.ToString("D2")}\\{CurrentMeasurement.Type.ToLower()}";
@@ -287,10 +288,10 @@ namespace Measurements.Core
 
         }
 
-        public void SetAcqureCountsAndMode(int counts, CanberraDeviceAccessLib.AcquisitionModes mode = AcquisitionModes.aCountToRealTime)
+        private void SetAcquireCounts(int counts)
         {
-            _nLogger.Info($"Detector get Acquisition mode - '{mode}' and count number - '{counts}'");
-            _device.SpectroscopyAcquireSetup(mode, counts);
+            _nLogger.Info($"Detector get Acquisition mode - '{AcquisitionMode}' and count number - '{counts}'");
+            _device.SpectroscopyAcquireSetup(AcquisitionMode, counts);
         }
 
 
@@ -422,88 +423,149 @@ namespace Measurements.Core
 
         public void SetParameterValue<T>(ParamCodes parCode, T val)
         {
-            _device.Param[parCode] = val;
-            _device.Save("", true);
-        }
-
-        /// <summary>
-        /// Fill the sample information
-        /// </summary>
-        /// <param name="sample"></param>
-        /// <param name="type"></param>
-        public void FillFileInfo()
-        {
             try
             {
-                //FIXME: 2019-09-11 18:09:25.8397--ERROR----Canberra.DeviceAccess.1 has generated exception from method set_Param. The message is 'Error: ece99d7d. Programming error invalid calling argument.' Stack trace is:'   at CanberraDeviceAccessLib.DeviceAccessClass.set_Param(ParamCodes Params, Int32 lRec, Int32 lEntry, Object pVal)
+                if (val == null)
+                    throw new ArgumentNullException($"{parCode} can't be a null");
 
-                if (CurrentMeasurement == null || string.IsNullOrEmpty(CurrentMeasurement.Assistant) || string.IsNullOrEmpty(CurrentMeasurement.Type) || RelatedIrradiation == null)
-                    throw new ArgumentNullException("Some of principal parameters is null. Probably you didn't specify the list of samples");
-
-                _nLogger.Info($"Filling information about sample: {CurrentMeasurement.ToString()}");
-
-                _device.Param[ParamCodes.CAM_T_STITLE]      = $"{CurrentMeasurement.SampleKey}";// title
-                _device.Param[ParamCodes.CAM_T_SCOLLNAME]   = CurrentMeasurement.Assistant; // operator's name
-                DivideString(CurrentMeasurement.Note);           //filling description field in file
-                _device.Param[ParamCodes.CAM_T_SIDENT]      = $"{CurrentMeasurement.SetKey}"; // sample code
-
-                if (RelatedIrradiation.Weight.HasValue)
-                    _device.Param[ParamCodes.CAM_F_SQUANT]  = (double)RelatedIrradiation.Weight.Value; // weight
-                else
-                {
-                    Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"Weight is empty for {CurrentMeasurement}. Zero will set."), Handlers.ExceptionLevel.Warn);
-                    _device.Param[ParamCodes.CAM_F_SQUANT]  = 0;
-                }
-
-                _device.Param[ParamCodes.CAM_F_SQUANTERR]   = 0; // err = 0
-                _device.Param[ParamCodes.CAM_T_SUNITS]      = "gram"; // units = gram
-                _device.Param[ParamCodes.CAM_T_BUILDUPTYPE] = "IRRAD";
-
-                if (RelatedIrradiation.DateTimeStart.HasValue)
-                    _device.Param[ParamCodes.CAM_X_SDEPOSIT] = RelatedIrradiation.DateTimeStart.Value; // irr start date time
-                else
-                {
-                    Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"DateTimeStart is empty for {RelatedIrradiation}. DateTime.Now will set."), Handlers.ExceptionLevel.Warn);
-                    _device.Param[ParamCodes.CAM_X_SDEPOSIT] = DateTime.Now;
-                }
-
-                if (RelatedIrradiation.DateTimeFinish.HasValue)
-                    _device.Param[ParamCodes.CAM_X_STIME] = RelatedIrradiation.DateTimeFinish.Value; // irr finish date time
-                else
-                {
-                    //Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"DateTimeFinish is empty for {RelatedIrradiation}. DateTime.Now + duration will set."), Handlers.ExceptionLevel.Warn);
-                    if (CurrentMeasurement.Duration.HasValue)
-                        _device.Param[ParamCodes.CAM_X_STIME] = DateTime.Now.AddSeconds(CurrentMeasurement.Duration.Value);
-                    else
-                    {
-                        Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"Duration also is empty. A counts to real time will add"), Handlers.ExceptionLevel.Warn);
-                        _device.Param[ParamCodes.CAM_X_STIME] = DateTime.Now.AddSeconds(CountToRealTime);
-                    }
-                }
-
-                _device.Param[ParamCodes.CAM_F_SSYSERR]     = 0; // Random sample error (%)
-                _device.Param[ParamCodes.CAM_F_SSYSTERR]    = 0; // Non-random sample error (%)
-                _device.Param[ParamCodes.CAM_T_STYPE]       = CurrentMeasurement.Type;
-
-                if (CurrentMeasurement.Height.HasValue)
-                    _device.Param[ParamCodes.CAM_T_SGEOMTRY] = CurrentMeasurement.Height.Value.ToString("f"); // height
-                else
-                {
-                    Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"Height is empty for {RelatedIrradiation}. Zero will set."), Handlers.ExceptionLevel.Warn);
-                    _device.Param[ParamCodes.CAM_T_SGEOMTRY] = 0;
-                }
-
+                //if (Nullable.GetUnderlyingType(typeof(T)) != null)
+                _device.Param[parCode] = val;
+                _device.Save("", true);
             }
             catch (ArgumentNullException ae)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, ae, Handlers.ExceptionLevel.Error);
+                Handlers.ExceptionHandler.ExceptionNotify(this, ae, Handlers.ExceptionLevel.Warn);
             }
-             catch (Exception e)
+            catch (Exception e)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"A problem with saving information to file. {parCode} can't has a value {val}"), Handlers.ExceptionLevel.Warn);
+            }
+        }
+
+        public void SetAcquisitionMode(AcquisitionModes mode)
+        {
+            _device.SpectroscopyAcquireSetup(mode);
+        }
+
+
+        /// <summary>
+        /// Save information about measurement to device
+        /// </summary>
+        /// <param name="measurement"></param>
+        /// <param name="irradiation"></param>        
+        public void FillSampleInformation(MeasurementInfo measurement, IrradiationInfo irradiation)
+        {
+            if (!CheckIrradiationInfo(irradiation) || !CheckMeasurementInfo(measurement))
+                return;
+
+            try
+            {
+                CurrentMeasurement = measurement;
+                RelatedIrradiation = irradiation;
+                _device.Param[ParamCodes.CAM_T_STITLE]      = measurement.SampleKey;                  // title
+                _device.Param[ParamCodes.CAM_T_SCOLLNAME]   = measurement.Assistant;                  // operator's name
+                _device.Param[ParamCodes.CAM_T_SIDENT]      = measurement.SetKey;                     // sample code
+                _device.Param[ParamCodes.CAM_F_SQUANT]      = (double)irradiation.Weight.Value;       // weight
+                _device.Param[ParamCodes.CAM_F_SQUANTERR]   = 0;                                      // err = 0
+                _device.Param[ParamCodes.CAM_T_SUNITS]      = "gram";                                 // units = gram
+                _device.Param[ParamCodes.CAM_T_BUILDUPTYPE] = "IRRAD";
+                _device.Param[ParamCodes.CAM_X_SDEPOSIT]    = irradiation.DateTimeStart.Value;        // irr start date time
+                _device.Param[ParamCodes.CAM_X_STIME]       = irradiation.DateTimeFinish.Value;       // irr finish date time
+                _device.Param[ParamCodes.CAM_F_SSYSERR]     = 0;                                      // Random sample error (%)
+                _device.Param[ParamCodes.CAM_F_SSYSTERR]    = 0;                                      // Non-random sample error (%)
+                _device.Param[ParamCodes.CAM_T_STYPE]       = measurement.Type;
+                _device.Param[ParamCodes.CAM_T_SGEOMTRY]    = measurement.Height.Value.ToString("f"); // height
+
+                AddEfficiencyCalibrationFile(measurement.Height.Value);
+
+                DivideString(CurrentMeasurement.Note); //filling description field in file
+
+                SetAcquireCounts(measurement.Duration.Value);
+
+                _device.Save("", true);
+            }
+            catch(Exception e)
             {
                 Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
             }
-       }
+        }
 
+        private bool CheckIrradiationInfo(IrradiationInfo irradiation)
+        {
+            bool isCorrect = true;
+            try
+            {
+                if (irradiation == null)
+                    throw new ArgumentException("Irradiated sample has not chosen");
+
+                var type = typeof(IrradiationInfo);
+                var neededProps = new string[] {"DateTimeStart", "Duration", "Weight"};
+
+                foreach (var pi in type.GetProperties())
+                {
+                    if (neededProps.Contains(pi.Name) && pi.GetValue(irradiation) == null)
+                        throw new ArgumentException($"{pi.Name} should not be null");
+                }
+
+                if (!irradiation.DateTimeFinish.HasValue)
+                        irradiation.DateTimeFinish = irradiation.DateTimeStart.Value.AddSeconds(irradiation.Duration.Value);
+
+                if (irradiation.DateTimeFinish.Value.TimeOfDay.TotalSeconds == 0)
+                        irradiation.DateTimeFinish = irradiation.DateTimeStart.Value.AddSeconds(irradiation.Duration.Value);
+            }
+            catch(ArgumentException ae)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, ae, Handlers.ExceptionLevel.Warn);
+                isCorrect = false;
+            }
+            catch (Exception e)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
+                isCorrect = false;
+            }
+            return isCorrect;
+        }
+
+        private bool CheckMeasurementInfo(MeasurementInfo measurement)
+        {
+            bool isCorrect = true;
+            try
+            {
+                if (measurement == null)
+                    throw new ArgumentException("Sample for measurement should not be null");
+
+                var type = typeof(MeasurementInfo);
+                var neededProps = new string[] {"Type", "Duration", "Height"};
+
+                foreach (var pi in type.GetProperties())
+                {
+                    if (neededProps.Contains(pi.Name) && pi.GetValue(measurement) == null)
+                        throw new ArgumentException($"{pi.Name} should not be null");
+                }
+
+                if (string.IsNullOrEmpty(measurement.Detector))
+                    measurement.Detector = Name;
+
+                if (measurement.Detector != Name)
+                    throw new ArgumentException("Name of detector in db doesn't correspond to current detector for the sample");
+
+                if (measurement.Duration.Value == 0)
+                    throw new ArgumentException("Duration of the measurement process should not be equal to zero");
+
+            }
+            catch(ArgumentException ae)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, ae, Handlers.ExceptionLevel.Warn);
+                isCorrect = false;
+            }
+            catch (Exception e)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
+                isCorrect = false;
+            }
+            return isCorrect;
+        }
+      
         /// <summary>
         /// In spectra file we have four row for notes, Each row allows to keep 64 charatcer.
         /// This method divide a big string to these rows
@@ -547,6 +609,11 @@ namespace Measurements.Core
         {
             try
             {
+                if (height == 20)   height = 20m;
+                if (height == 10)   height = 10m;
+                if (height == 5)    height = 5m;
+                if (height == 2.5m) height = 2.5m;
+
                 string effFileName = $"C:\\GENIE2K\\CALFILES\\Efficiency\\{Name}\\{Name}-eff-{height.ToString().Replace('.', ',')}.CAL";
 
                 if (!File.Exists(effFileName))

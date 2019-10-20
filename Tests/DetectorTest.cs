@@ -63,55 +63,7 @@ namespace Measurements.Core.Tests
         }
 
         [Fact]
-        public void StartPauseContinueClear()
-        {
-            _detectors.d1.SetAcqureCountsAndMode(5, CanberraDeviceAccessLib.AcquisitionModes.aCountToLiveTime);
-            Assert.Equal(5, _detectors.d1.CountToLiveTime);
-            _detectors.d1.SetAcqureCountsAndMode(5);
-            Assert.Equal(5, _detectors.d1.CountToRealTime);
-
-            _detectors.d1.Start();
-            Assert.False(_detectors.d1.IsPaused);
-            System.Threading.Thread.Sleep(2000);
-            Assert.Equal(DetectorStatus.busy, _detectors.d1.Status);
-            _detectors.d1.Pause();
-            Assert.True(_detectors.d1.IsPaused);
-            Assert.Equal(DetectorStatus.ready, _detectors.d1.Status);
-            Assert.NotEqual(0, Double.Parse(_detectors.d1.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_EREAL)),2);
-            double prev = Double.Parse(_detectors.d1.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_EREAL));
-            _detectors.d1.Start();
-            Assert.False(_detectors.d1.IsPaused);
-            System.Threading.Thread.Sleep(2000);
-            Assert.NotEqual(prev, Double.Parse(_detectors.d1.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_EREAL)),2);
-            _detectors.d1.Pause();
-            _detectors.d1.Clear();
-            System.Threading.Thread.Sleep(1000);
-            Assert.Equal(0, Double.Parse(_detectors.d1.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_EREAL)),2);
-        }
-
-       [Fact]
-        public void StartStopContinue()
-        {
-            Assert.False(_detectors.d1.IsPaused);
-            _detectors.d1.SetAcqureCountsAndMode(3);
-            _detectors.d1.Start();
-            Assert.False(_detectors.d1.IsPaused);
-            System.Threading.Thread.Sleep(2000);
-            Assert.Equal(DetectorStatus.busy, _detectors.d1.Status);
-            Assert.NotEqual(0, Double.Parse(_detectors.d1.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_EREAL)),2);
-            Assert.False(_detectors.d1.IsPaused);
-            _detectors.d1.Stop();
-            Assert.False(_detectors.d1.IsPaused);
-            Assert.Equal(DetectorStatus.ready, _detectors.d1.Status);
-            Assert.Equal(2,(int)Double.Parse(_detectors.d1.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_EREAL)));
-            _detectors.d1.Start();
-            Assert.False(_detectors.d1.IsPaused);
-            System.Threading.Thread.Sleep(1000);
-            Assert.NotEqual(0, Double.Parse(_detectors.d1.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_EREAL)),2);
-        }
-
-        [Fact]
-        public void StartStopSave()
+        public void StartStopStartStopSave()
         {
             var sd = new IrradiationInfo()
             {
@@ -125,27 +77,37 @@ namespace Measurements.Core.Tests
                 Assistant = "bdrum",
                 Note = "test2",
                 DateTimeStart = DateTime.Now,
-                DateTimeFinish = DateTime.Now.AddSeconds(3)
+                DateTimeFinish = DateTime.Now.AddSeconds(3),
+                Duration = 3
             };
 
-            _detectors.d1.RelatedIrradiation = sd;
             var configuration = new MapperConfiguration(cfg => cfg.AddMaps("MeasurementsCore"));
             var mapper = new Mapper(configuration);
             var m = mapper.Map<MeasurementInfo>(sd);
-            _detectors.d1.CurrentMeasurement = m;
-            _detectors.d1.CurrentMeasurement.Height = 10;
-            _detectors.d1.CurrentMeasurement.Type = "SLI";
-            _detectors.d1.CurrentMeasurement.FileSpectra = "testD1";
-            _detectors.d1.CurrentMeasurement.Assistant = "bdrum";
-            _detectors.d1.CurrentMeasurement.Note = "bdrum-test";
-            _detectors.d1.SetAcqureCountsAndMode(3);
+            m.Duration = 5;
+            m.Detector = "D1";
+            m.Height = 10;
+            m.Type = "SLI";
+            m.FileSpectra = "testD1";
+            m.Assistant = "bdrum";
+            m.Note = "bdrum-test";
+
+            _detectors.d1.FillSampleInformation(m, sd);
 
             _detectors.d1.Start();
 
             System.Threading.Thread.Sleep(2000);
-            
+            Assert.Equal(DetectorStatus.busy, _detectors.d1.Status);
+            Assert.NotEqual(0, Double.Parse(_detectors.d1.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_EREAL)), 2);
             _detectors.d1.Stop();
 
+            Assert.Equal(DetectorStatus.ready, _detectors.d1.Status);
+            Assert.Equal(2, (int)Double.Parse(_detectors.d1.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_EREAL)));
+            _detectors.d1.Start();
+            System.Threading.Thread.Sleep(2000);
+            Assert.Equal(DetectorStatus.busy, _detectors.d1.Status);
+            Assert.NotEqual(2, Double.Parse(_detectors.d1.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_EREAL)), 2);
+            _detectors.d1.Stop();
             _detectors.d1.Save();
 
             Assert.Equal(DetectorStatus.ready, _detectors.d1.Status);

@@ -21,19 +21,7 @@ namespace Measurements.Core
     // ├── ISession.cs                - interface of Session class
     // ├── SessionDetectorsControl.cs - contains methods that related with managing of detector
     // ├── SessionInfo.cs             - contains fields of Session for EF core interaction
-    // ├── SessionLists.cs            - contains method that forms list of samples and measurements
-    // ├── SessionMain.cs --> opened
-    // └── SessionSamplesMoves.cs     - contins method for changing and setting sample to detectors
-
-    /// <summary>
-    /// Before start the measurement process one of principal thing that user should define is 
-    /// how exactly samples should be distributed(spreaded) to detectors. We suggest three types
-    /// of spreading: 
-    /// 1. By number of container (All sample from the same container will measure at the same detector)
-    /// 2. Uniform spreading. We merely count all samples and divide it to number of detectors
-    /// 3. Just in order: first sample to the first detectors, second to second, so on.
-    /// </summary>
-    public enum SpreadOptions { container, uniform, inOrder }
+    // └── SessionMain.cs --> opened
 
     /// <summary>
     /// Session class is used for control measurement process. Our measurement process involved few principal parameters:
@@ -97,12 +85,29 @@ namespace Measurements.Core
         /// <summary>
         /// Allows user to get chosen acqusition mode specified via <seealso cref="SetAcquireDurationAndMode(int, CanberraDeviceAccessLib.AcquisitionModes)"/>
         /// </summary>
-        public CanberraDeviceAccessLib.AcquisitionModes CountMode { get; set; }
-        
-        /// <summary>
-        /// Internal field allow to control of filling models by the data via EF Core.
-        /// </summary>
-        private InfoContext _infoContext;
+        private CanberraDeviceAccessLib.AcquisitionModes _countMode;
+        public CanberraDeviceAccessLib.AcquisitionModes CountMode
+        {
+            get { return _countMode; }
+            set
+            {
+                var AvailableAcquisitionModes = new CanberraDeviceAccessLib.AcquisitionModes[] 
+                                                    {
+                                                        CanberraDeviceAccessLib.AcquisitionModes.aCountToRealTime,
+                                                        CanberraDeviceAccessLib.AcquisitionModes.aCountToLiveTime
+                                                    };
+
+                if (!AvailableAcquisitionModes.Contains(value))
+                {
+                    _nLogger.Info($"Acquisition mode could be chosen only from this modes: {string.Join(", ",AvailableAcquisitionModes)}. aCountToRealTime will be set");
+                    return;
+                }
+                _nLogger.Info($"Acquisition mode of measurements is set to {value}");
+                _countMode = value;
+                foreach (var d in ManagedDetectors)
+                    d.AcquisitionMode = value;
+            }
+        }
 
         /// <summary>
         /// List of detectors that controlled by the session
@@ -127,7 +132,6 @@ namespace Measurements.Core
 
             _nLogger.Info("Initialisation of session has begun");
 
-            _infoContext                                     = new InfoContext();
             ManagedDetectors                                 = new List<IDetector>();
             CountMode                                        = CanberraDeviceAccessLib.AcquisitionModes.aCountToRealTime;
             MeasurementDone                                  += MeasurementDoneHandler;
@@ -136,7 +140,7 @@ namespace Measurements.Core
         }
 
         /// <summary>
-        /// Overloaded constructor needed for the load of session from data base
+        /// Overloaded constructor for the loading of session from data base
         /// </summary>
         /// <param name="session"></param>
         public Session(SessionInfo session) : this()
@@ -300,7 +304,7 @@ namespace Measurements.Core
         public void SaveMeasurement(ref IDetector det)
         {
             if (SessionControllerSingleton.TestDBConnection())
-                SaveRemotely(ref det);
+                SaveRemotely(det);
             else
                 SaveLocally(ref det);
         }
@@ -312,19 +316,20 @@ namespace Measurements.Core
         /// <paramref name="det">Reference to the instance of detector class</>
         private void SaveLocally(ref IDetector det)
         {
-            _nLogger.Info($"Something wrong with connection to the data base. Information about measurement of current sample {det.CurrentMeasurement} from detector '{det.Name}' will be save locally");
-
-            JsonSerializer serializer = new JsonSerializer();
-            serializer.NullValueHandling = NullValueHandling.Include;
-
-            if (!Directory.Exists(@"D:\\LocalData"))
-                Directory.CreateDirectory(@"D:\\LocalData");
+            if (det.CurrentMeasurement == null || det == null) return;
 
             StreamWriter sw   = null;
             JsonWriter writer = null;
-
             try
             {
+                _nLogger.Info($"Something wrong with connection to the data base. Information about measurement of current sample {det.CurrentMeasurement} from detector '{det.Name}' will be save locally");
+
+                JsonSerializer serializer = new JsonSerializer();
+                serializer.NullValueHandling = NullValueHandling.Include;
+
+                if (!Directory.Exists(@"D:\\LocalData"))
+                    Directory.CreateDirectory(@"D:\\LocalData");
+
                 sw = new StreamWriter($"D:\\LocalData\\{DateTime.Now.ToString("dd-MM-yyyy_hh-mm")}_{det.CurrentMeasurement}.json");
                 writer = new JsonTextWriter(sw);
                 serializer.Serialize(writer, det.CurrentMeasurement);
@@ -345,19 +350,48 @@ namespace Measurements.Core
         /// Saves information about current measurement to the data base. <seealso cref="MeasurementInfo"/>
         /// </summary>
         /// <paramref name="det">Reference to the instance of detector class</>
-        private void SaveRemotely(ref IDetector det)
+        private void SaveRemotely(IDetector det)
         {
-            try
+            if (det.CurrentMeasurement == null || det == null) return;
+            using (var ic = new InfoContext())
             {
-                _nLogger.Info($"Information about measurement of current sample {det.CurrentMeasurement} from detector '{det.Name}' will be save to the data base");
-                var ic = new InfoContext();
-                ic.Measurements.Update(det.CurrentMeasurement);
-                ic.SaveChanges();
-            }
-            catch (Microsoft.EntityFrameworkCore.DbUpdateException dbe)
-            {
-                Handlers.ExceptionHandler.ExceptionNotify(this, dbe.InnerException, Handlers.ExceptionLevel.Error);
-                SaveLocally(ref det);
+                try
+                {
+                    if (ic.Measurements.Where(m => m.Id == det.CurrentMeasurement.Id && string.IsNullOrEmpty(m.FileSpectra)).Any())
+                    {
+                        _nLogger.Info($"Information about measurement of current sample {det.CurrentMeasurement} from detector '{det.Name}' will be save to the data base");
+                        ic.Measurements.Update(det.CurrentMeasurement);
+                    }
+                    else
+                    {
+                        ic.Measurements.Add(new MeasurementInfo
+                        {
+                            IrradiationId = det.CurrentMeasurement.IrradiationId,
+                            CountryCode = det.CurrentMeasurement.CountryCode,
+                            ClientNumber = det.CurrentMeasurement.ClientNumber,
+                            Year = det.CurrentMeasurement.Year,
+                            SetNumber = det.CurrentMeasurement.SetNumber,
+                            SetIndex = det.CurrentMeasurement.SetIndex,
+                            SampleNumber = det.CurrentMeasurement.SampleNumber,
+                            Type = det.CurrentMeasurement.Type,
+                            Height = det.CurrentMeasurement.Height,
+                            DateTimeStart = det.CurrentMeasurement.DateTimeStart,
+                            Duration = det.CurrentMeasurement.Duration,
+                            DateTimeFinish = det.CurrentMeasurement.DateTimeFinish,
+                            FileSpectra = det.CurrentMeasurement.FileSpectra,
+                            Detector = det.CurrentMeasurement.Detector,
+                            Assistant = det.CurrentMeasurement.Assistant,
+                            Note = det.CurrentMeasurement.Note
+                        }
+                        );
+                    }
+                    ic.SaveChanges();
+                }
+                catch (Exception dbe)
+                {
+                    Handlers.ExceptionHandler.ExceptionNotify(this, dbe.InnerException, Handlers.ExceptionLevel.Error);
+                    SaveLocally(ref det);
+                }
             }
         }
 
@@ -368,16 +402,21 @@ namespace Measurements.Core
         /// <returns>List of object with MeasurementInfo type that will be load to the data base. <seealso cref="MeasurementInfo"/></returns>
         private List<MeasurementInfo> LoadMeasurementsFiles()
         {
-            _nLogger.Info($"Deserilization has begun");
-            
-            var dir                       = new DirectoryInfo(@"D:\LocalData");
-            var files                     = dir.GetFiles("*.json").ToList();
-            var MeasurementsInfoForUpload = new List<MeasurementInfo>();
-            string                        fileName = "";
+         
             StreamReader                  fileStream = null;
+            var MeasurementsInfoForUpload = new List<MeasurementInfo>();
 
             try
             {
+                _nLogger.Info($"Deserilization has begun");
+                var dir                       = new DirectoryInfo(@"D:\LocalData");
+
+                if (!dir.Exists)
+                    return MeasurementsInfoForUpload;
+
+                var files                     = dir.GetFiles("*.json").ToList();
+                string                        fileName = "";
+
                 foreach (var file in files)
                 {
                     fileName = file.Name;
@@ -405,23 +444,28 @@ namespace Measurements.Core
         /// </summary>
         private void UploadLocalDataToDB()
         {
-            try
+            var fileList = LoadMeasurementsFiles();
+            if (fileList.Count == 0) return;
+
+            using (var ic = new InfoContext())
             {
-                _nLogger.Info($"Local data has found. It will deserialize, load into db and then delete from local storage");
-                var fileList = LoadMeasurementsFiles();
-                if (fileList.Count == 0) return;
-                var ic = new InfoContext();
-                ic.Measurements.AddRange(LoadMeasurementsFiles());
-                ic.SaveChanges();
-                var dir   = new DirectoryInfo(@"D:\LocalData");
-                var files = dir.GetFiles("*.json").ToList();
-                foreach (var file in files)
-                    file.Delete();
-            }
-            catch (Exception e)
-            {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
+                try
+                {
+                    _nLogger.Info($"Local data has found. It will deserialize, load into db and then delete from local storage");
+
+                    ic.Measurements.UpdateRange(fileList);
+                    ic.SaveChanges();
+                    var dir   = new DirectoryInfo(@"D:\LocalData");
+                    var files = dir.GetFiles("*.json").ToList();
+                    foreach (var file in files)
+                        file.Delete();
+                }
+                catch (Exception e)
+                {
+                    Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
+                }
             }
         }
-    }
-}
+
+    } // Session
+}     // Measurements.Core

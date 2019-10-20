@@ -29,53 +29,32 @@ namespace Measurements.Core
 
     public partial class Detector : IDetector, IDisposable
     {
-        private readonly DeviceAccessClass           _device;
-        private readonly string                      _name;
-        private int                                  _timeOutLimitSeconds;
-        private bool                                 _isDisposed;
-        private DetectorStatus                       _status;
-        private readonly ConnectOptions              _conOption;
-        private readonly NLog.Logger                 _nLogger;
-        private MeasurementInfo                      _currentMeasurement;
+        private readonly DeviceAccessClass _device;
+        private readonly string            _name;
+        private int                        _timeOutLimitSeconds;
+        private bool                       _isDisposed;
+        private DetectorStatus             _status;
+        private readonly ConnectOptions    _conOption;
+        private readonly NLog.Logger       _nLogger;
 
-        public MeasurementInfo CurrentMeasurement 
-        {
-            get { return _currentMeasurement; }
-            set
-            {
-                _currentMeasurement = value;
-                FillFileInfo();
-                //SetAcqureCountsAndMode(_currentMeasurement.Duration.Value);
-            }
-        }
-
-        public IrradiationInfo RelatedIrradiation { get; set; }
+        public MeasurementInfo CurrentMeasurement { get; private set; }
+        public IrradiationInfo RelatedIrradiation { get; private set; }
 
         public event EventHandler  StatusChanged;
         public string FullFileSpectraName { get; private set; }
         public event EventHandler<DetectorEventsArgs>  AcquiringStatusChanged;
+        public AcquisitionModes AcquisitionMode { get; set; }
 
         //protected virtual void OnProcessAcquiringMessaget(DetectorEventsArgs e)
         //{
             //AcquiringStatusChanged?.Invoke(this, e);
         //}
 
-       /// <summary>
-       /// The reason of this field that stop method generates acquire done event, this means
-       /// that we should distinguish stop and pause. That's why this field exist
-       /// </summary>
+        /// <summary>
+        /// The reason of this field that stop method generates acquire done event, this means
+        /// that we should distinguish stop and pause. That's why this field exist
+        /// </summary>
         public bool IsPaused { get; private set; }
-
-        public decimal DeadTime
-        {
-            get
-            {
-                if (decimal.Parse(_device.Param[ParamCodes.CAM_X_EREAL].ToString()) == 0)
-                   return 0;
-                else
-                   return Math.Round(100 * (1 - decimal.Parse(_device.Param[ParamCodes.CAM_X_ELIVE].ToString()) / decimal.Parse(_device.Param[ParamCodes.CAM_X_EREAL].ToString())), 2);
-            }
-        }
         
         /// <summary>
         /// Name of detector
@@ -108,12 +87,22 @@ namespace Measurements.Core
                 return false;
             }
         }
-        
 
-        public int CountToRealTime =>  int.Parse(GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_PREAL)); 
-        public int CountToLiveTime =>  int.Parse(GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_PLIVE)); 
+        public int PresetRealTime      =>     int.Parse(GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_PREAL)); 
+        public int PresetLiveTime      =>     int.Parse(GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_PLIVE)); 
+        public decimal ElapsedRealTime => decimal.Parse(GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_EREAL)); 
+        public decimal ElapsedLiveTime => decimal.Parse(GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_ELIVE));
 
-       
+        public decimal DeadTime
+        {
+            get
+            {
+                if (ElapsedRealTime == 0)
+                    return 0;
+                else
+                    return Math.Round(100 * (1 - ElapsedLiveTime / ElapsedRealTime), 2);
+            }
+        }
         /// <summary> Returns status of detector. {ready, off, busy, error}. </summary>
         /// <seealso cref="Enum Status"/>
         public DetectorStatus Status

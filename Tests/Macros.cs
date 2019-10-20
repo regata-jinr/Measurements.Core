@@ -189,8 +189,9 @@ namespace Measurements.Core.Tests
                 IDetector det = d;
                 var CurrentMeasurement = spreadedSamples[d.Name][0];
                 var CurrentIrradiations = IrradiationList.Where(ir => ir.Id == spreadedSamples[d.Name].First().IrradiationId).First();
-                iSession.StartMeasurements(ref det, ref CurrentMeasurement, ref CurrentIrradiations);
             }
+            
+            iSession.StartMeasurements();
 
             while (NumberSessionWhichHasDone != 1)
             { }
