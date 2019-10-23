@@ -187,9 +187,6 @@ namespace Measurements.Core.Tests
                         si.DetectorsNames = (string)  sqr.GetValue(1);
                         si.Type           = (string)  sqr.GetValue(2);
                         si.CountMode      = (string)  sqr.GetValue(3);
-                        si.SpreadOption   = (string)  sqr.GetValue(4);
-                        si.Duration       = (int)     sqr.GetValue(5);
-                        si.Height         = (decimal) sqr.GetValue(6);
                         si.Assistant      = (string)  sqr.GetValue(7);
                         si.Note           = (string)  sqr.GetValue(8);
                     }
@@ -204,9 +201,6 @@ namespace Measurements.Core.Tests
             Assert.Equal(si.DetectorsNames, s.DetectorsNames);
             Assert.Equal(si.Type,           s.Type);
             Assert.Equal(si.CountMode,      s.CountMode);
-            Assert.Equal(si.SpreadOption,   s.SpreadOption);
-            Assert.Equal(si.Duration,       s.Duration);
-            Assert.Equal(si.Height,         s.Height);
             Assert.Equal(si.Assistant,      s.Assistant);
             Assert.Equal(si.Note,           s.Note);
         }

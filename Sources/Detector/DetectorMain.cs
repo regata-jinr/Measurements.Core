@@ -290,7 +290,7 @@ namespace Measurements.Core
 
         private void SetAcquireCounts(int counts)
         {
-            _nLogger.Info($"Detector get Acquisition mode - '{AcquisitionMode}' and count number - '{counts}'");
+            _nLogger.Info($"Detector has got Acquisition mode - '{AcquisitionMode}' and number of counts- '{counts}'");
             _device.SpectroscopyAcquireSetup(AcquisitionMode, counts);
         }
 
@@ -458,6 +458,8 @@ namespace Measurements.Core
         {
             if (!CheckIrradiationInfo(irradiation) || !CheckMeasurementInfo(measurement))
                 return;
+
+            _nLogger.Info($"Set sample {measurement} to detector");
 
             try
             {
