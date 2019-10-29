@@ -16,8 +16,6 @@ using System.Threading.Tasks;
 using System.Linq;
 
 // TODO:  add static analyzers
-// TODO:  add license
-// TODO:  in case of connection falling but pin is correct local mode should be available
 
 // FIXME: adding costura for merging dlls, but pay attention that it will break tests.
 //        find out how to exclude test. exclude assemblies with xunit didn't help
@@ -44,140 +42,12 @@ namespace Measurements.Core
         /// The list of created session managed by SessionController
         /// </summary>
         public static List<ISession>              ManagedSessions         { get; private set; }
-        /// <summary>
-        /// The list of available session for loading
-        /// </summary>
-        public static List<SessionInfo> AvailableSessions
-        {
-            get
-            {
-                CheckSessionControllerInitialisation();
-                try
-                {
-                    logger.Info("Getting list of available session parameters for usage");
-                    var ic = new InfoContext();
 
-                    var list = ic.Sessions.Where(s => string.IsNullOrEmpty(s.Assistant) || s.Assistant == ConnectionStringBuilder.UserID).ToList();
-
-                    return list;
-                }
-                catch (Exception e)
-                {
-                    Handlers.ExceptionHandler.ExceptionNotify(null, e, Handlers.ExceptionLevel.Error);
-                }
-                return new List<SessionInfo>();
-            }
-        }
         /// <summary>
         /// The list of MCA devices available for usage. This list forms via MCA databases provided by Canberra DeviceAccessClass
         /// </summary>
         public static List<IDetector> AvailableDetectors { get; private set; }
 
-        /// <summary>
-        /// We consider the opportunity to have two modes of measurement (local and remote). Now remote mode by default, but in case of errors
-        /// local mode will turn on and keep measurement process till connection will restore. All data save to the local storage with the usage of serialization process.
-        /// </summary>
-        private static bool LocalMode;
-
-        private static SqlConnectionStringBuilder _connectionStringBuilder; 
-        /// <summary>
-        /// Connection string builder allows to get all information via connection string: DBName, UserID, so on.
-        /// UserID is used for getting assistant name
-        /// </summary>
-        public static SqlConnectionStringBuilder ConnectionStringBuilder
-        {
-            get { return _connectionStringBuilder; }
-        }
-        /// <summary>
-        /// Here is the starting point of the application. Before the calling any method of this class, you have to call this one
-        /// It will initialize all field of this class and allow you to go further
-        /// </summary>
-        /// <param name="connectionString"></param>
-        public static void InitializeDBConnectionString(string connectionString)
-        {
-            _connectionStringBuilder.ConnectionString = connectionString;
-            logger.SetProperty("Assistant", ConnectionStringBuilder.UserID);
-            logger.SetProperty("ParamName", "SessionController");
-            TestDBConnection();
-        }
-
-        /// <summary>
-        /// This additional method for the checking the connection state. In case of returning false local mode will turn on
-        /// </summary>
-        /// <returns>True in case of connection with specified db is success</returns>
-        public static bool TestDBConnection()
-        {
-            CheckSessionControllerInitialisation();
-
-            bool isConnected = false;
-            var sqlCon = new SqlConnection(ConnectionStringBuilder.ConnectionString);
-            try
-            {
-                logger.Info("Test connection with database:");
-                sqlCon.Open();
-
-                isConnected = true;
-
-                logger.Info("Connection successful");
-            }
-
-            catch (SqlException sqle)
-            {
-                ConnectionFallen?.Invoke();
-                Handlers.ExceptionHandler.ExceptionNotify(null, sqle, Handlers.ExceptionLevel.Warn);
-                sqlCon.Dispose();
-                if (!LocalMode)
-                    Task.Run(() => ConnectionWaiter());
-            }
-            catch (Exception e)
-            {
-                Handlers.ExceptionHandler.ExceptionNotify(null, e, Handlers.ExceptionLevel.Error);
-            }
-            finally
-            {
-                sqlCon.Dispose();
-            }
-
-            return isConnected;
-        }
-
-        /// <summary>
-        /// This event will occur when connection will be restore after falling
-        /// </summary>
-        public static event Action ConectionRestoreEvent;
-
-        public static event Action ConnectionFallen;
-
-        /// <summary>
-        /// This internal action for the checking connection. Every 10 seconds it runs TestDBConnection
-        /// in case of true it invoke ConnectionRestoreEvent
-        /// </summary>
-        private static void ConnectionWaiter()
-        {
-            logger.Info("Try to connect to db asynchronously");
-            LocalMode = true;
-            System.Threading.Thread.Sleep(10000);
-            if (TestDBConnection())
-            {
-                logger.Info("Connection has restored!");
-                LocalMode = false;
-                ConectionRestoreEvent?.Invoke();
-                return;
-            }
-            else ConnectionWaiter();
-        }
-
-        /// <summary>
-        /// This internal method deny to use this class till InitializeDBConnectionString() has called
-        /// </summary>
-        private static void CheckSessionControllerInitialisation()
-        {
-            if (string.IsNullOrEmpty(_connectionStringBuilder.ConnectionString))
-            {
-                Handlers.ExceptionHandler.ExceptionNotify(null, new ArgumentNullException("First of all call InitializeDBConnection method!"), Handlers.ExceptionLevel.Error);
-                throw new ArgumentNullException("First of all call InitializeDBConnection method!");
-            }
-        }
         /// <summary>
         /// This internal method add detector to the list of available detectors for usage
         /// with all checkings
@@ -240,8 +110,6 @@ namespace Measurements.Core
             logger.Info("Inititalization of Session Controller instance has begun");
 
             _isDisposed              = false;
-            LocalMode                = false;
-            _connectionStringBuilder = new SqlConnectionStringBuilder(); 
             AvailableDetectors       = new List<IDetector>();
             ManagedSessions          = new List<ISession>();
 
@@ -257,8 +125,6 @@ namespace Measurements.Core
         /// <returns></returns>
         public static ISession Create()
         {
-            CheckSessionControllerInitialisation();
-
             logger.Info("Creating of the new session instance");
             ISession session = new Session();
             ManagedSessions.Add(session);
@@ -270,17 +136,12 @@ namespace Measurements.Core
         /// </summary>
         /// <param name="sName">Name of saved session</param>
         /// <returns>Session object with filled information such as: Name of session, List of detectors, type of measurement, spreaded option, counts, countmode, height, assistant, note</returns>
-        public static ISession Load(string sName)
+        public static ISession Create(SessionInfo sessionInfo)
         {
-            CheckSessionControllerInitialisation();
 
-            logger.Info($"Loading session with name '{sName}' from DB");
+            logger.Info($"Createing existing session with name '{sessionInfo.Name}' from DB");
             try
             {
-                var sessionContext = new InfoContext();
-
-                var sessionInfo = sessionContext.Sessions.Where(s => s.Name == sName && (s.Assistant == null || s.Assistant == ConnectionStringBuilder.UserID)).FirstOrDefault();
-
                 if (sessionInfo == null)
                     throw new ArgumentNullException("Such session doesn't exist. Check the name or create the new one");
 

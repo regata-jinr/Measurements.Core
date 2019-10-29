@@ -1,15 +1,36 @@
-﻿//Only fields and properties of Detector class
+﻿/***************************************************************************
+ *                                                                         *
+ *                                                                         *
+ * Copyright(c) 2017-2019, REGATA Experiment at FLNP|JINR                  *
+ * Author: [Boris Rumyantsev](mailto:bdrum@jinr.ru)                        *
+ * All rights reserved                                                     *
+ *                                                                         *
+ *                                                                         *
+ ***************************************************************************/
+
+// Contains description of basics properties, events, enumerations and additional classes
+// Detector class divided by few files:
+
+// ├── DetectorAcquisition.cs      --> Contains methods that allow to manage of spectra acquisition process. 
+// |                                    Start, stop, pause, clear acquisition process and also specify acquisition mode.
+// ├── DetectorCalibration.cs      --> Contains methods for loading calibration files by energy and height
+// ├── DetectorConnection.cs       --> Contains methods for connection, disconnection to the device. Reset connection and so on.
+// ├── DetectorFileInteractions.cs --> The code in this file determines interaction with acquiring spectra. 
+// |                                    E.g. filling information about sample. Save file. 
+// ├── DetectorInitialization.cs   --> Contains constructor of type, destructor and additional parameters. Like Status enumeration
+// |                                    Events arguments and so on
+// ├── DetectorParameters.cs       --> Contains methods for getting and setting any parameters by special code.
+// |                                    See codes here CanberraDeviceAccessLib.ParamCodes. 
+// |                                    Also some of important parameters wrapped into properties
+// ├── DetectorProperties.cs       --> opened
+// └── IDetector.cs                --> Interface of the Detector type
+
 
 using System;
 using System.Linq;
 using System.Collections.Generic;
 using CanberraDeviceAccessLib;
 
-//TODO: set up db target to logger https://knightcodes.com/.net/2016/05/25/logging-to-a-database-wth-nlog.html
-
-/// <summary>
-/// This namespace contains implementations of core interfaces or internal classes.
-/// </summary>
 namespace Measurements.Core
 {
     /// <summary>
@@ -30,40 +51,21 @@ namespace Measurements.Core
     public partial class Detector : IDetector, IDisposable
     {
         private readonly DeviceAccessClass _device;
-        private readonly string            _name;
-        private int                        _timeOutLimitSeconds;
-        private bool                       _isDisposed;
-        private DetectorStatus             _status;
+        private readonly string            Name;
         private readonly ConnectOptions    _conOption;
         private readonly NLog.Logger       _nLogger;
+        private          int               _timeOutLimitSeconds;
+        private          bool              _isDisposed;
+        private          DetectorStatus    _status;
 
         public MeasurementInfo CurrentMeasurement { get; private set; }
         public IrradiationInfo RelatedIrradiation { get; private set; }
 
-        public event EventHandler  StatusChanged;
+        public event EventHandler StatusChanged;
         public string FullFileSpectraName { get; private set; }
-        public event EventHandler<DetectorEventsArgs>  AcquiringStatusChanged;
-        public AcquisitionModes AcquisitionMode { get; set; }
+        public event EventHandler<DetectorEventsArgs> AcquiringStatusChanged;
 
-        //protected virtual void OnProcessAcquiringMessaget(DetectorEventsArgs e)
-        //{
-            //AcquiringStatusChanged?.Invoke(this, e);
-        //}
-
-        /// <summary>
-        /// The reason of this field that stop method generates acquire done event, this means
-        /// that we should distinguish stop and pause. That's why this field exist
-        /// </summary>
-        public bool IsPaused { get; private set; }
-        
-        /// <summary>
-        /// Name of detector
-        /// </summary>
-        public string Name
-        {
-            get { return _name; }
-        }
-        private  bool CheckNameOfDetector(string name)
+        private bool CheckNameOfDetector(string name)
         {
             try
             {
@@ -88,21 +90,6 @@ namespace Measurements.Core
             }
         }
 
-        public int PresetRealTime      =>     int.Parse(GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_PREAL)); 
-        public int PresetLiveTime      =>     int.Parse(GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_PLIVE)); 
-        public decimal ElapsedRealTime => decimal.Parse(GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_EREAL)); 
-        public decimal ElapsedLiveTime => decimal.Parse(GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_ELIVE));
-
-        public decimal DeadTime
-        {
-            get
-            {
-                if (ElapsedRealTime == 0)
-                    return 0;
-                else
-                    return Math.Round(100 * (1 - ElapsedLiveTime / ElapsedRealTime), 2);
-            }
-        }
         /// <summary> Returns status of detector. {ready, off, busy, error}. </summary>
         /// <seealso cref="Enum Status"/>
         public DetectorStatus Status
@@ -121,21 +108,21 @@ namespace Measurements.Core
         }
 
         /// <summary>
-        /// Returns true if high voltage is on.
-        /// </summary>
-        public bool IsHV { get { return _device.HighVoltage.On; } }
-
-        /// <summary>
-        /// Returns true if detector connected successfully.
-        /// </summary>
-        public bool IsConnected { get { return _device.IsConnected; } }
-
-        /// <summary>
         /// Returns error message.
         /// </summary>
         public string ErrorMessage { get; private set; }
 
     }
-   
+
+    /// <summary>
+    /// This class shared information about events occured on the detector between callers.
+    /// </summary>
+    public class DetectorEventsArgs : EventArgs
+    {
+        public string Name;
+        public DetectorStatus Status;
+        public int AcquireMessageParam;
+        public string Message;
+    }
 }
 

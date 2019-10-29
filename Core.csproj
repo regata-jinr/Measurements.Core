@@ -198,8 +198,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Sources\Detector\DetectorMain.cs" />
-    <Compile Include="Sources\Detector\DetectorFields.cs" />
+    <Compile Include="Sources\Detector\DetectorCalibration.cs" />
+    <Compile Include="Sources\Detector\DetectorInitialization.cs" />
+    <Compile Include="Sources\Detector\DetectorProperties.cs" />
+    <Compile Include="Sources\Detector\DetectorParameters.cs" />
+    <Compile Include="Sources\Detector\DetectorConnection.cs" />
+    <Compile Include="Sources\Detector\DetectorAcquisition.cs" />
+    <Compile Include="Sources\Detector\DetectorFileInteractions.cs" />
     <Compile Include="Sources\Detector\IDetector.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Sources\Handlers\ExceptionHandler.cs" />
