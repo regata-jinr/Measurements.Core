@@ -25,8 +25,6 @@
 // ├── DetectorProperties.cs       --> Contains description of basics properties, events, enumerations and additional classes
 // └── IDetector.cs                --> opened
 
-//TODO: add groups for interface members according to file division
-
 using System;
 using CanberraDeviceAccessLib;
 
@@ -60,6 +58,7 @@ namespace Measurements.Core
         // DetectorInitialization
         void             Dispose();
         void             Reset();
+        string           Name { get; }
 
 
         // DetectorParameters

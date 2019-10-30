@@ -35,14 +35,14 @@ namespace Measurements.Core
         /// <summary>Constructor of Detector class.</summary>
         /// <param name="name">Name of detector. Without path.</param>
         /// <param name="option">CanberraDeviceAccessLib.ConnectOptions {aReadWrite, aContinue, aNoVerifyLicense, aReadOnly, aTakeControl, aTakeOver}.By default ConnectOptions is ReadWrite.</param>
-        public Detector(string name, ConnectOptions option = ConnectOptions.aReadWrite, int timeOutLimitSeconds = 5)
+        public Detector(string name, int timeOutLimitSeconds = 5)
         {
             try
             {
                 _nLogger = SessionControllerSingleton.logger.WithProperty("ParamName", name);
-                _nLogger.Info($"Initialisation of the detector {name} with mode {option.ToString()} and timeout limit {timeOutLimitSeconds}");
+                _nLogger.Info($"Initialisation of the detector {name} with mode {ConnectOptions.aReadWrite} and timeout limit {timeOutLimitSeconds}");
 
-                _conOption         = option;
+                _conOption         = ConnectOptions.aReadWrite;
                 _isDisposed        = false;
                 Status             = DetectorStatus.off;
                 ErrorMessage       = "";
@@ -51,11 +51,11 @@ namespace Measurements.Core
                 CurrentMeasurement = new MeasurementInfo();
 
                 if (CheckNameOfDetector(name))
-                    Name = name;
+                    _name = name;
                 else
                     throw new Exception($"Detector with name '{name}' doesn't exist in MID Data base");
 
-                _device.DeviceMessages += ProcessDeviceMessages;
+                _device.DeviceMessages += DeviceMessagesHandler;
                 _timeOutLimitSeconds   = timeOutLimitSeconds;
                 IsPaused               = false;
 
@@ -67,71 +67,7 @@ namespace Measurements.Core
             }
         }
 
-        /// <summary>
-        ///
-        ///  |Advise Mask        |Description                                        |int value(lParam)|
-        ///  |:-----------------:|:-------------------------------------------------:|:---------------:|
-        ///  |DisplaySetting     | Display settings have changed                     |  1              |
-        ///  |ExternalStart      | Acquisition has been started externall            |  1048608        |
-        ///  |CalibrationChange  | A calibration parameter has changed               |  4              |
-        ///  |AcquireStart       | Acquisition has been started                      |  134217728      |
-        ///  |AcquireDone        | Acquisition has been stopped                      | -2147483648     |
-        ///  |DataChange         | Data has been changes (occurs after AcquireClear) |  67108864       |
-        ///  |HardwareError      | Hardware error                                    |  2097152        |
-        ///  |HardwareChange     | Hardware setting has changed                      |  268435456      |
-        ///  |HardwareAttention  | Hardware is requesting attention                  |  16777216       |
-        ///  |DeviceUpdate       | Device settings have been updated                 |  8388608        |
-        ///  |SampleChangerSet   | Sample changer set                                |  1073741824     |
-        ///  |SampleChangeAdvance| Sample changer advanced                           |  4194304        |
-
-        /// </summary>
-        /// <param name="message">DeviceMessages type from CanberraDeviceAccessLib</param>
-        /// <param name="wParam">The first parameter of information associated with the message.</param>
-        /// <param name="lParam">The second parameter of information associated with the message</param>
-        private void ProcessDeviceMessages(int message, int wParam, int lParam)
-        {
-            string response = "";
-            bool isForCalling = false;
-            try
-            {
-                if ((int)AdviseMessageMasks.amAcquireDone == lParam && !IsPaused)
-                {
-                    _nLogger.Info($"Has got message AcquireDone.");
-                    response = "Acquire has done";
-                    Status = DetectorStatus.ready;
-                    CurrentMeasurement.DateTimeFinish = DateTime.Now;
-                    isForCalling = true;
-                }
-
-                if ((int)AdviseMessageMasks.amAcquireStart == lParam)
-                {
-                    _nLogger.Info($"Has got message amAcquireStart.");
-                    response = "Acquire has start";
-                    Status = DetectorStatus.busy;
-                    isForCalling = true;
-                }
-
-                if ((int)AdviseMessageMasks.amHardwareError == lParam)
-                {
-                    Status = DetectorStatus.error;
-                    ErrorMessage = $"{_device.Message((MessageCodes)lParam)}";
-                    response = ErrorMessage;
-                    isForCalling = true;
-                }
-                if ((int)AdviseMessageMasks.amAcquisitionParamChange == lParam)
-                {
-                    response = "Device ready to use!";
-
-                }
-
-                if (isForCalling)
-                    AcquiringStatusChanged?.Invoke(this, new DetectorEventsArgs { Message = response, AcquireMessageParam = lParam, Name = this.Name, Status = this.Status });
-            }
-            catch (Exception e)
-            {
-                    Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
-            }
-        }
+      
 
         private void CleanUp(bool isDisposing)
         {

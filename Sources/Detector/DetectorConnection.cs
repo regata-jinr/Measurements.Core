@@ -11,23 +11,22 @@
 // Contains methods for connection, disconnection to the device. Reset connection and so on.
 // Detector class divided by few files:
 
-// ├── DetectorAcquisition.cs      --> Contains methods that allow to manage of spectra acquisition process. 
-// |                                    Start, stop, pause, clear acquisition process and also specify acquisition mode.
+// ├── DetectorAcquisition.cs      --> Contains methods that allow to manage of spectra acquisition process 
+// |                                    Start, stop, pause, clear acquisition process and also specify acquisition mode
 // ├── DetectorCalibration.cs      --> Contains methods for loading calibration files by energy and height
 // ├── DetectorConnection.cs       --> opened
 // ├── DetectorFileInteractions.cs --> The code in this file determines interaction with acquiring spectra. 
-// |                                    E.g. filling information about sample. Save file.
+// |                                    E.g. filling information about sample. Save file
 // ├── DetectorInitialization.cs   --> Contains constructor of type, destructor and additional parameters. Like Status enumeration
 // |                                    Events arguments and so on
-// ├── DetectorParameters.cs       --> Contains methods for getting and setting any parameters by special code.
-// |                                    See codes here CanberraDeviceAccessLib.ParamCodes. 
+// ├── DetectorParameters.cs       --> Contains methods for getting and setting any parameters by special code
+// |                                    See codes here CanberraDeviceAccessLib.ParamCodes 
 // |                                    Also some of important parameters wrapped into properties
 // ├── DetectorProperties.cs       --> Contains description of basics properties, events, enumerations and additional classes
 // └── IDetector.cs                --> Interface of the Detector type
 
 using System;
 using System.Threading.Tasks;
-using System.Threading;
 
 namespace Measurements.Core
 {
@@ -52,7 +51,7 @@ namespace Measurements.Core
             }
             catch (TimeoutException te)
             {
-                Handlers.ExceptionHandler.ExceptionNotify(this, te, Handlers.ExceptionLevel.Warn );
+                Handlers.ExceptionHandler.ExceptionNotify(this, te, Handlers.ExceptionLevel.Warn);
             }
             catch (Exception e)
             {
@@ -77,9 +76,7 @@ namespace Measurements.Core
             {
                 Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
                 if (e.Message.Contains("278e2a")) Status = DetectorStatus.busy;
-
             }
-
         }
 
         /// <summary>

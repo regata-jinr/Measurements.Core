@@ -51,7 +51,7 @@ namespace Measurements.Core
     public partial class Detector : IDetector, IDisposable
     {
         private readonly DeviceAccessClass _device;
-        private readonly string            Name;
+        private readonly string            _name;
         private readonly ConnectOptions    _conOption;
         private readonly NLog.Logger       _nLogger;
         private          int               _timeOutLimitSeconds;
@@ -60,6 +60,8 @@ namespace Measurements.Core
 
         public MeasurementInfo CurrentMeasurement { get; private set; }
         public IrradiationInfo RelatedIrradiation { get; private set; }
+
+        public string Name { get { return _name; } }
 
         public event EventHandler StatusChanged;
         public string FullFileSpectraName { get; private set; }

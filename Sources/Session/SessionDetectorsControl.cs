@@ -267,7 +267,7 @@ namespace Measurements.Core
         }
 
         /// <summary>
-        /// This internal method process message from the detector. <see cref="Detector.ProcessDeviceMessages(int, int, int)"/>
+        /// This internal method process message from the detector. <see cref="Detector.DeviceMessagesHandler(int, int, int)"/>
         /// </summary>
         /// <param name="o">Boxed detector</param>
         /// <param name="args"><see cref="DetectorEventsArgs"/></param>

@@ -104,10 +104,11 @@ namespace Measurements.Core
                 _device.Param[ParamCodes.CAM_T_SGEOMTRY]    = measurement.Height.Value.ToString("f"); // height
 
                 AddEfficiencyCalibrationFileByHeight(measurement.Height.Value);
+                AddEfficiencyCalibrationFileByEnergy();
 
                 DivideString(CurrentMeasurement.Note); //filling description field in file
 
-                //SetAcquireCounts(measurement.Duration.Value);
+                Counts = measurement.Duration.Value;
 
                 _device.Save("", true);
             }

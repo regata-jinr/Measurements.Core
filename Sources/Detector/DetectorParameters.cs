@@ -34,7 +34,15 @@ namespace Measurements.Core
     {
         public string GetParameterValue(ParamCodes parCode)
         {
-            return _device.Param[parCode].ToString();
+            try
+            {
+                return _device.Param[parCode].ToString();
+            }
+            catch (Exception e)
+            {
+                Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"A problem with getting information from device. {parCode} doesn't exist.{Environment.NewLine}{e.Message}"), Handlers.ExceptionLevel.Warn);
+                return string.Empty;
+            }
         }
 
         public void SetParameterValue<T>(ParamCodes parCode, T val)
