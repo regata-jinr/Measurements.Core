@@ -107,7 +107,7 @@ namespace Measurements.Core
             try
             {
                 SaveSpectraOnDetectorToFile(ref d);
-                SaveMeasurement(ref d);
+                //SaveMeasurement(ref d);
             }
             catch (Exception e)
             {

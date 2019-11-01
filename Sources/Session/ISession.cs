@@ -8,7 +8,7 @@ namespace Measurements.Core
         void   StartMeasurements();
         void   PauseMeasurements();
         void   StopMeasurements();
-        void   SaveMeasurements();
+        //void   SaveMeasurements();
         void   ContinueMeasurements();
         void   ClearMeasurements();
         void   Dispose();

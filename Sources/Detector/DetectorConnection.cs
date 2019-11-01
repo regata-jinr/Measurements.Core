@@ -86,8 +86,9 @@ namespace Measurements.Core
         public void Reconnect()
         {
             _nLogger.Info($"Attempt to reconnect to the detector.");
-            if (_device.IsConnected) { Connect(); return; }
+            //if (_device.IsConnected) return;
             Disconnect();
+            System.Threading.Thread.Sleep(1000);
             Connect();
         }
 

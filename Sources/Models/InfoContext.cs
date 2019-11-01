@@ -10,7 +10,7 @@ namespace Measurements.Core
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer(SessionControllerSingleton.ConnectionStringBuilder.ConnectionString);
+            //optionsBuilder.UseSqlServer(SessionControllerSingleton.ConnectionStringBuilder.ConnectionString);
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

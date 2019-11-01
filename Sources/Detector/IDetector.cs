@@ -76,6 +76,7 @@ namespace Measurements.Core
         string           ErrorMessage        { get; }
         MeasurementInfo  CurrentMeasurement  { get; }
         IrradiationInfo  RelatedIrradiation  { get; }
+        string           FullFileSpectraName { get; }
 
         event EventHandler StatusChanged;
         event EventHandler<DetectorEventsArgs> AcquiringStatusChanged;

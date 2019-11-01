@@ -121,7 +121,7 @@ namespace Measurements.Core
 
         public string Type { get; set; }
 
-        public override string ToString() => $"{Name}-{Type}-{string.Join(",", ManagedDetectors.Select(d => d.Name).ToArray())}-{CountMode}-{SessionControllerSingleton.ConnectionStringBuilder.UserID}-{Note}";
+        public override string ToString() => $"{Name}-{Type}-{string.Join(",", ManagedDetectors.Select(d => d.Name).ToArray())}-{CountMode}-{Note}";
 
         /// <summary>
         /// Default constructor of the session class. This initialize field and specify some default values. For more details see the code.
@@ -136,7 +136,6 @@ namespace Measurements.Core
             CountMode                                        = CanberraDeviceAccessLib.AcquisitionModes.aCountToRealTime;
             MeasurementDone                                  += MeasurementDoneHandler;
             DetectorsListsChanged                            += SessionControllerSingleton.AvailableDetectorsChangesHaveOccurred;
-            SessionControllerSingleton.ConectionRestoreEvent += UploadLocalDataToDB;
         }
 
         /// <summary>
@@ -175,98 +174,98 @@ namespace Measurements.Core
         /// </summary>
         /// <param name="nameOfSession"></param>
         /// <param name="isBasic"></param>
-        public void SaveSession(string nameOfSession, bool isPublic = false)
-        {
-            _nLogger.Info($"Session with parameters {this} will save into DB {(isPublic ? "as public" : "as private" )} session with name '{nameOfSession}'");
+        //public void SaveSession(string nameOfSession, bool isPublic = false)
+        //{
+        //    _nLogger.Info($"Session with parameters {this} will save into DB {(isPublic ? "as public" : "as private" )} session with name '{nameOfSession}'");
 
-            try
-            {
-                if (string.IsNullOrEmpty(nameOfSession))
-                    throw new ArgumentNullException("Name of session must be specified");
-                Name = nameOfSession;
-                var sc = new InfoContext();
+        //    try
+        //    {
+        //        if (string.IsNullOrEmpty(nameOfSession))
+        //            throw new ArgumentNullException("Name of session must be specified");
+        //        Name = nameOfSession;
+        //        var sc = new InfoContext();
 
-                if (sc.Sessions.Where(s => s.Name == Name).Any())
-                    UpdateExistingSession(isPublic);
-                else
-                    SaveNewSession(isPublic);
+        //        if (sc.Sessions.Where(s => s.Name == Name).Any())
+        //            UpdateExistingSession(isPublic);
+        //        else
+        //            SaveNewSession(isPublic);
 
-            }
-            catch (ArgumentNullException are)
-            {
-                Handlers.ExceptionHandler.ExceptionNotify(this, are, Handlers.ExceptionLevel.Error);
-            }
-            catch (Microsoft.EntityFrameworkCore.DbUpdateException dbe)
-            {
-                Handlers.ExceptionHandler.ExceptionNotify(this, dbe, Handlers.ExceptionLevel.Warn);
-            }
-            catch (Exception e)
-            {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
-            }
-        }
+        //    }
+        //    catch (ArgumentNullException are)
+        //    {
+        //        Handlers.ExceptionHandler.ExceptionNotify(this, are, Handlers.ExceptionLevel.Error);
+        //    }
+        //    catch (Microsoft.EntityFrameworkCore.DbUpdateException dbe)
+        //    {
+        //        Handlers.ExceptionHandler.ExceptionNotify(this, dbe, Handlers.ExceptionLevel.Warn);
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
+        //    }
+        //}
 
 
-        private void SaveNewSession(bool isPublic)
-        {
-            try
-            {
-                var sessionContext = new InfoContext();
+        //private void SaveNewSession(bool isPublic)
+        //{
+        //    try
+        //    {
+        //        var sessionContext = new InfoContext();
 
-                string assistant = null;
-                if (!isPublic) assistant = SessionControllerSingleton.ConnectionStringBuilder.UserID;
+        //        string assistant = null;
+        //        if (!isPublic) assistant = SessionControllerSingleton.ConnectionStringBuilder.UserID;
 
-                sessionContext.Sessions.Add(new SessionInfo
-                {
-                    CountMode = this.CountMode.ToString(),
-                    Name = this.Name,
-                    Type = this.Type,
-                    Assistant = assistant,
-                    Note = this.Note,
-                    DetectorsNames = string.Join(",", ManagedDetectors.Select(n => n.Name).ToArray())
-                });
+        //        sessionContext.Sessions.Add(new SessionInfo
+        //        {
+        //            CountMode = this.CountMode.ToString(),
+        //            Name = this.Name,
+        //            Type = this.Type,
+        //            Assistant = assistant,
+        //            Note = this.Note,
+        //            DetectorsNames = string.Join(",", ManagedDetectors.Select(n => n.Name).ToArray())
+        //        });
 
-                sessionContext.SaveChanges();
-            }
-            catch (Microsoft.EntityFrameworkCore.DbUpdateException dbe)
-            {
-                Handlers.ExceptionHandler.ExceptionNotify(this, dbe, Handlers.ExceptionLevel.Warn);
-            }
-            catch (Exception e)
-            {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
-            };
-        }
+        //        sessionContext.SaveChanges();
+        //    }
+        //    catch (Microsoft.EntityFrameworkCore.DbUpdateException dbe)
+        //    {
+        //        Handlers.ExceptionHandler.ExceptionNotify(this, dbe, Handlers.ExceptionLevel.Warn);
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
+        //    };
+        //}
 
-        private void UpdateExistingSession(bool isPublic)
-        {
-            try 
-            { 
-                string assistant = null;
-                if (!isPublic) assistant = SessionControllerSingleton.ConnectionStringBuilder.UserID;
+        //private void UpdateExistingSession(bool isPublic)
+        //{
+        //    try 
+        //    { 
+        //        string assistant = null;
+        //        if (!isPublic) assistant = SessionControllerSingleton.ConnectionStringBuilder.UserID;
 
-                var sc = new InfoContext();
-                var si = sc.Sessions.Where(s => s.Name == Name).First();
+        //        var sc = new InfoContext();
+        //        var si = sc.Sessions.Where(s => s.Name == Name).First();
 
-                si.CountMode = this.CountMode.ToString();
-                si.Name = this.Name;
-                si.Type = this.Type;
-                si.Assistant = assistant;
-                si.Note = this.Note;
-                si.DetectorsNames = string.Join(",", ManagedDetectors.Select(n => n.Name).ToArray());
+        //        si.CountMode = this.CountMode.ToString();
+        //        si.Name = this.Name;
+        //        si.Type = this.Type;
+        //        si.Assistant = assistant;
+        //        si.Note = this.Note;
+        //        si.DetectorsNames = string.Join(",", ManagedDetectors.Select(n => n.Name).ToArray());
            
-                sc.Sessions.Update(si);
-                sc.SaveChanges();
-            }
-            catch (Microsoft.EntityFrameworkCore.DbUpdateException dbe)
-            {
-                Handlers.ExceptionHandler.ExceptionNotify(this, dbe, Handlers.ExceptionLevel.Warn);
-            }
-            catch (Exception e)
-            {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
-            }
-        }
+        //        sc.Sessions.Update(si);
+        //        sc.SaveChanges();
+        //    }
+        //    catch (Microsoft.EntityFrameworkCore.DbUpdateException dbe)
+        //    {
+        //        Handlers.ExceptionHandler.ExceptionNotify(this, dbe, Handlers.ExceptionLevel.Warn);
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
+        //    }
+        //}
 
         ~Session()
         {
@@ -290,7 +289,6 @@ namespace Measurements.Core
             
                 MeasurementDone -= MeasurementDoneHandler;
                 DetectorsListsChanged -= SessionControllerSingleton.AvailableDetectorsChangesHaveOccurred;
-                SessionControllerSingleton.ConectionRestoreEvent -= UploadLocalDataToDB;
                 SessionControllerSingleton.ManagedSessions.Remove(this);
             }
             _isDisposed = true;
@@ -303,171 +301,171 @@ namespace Measurements.Core
         /// serialization for save CurrentMeasurement from detector to the local storage. By default path is 'D:\LocalData'
         /// </summary>
         /// <param name="det"></param>
-        public void SaveMeasurement(ref IDetector det)
-        {
-            if (SessionControllerSingleton.TestDBConnection())
-                SaveRemotely(det);
-            else
-                SaveLocally(ref det);
-        }
+        //public void SaveMeasurement(ref IDetector det)
+        //{
+        //    if (SessionControllerSingleton.TestDBConnection())
+        //        SaveRemotely(det);
+        //    else
+        //        SaveLocally(ref det);
+        //}
 
-        /// <summary>
-        /// Save current measurement locally to the disk storage. By default folder is 'D:\LocalData'
-        /// Name of file is "dd-MM-yyyy_hh-mm"_CountryCode-ClientNumber-Year-SetNumber-SetIndex-SampleNumber.json"
-        /// </summary>
-        /// <paramref name="det">Reference to the instance of detector class</>
-        private void SaveLocally(ref IDetector det)
-        {
-            if (det.CurrentMeasurement == null || det == null) return;
+        ///// <summary>
+        ///// Save current measurement locally to the disk storage. By default folder is 'D:\LocalData'
+        ///// Name of file is "dd-MM-yyyy_hh-mm"_CountryCode-ClientNumber-Year-SetNumber-SetIndex-SampleNumber.json"
+        ///// </summary>
+        ///// <paramref name="det">Reference to the instance of detector class</>
+        //private void SaveLocally(ref IDetector det)
+        //{
+        //    if (det.CurrentMeasurement == null || det == null) return;
 
-            StreamWriter sw   = null;
-            JsonWriter writer = null;
-            try
-            {
-                _nLogger.Info($"Something wrong with connection to the data base. Information about measurement of current sample {det.CurrentMeasurement} from detector '{det.Name}' will be save locally");
+        //    StreamWriter sw   = null;
+        //    JsonWriter writer = null;
+        //    try
+        //    {
+        //        _nLogger.Info($"Something wrong with connection to the data base. Information about measurement of current sample {det.CurrentMeasurement} from detector '{det.Name}' will be save locally");
 
-                JsonSerializer serializer = new JsonSerializer();
-                serializer.NullValueHandling = NullValueHandling.Include;
+        //        JsonSerializer serializer = new JsonSerializer();
+        //        serializer.NullValueHandling = NullValueHandling.Include;
 
-                if (!Directory.Exists(@"D:\\LocalData"))
-                    Directory.CreateDirectory(@"D:\\LocalData");
+        //        if (!Directory.Exists(@"D:\\LocalData"))
+        //            Directory.CreateDirectory(@"D:\\LocalData");
 
-                sw = new StreamWriter($"D:\\LocalData\\{DateTime.Now.ToString("dd-MM-yyyy_hh-mm")}_{det.CurrentMeasurement}.json");
-                writer = new JsonTextWriter(sw);
-                serializer.Serialize(writer, det.CurrentMeasurement);
-            }
-            catch (Exception e)
-            {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
-            }
-            finally
-            {
-                sw?.Dispose();
-                writer?.Close();
-            }
-        }
+        //        sw = new StreamWriter($"D:\\LocalData\\{DateTime.Now.ToString("dd-MM-yyyy_hh-mm")}_{det.CurrentMeasurement}.json");
+        //        writer = new JsonTextWriter(sw);
+        //        serializer.Serialize(writer, det.CurrentMeasurement);
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
+        //    }
+        //    finally
+        //    {
+        //        sw?.Dispose();
+        //        writer?.Close();
+        //    }
+        //}
 
 
-        /// <summary>
-        /// Saves information about current measurement to the data base. <seealso cref="MeasurementInfo"/>
-        /// </summary>
-        /// <paramref name="det">Reference to the instance of detector class</>
-        private void SaveRemotely(IDetector det)
-        {
-            if (det.CurrentMeasurement == null || det == null) return;
-            using (var ic = new InfoContext())
-            {
-                try
-                {
-                    if (ic.Measurements.Where(m => m.Id == det.CurrentMeasurement.Id && string.IsNullOrEmpty(m.FileSpectra)).Any())
-                    {
-                        _nLogger.Info($"Information about measurement of current sample {det.CurrentMeasurement} from detector '{det.Name}' will be save to the data base");
-                        ic.Measurements.Update(det.CurrentMeasurement);
-                    }
-                    else
-                    {
-                        ic.Measurements.Add(new MeasurementInfo
-                        {
-                            IrradiationId = det.CurrentMeasurement.IrradiationId,
-                            CountryCode = det.CurrentMeasurement.CountryCode,
-                            ClientNumber = det.CurrentMeasurement.ClientNumber,
-                            Year = det.CurrentMeasurement.Year,
-                            SetNumber = det.CurrentMeasurement.SetNumber,
-                            SetIndex = det.CurrentMeasurement.SetIndex,
-                            SampleNumber = det.CurrentMeasurement.SampleNumber,
-                            Type = det.CurrentMeasurement.Type,
-                            Height = det.CurrentMeasurement.Height,
-                            DateTimeStart = det.CurrentMeasurement.DateTimeStart,
-                            Duration = det.CurrentMeasurement.Duration,
-                            DateTimeFinish = det.CurrentMeasurement.DateTimeFinish,
-                            FileSpectra = det.CurrentMeasurement.FileSpectra,
-                            Detector = det.CurrentMeasurement.Detector,
-                            Assistant = det.CurrentMeasurement.Assistant,
-                            Note = det.CurrentMeasurement.Note
-                        }
-                        );
-                    }
-                    ic.SaveChanges();
-                }
-                catch (Exception dbe)
-                {
-                    Handlers.ExceptionHandler.ExceptionNotify(this, dbe.InnerException, Handlers.ExceptionLevel.Error);
-                    SaveLocally(ref det);
-                }
-            }
-        }
+        ///// <summary>
+        ///// Saves information about current measurement to the data base. <seealso cref="MeasurementInfo"/>
+        ///// </summary>
+        ///// <paramref name="det">Reference to the instance of detector class</>
+        //private void SaveRemotely(IDetector det)
+        //{
+        //    if (det.CurrentMeasurement == null || det == null) return;
+        //    using (var ic = new InfoContext())
+        //    {
+        //        try
+        //        {
+        //            if (ic.Measurements.Where(m => m.Id == det.CurrentMeasurement.Id && string.IsNullOrEmpty(m.FileSpectra)).Any())
+        //            {
+        //                _nLogger.Info($"Information about measurement of current sample {det.CurrentMeasurement} from detector '{det.Name}' will be save to the data base");
+        //                ic.Measurements.Update(det.CurrentMeasurement);
+        //            }
+        //            else
+        //            {
+        //                ic.Measurements.Add(new MeasurementInfo
+        //                {
+        //                    IrradiationId = det.CurrentMeasurement.IrradiationId,
+        //                    CountryCode = det.CurrentMeasurement.CountryCode,
+        //                    ClientNumber = det.CurrentMeasurement.ClientNumber,
+        //                    Year = det.CurrentMeasurement.Year,
+        //                    SetNumber = det.CurrentMeasurement.SetNumber,
+        //                    SetIndex = det.CurrentMeasurement.SetIndex,
+        //                    SampleNumber = det.CurrentMeasurement.SampleNumber,
+        //                    Type = det.CurrentMeasurement.Type,
+        //                    Height = det.CurrentMeasurement.Height,
+        //                    DateTimeStart = det.CurrentMeasurement.DateTimeStart,
+        //                    Duration = det.CurrentMeasurement.Duration,
+        //                    DateTimeFinish = det.CurrentMeasurement.DateTimeFinish,
+        //                    FileSpectra = det.CurrentMeasurement.FileSpectra,
+        //                    Detector = det.CurrentMeasurement.Detector,
+        //                    Assistant = det.CurrentMeasurement.Assistant,
+        //                    Note = det.CurrentMeasurement.Note
+        //                }
+        //                );
+        //            }
+        //            ic.SaveChanges();
+        //        }
+        //        catch (Exception dbe)
+        //        {
+        //            Handlers.ExceptionHandler.ExceptionNotify(this, dbe.InnerException, Handlers.ExceptionLevel.Error);
+        //            SaveLocally(ref det);
+        //        }
+        //    }
+        //}
 
-        /// <summary>
-        /// This internal method will be call when ConnectionRestoreEvent will occur <see cref="SessionControllerSingleton.ConectionRestoreEvent"/>
-        /// It upload all files into memory via usage of desirilizer and then upload it to database.
-        /// </summary>
-        /// <returns>List of object with MeasurementInfo type that will be load to the data base. <seealso cref="MeasurementInfo"/></returns>
-        private List<MeasurementInfo> LoadMeasurementsFiles()
-        {
+        ///// <summary>
+        ///// This internal method will be call when ConnectionRestoreEvent will occur <see cref="SessionControllerSingleton.ConectionRestoreEvent"/>
+        ///// It upload all files into memory via usage of desirilizer and then upload it to database.
+        ///// </summary>
+        ///// <returns>List of object with MeasurementInfo type that will be load to the data base. <seealso cref="MeasurementInfo"/></returns>
+        //private List<MeasurementInfo> LoadMeasurementsFiles()
+        //{
          
-            StreamReader                  fileStream = null;
-            var MeasurementsInfoForUpload = new List<MeasurementInfo>();
+        //    StreamReader                  fileStream = null;
+        //    var MeasurementsInfoForUpload = new List<MeasurementInfo>();
 
-            try
-            {
-                _nLogger.Info($"Deserilization has begun");
-                var dir                       = new DirectoryInfo(@"D:\LocalData");
+        //    try
+        //    {
+        //        _nLogger.Info($"Deserilization has begun");
+        //        var dir                       = new DirectoryInfo(@"D:\LocalData");
 
-                if (!dir.Exists)
-                    return MeasurementsInfoForUpload;
+        //        if (!dir.Exists)
+        //            return MeasurementsInfoForUpload;
 
-                var files                     = dir.GetFiles("*.json").ToList();
-                string                        fileName = "";
+        //        var files                     = dir.GetFiles("*.json").ToList();
+        //        string                        fileName = "";
 
-                foreach (var file in files)
-                {
-                    fileName = file.Name;
-                    fileStream = File.OpenText(file.FullName);
-                    JsonSerializer serializer = new JsonSerializer();
-                    MeasurementsInfoForUpload.Add((MeasurementInfo)serializer.Deserialize(fileStream, typeof(MeasurementInfo)));
-                    fileStream.Close();
-                }
-            }
-            catch (Exception e)
-            {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
-            }
-            finally
-            {
-                fileStream?.Dispose();
-            }
+        //        foreach (var file in files)
+        //        {
+        //            fileName = file.Name;
+        //            fileStream = File.OpenText(file.FullName);
+        //            JsonSerializer serializer = new JsonSerializer();
+        //            MeasurementsInfoForUpload.Add((MeasurementInfo)serializer.Deserialize(fileStream, typeof(MeasurementInfo)));
+        //            fileStream.Close();
+        //        }
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
+        //    }
+        //    finally
+        //    {
+        //        fileStream?.Dispose();
+        //    }
 
-            return MeasurementsInfoForUpload;
-        }
+        //    return MeasurementsInfoForUpload;
+        //}
 
-        /// <summary>
-        /// Upload local file to the database in order to keep data after connection lost. 
-        /// In case of success loading local files wil be delete.
-        /// </summary>
-        private void UploadLocalDataToDB()
-        {
-            var fileList = LoadMeasurementsFiles();
-            if (fileList.Count == 0) return;
+        ///// <summary>
+        ///// Upload local file to the database in order to keep data after connection lost. 
+        ///// In case of success loading local files wil be delete.
+        ///// </summary>
+        //private void UploadLocalDataToDB()
+        //{
+        //    var fileList = LoadMeasurementsFiles();
+        //    if (fileList.Count == 0) return;
 
-            using (var ic = new InfoContext())
-            {
-                try
-                {
-                    _nLogger.Info($"Local data has found. It will deserialize, load into db and then delete from local storage");
+        //    using (var ic = new InfoContext())
+        //    {
+        //        try
+        //        {
+        //            _nLogger.Info($"Local data has found. It will deserialize, load into db and then delete from local storage");
 
-                    ic.Measurements.UpdateRange(fileList);
-                    ic.SaveChanges();
-                    var dir   = new DirectoryInfo(@"D:\LocalData");
-                    var files = dir.GetFiles("*.json").ToList();
-                    foreach (var file in files)
-                        file.Delete();
-                }
-                catch (Exception e)
-                {
-                    Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
-                }
-            }
-        }
+        //            ic.Measurements.UpdateRange(fileList);
+        //            ic.SaveChanges();
+        //            var dir   = new DirectoryInfo(@"D:\LocalData");
+        //            var files = dir.GetFiles("*.json").ToList();
+        //            foreach (var file in files)
+        //                file.Delete();
+        //        }
+        //        catch (Exception e)
+        //        {
+        //            Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
+        //        }
+        //    }
+        //}
 
     } // Session
 }     // Measurements.Core

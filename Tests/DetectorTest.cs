@@ -10,7 +10,7 @@ namespace Measurements.Core.Tests
    //TODO: add correct sequence for tests
     public class Detectors
     {
-        public Detector d1;
+        public IDetector d1;
 
         public MeasurementInfo measurement1;
         public MeasurementInfo measurement2;
@@ -78,6 +78,7 @@ namespace Measurements.Core.Tests
         }
     }
 
+    [TestCaseOrderer("Measurements.Core.Tests.PriorityOrderer", "MeasurementsCore")]
     public class DetectorsTest : IClassFixture<Detectors>
     {
         private readonly ITestOutputHelper output;
@@ -92,13 +93,13 @@ namespace Measurements.Core.Tests
             this.output = output;
         }
 
-        [Fact]
+        [Fact, TestPriority(0)]
         public void Logs()
         {
             Assert.True(System.IO.File.Exists($"{System.IO.Directory.GetCurrentDirectory()}\\MeasurementsLogs\\{DateTime.Now.ToString("yyyy-MM-dd")}.log"));
         }
 
-        [Fact]
+        [Fact, TestPriority(1)]
         public void Initialization()
         {
             Assert.Equal("D1", _detectors.d1.Name);
@@ -110,7 +111,7 @@ namespace Measurements.Core.Tests
             Assert.False(_detectors.d1.IsPaused);
         }
 
-        [Fact]
+        [Fact, TestPriority(2)]
         public void Connection()
         {
             Assert.True(_detectors.d1.IsConnected);
@@ -119,14 +120,16 @@ namespace Measurements.Core.Tests
             Assert.Equal(DetectorStatus.off, _detectors.d1.Status);
             Assert.False(_detectors.d1.IsConnected);
             _detectors.d1.Connect();
+            System.Threading.Thread.Sleep(1000);
             Assert.True(_detectors.d1.IsConnected);
             Assert.Equal(DetectorStatus.ready, _detectors.d1.Status);
             _detectors.d1.Reconnect();
+            System.Threading.Thread.Sleep(1000);
             Assert.True(_detectors.d1.IsConnected);
             Assert.Equal(DetectorStatus.ready, _detectors.d1.Status);
         }
 
-        [Fact]
+        [Fact, TestPriority(3)]
         public void LoadInformationToDevice()
         {
             Assert.True(_detectors.d1.IsConnected);
@@ -146,7 +149,7 @@ namespace Measurements.Core.Tests
             Assert.Equal("0", _detectors.d1.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_F_SSYSERR));
             Assert.Equal("0", _detectors.d1.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_F_SSYSTERR));
             Assert.Equal(_detectors.measurement1.Type, _detectors.d1.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_T_STYPE));
-            Assert.Equal(_detectors.measurement1.Height.Value.ToString(), _detectors.d1.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_T_SGEOMTRY));
+            Assert.Equal(_detectors.measurement1.Height.Value.ToString("f2"), _detectors.d1.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_T_SGEOMTRY));
             Assert.Equal("IRRAD", _detectors.d1.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_T_BUILDUPTYPE));
 
 
@@ -166,12 +169,12 @@ namespace Measurements.Core.Tests
             Assert.Equal("0", _detectors.d1.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_F_SSYSERR));
             Assert.Equal("0", _detectors.d1.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_F_SSYSTERR));
             Assert.Equal(_detectors.measurement2.Type, _detectors.d1.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_T_STYPE));
-            Assert.Equal(_detectors.measurement2.Height.Value.ToString(), _detectors.d1.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_T_SGEOMTRY));
+            Assert.Equal(_detectors.measurement2.Height.Value.ToString("f2"), _detectors.d1.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_T_SGEOMTRY));
             Assert.Equal("IRRAD", _detectors.d1.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_T_BUILDUPTYPE));
         }
 
 
-        [Fact]
+        [Fact, TestPriority(4)]
         public void Calibration()
         {
             _detectors.d1.LoadMeasurementInfoToDevice(_detectors.measurement2, _detectors.relatedIrradiation2);
@@ -182,32 +185,50 @@ namespace Measurements.Core.Tests
 
         }
 
-        [Fact]
-        public void StartStopStartStopSave()
+        [Fact, TestPriority(5)]
+        public void StartStopPauseClear()
         {
-           
-          
+            _detectors.d1.LoadMeasurementInfoToDevice(_detectors.measurement2, _detectors.relatedIrradiation2);
+            _detectors.d1.Start();
 
+            System.Threading.Thread.Sleep(2000);
+            Assert.Equal(DetectorStatus.busy, _detectors.d1.Status);
+            Assert.NotEqual(0, _detectors.d1.ElapsedRealTime);
+
+            _detectors.d1.Pause();
+
+            Assert.Equal(DetectorStatus.ready, _detectors.d1.Status);
+            Assert.Equal(2, _detectors.d1.ElapsedRealTime,0);
 
             _detectors.d1.Start();
 
             System.Threading.Thread.Sleep(2000);
             Assert.Equal(DetectorStatus.busy, _detectors.d1.Status);
-            Assert.NotEqual(0, Double.Parse(_detectors.d1.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_EREAL)), 2);
+            Assert.NotEqual(2, _detectors.d1.ElapsedRealTime);
+
+            _detectors.d1.Pause();
+            _detectors.d1.Clear();
+
+            Assert.Equal(0, _detectors.d1.ElapsedRealTime);
+
             _detectors.d1.Stop();
 
             Assert.Equal(DetectorStatus.ready, _detectors.d1.Status);
-            Assert.Equal(2, (int)Double.Parse(_detectors.d1.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_EREAL)));
+        }
+
+        [Fact, TestPriority(6)]
+        public void Save()
+        {
+
+            _detectors.d1.LoadMeasurementInfoToDevice(_detectors.measurement1, _detectors.relatedIrradiation1);
             _detectors.d1.Start();
-            System.Threading.Thread.Sleep(2000);
-            Assert.Equal(DetectorStatus.busy, _detectors.d1.Status);
-            Assert.NotEqual(2, Double.Parse(_detectors.d1.GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_EREAL)), 2);
+
+            System.Threading.Thread.Sleep(3000);
+
             _detectors.d1.Stop();
-            _detectors.d1.Save();
 
-            Assert.Equal(DetectorStatus.ready, _detectors.d1.Status);
-
-            System.Threading.Thread.Sleep(1000);
+            _detectors.d1.Save(@"D:\TestSpectra.cnf");
+            
             Assert.True(System.IO.File.Exists(_detectors.d1.FullFileSpectraName));
 
             f1.Open(_detectors.d1.FullFileSpectraName);
@@ -232,7 +253,7 @@ namespace Measurements.Core.Tests
             Assert.False(System.IO.File.Exists(_detectors.d1.FullFileSpectraName));
         }
 
-        [Fact]
+        [Fact, TestPriority(7)]
         public void Disconnections()
         {
             System.Threading.Thread.Sleep(2000);

@@ -222,6 +222,7 @@
     <Compile Include="Tests\InfoesTest.cs" />
     <Compile Include="Tests\SessionControllerSingletonTest.cs" />
     <Compile Include="Tests\SessionTest.cs" />
+    <Compile Include="Tests\TestOrder.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="NLog.config">

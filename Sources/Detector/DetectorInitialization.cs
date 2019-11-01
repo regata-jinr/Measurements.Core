@@ -46,7 +46,6 @@ namespace Measurements.Core
                 _isDisposed        = false;
                 Status             = DetectorStatus.off;
                 ErrorMessage       = "";
-                AcquisitionMode    = AcquisitionModes.aCountToRealTime;
                 _device            = new DeviceAccessClass();
                 CurrentMeasurement = new MeasurementInfo();
 
@@ -60,6 +59,8 @@ namespace Measurements.Core
                 IsPaused               = false;
 
                 Connect();
+
+                AcquisitionMode    = AcquisitionModes.aCountToRealTime;
             }
             catch (Exception e)
             {
