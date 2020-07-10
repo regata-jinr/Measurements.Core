@@ -46,7 +46,7 @@ namespace Measurements.Core
         /// <summary>
         /// The list of MCA devices available for usage. This list forms via MCA databases provided by Canberra DeviceAccessClass
         /// </summary>
-        public static List<IDetector> AvailableDetectors { get; private set; }
+        public static List<IDetector>             AvailableDetectors      { get; private set; }
 
         /// <summary>
         /// This internal method add detector to the list of available detectors for usage

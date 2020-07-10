@@ -294,10 +294,8 @@ namespace Measurements.Core
             _isDisposed = true;
         }
 
-        // TODO: Change to SqlConnection.State
         /// <summary>
-        /// Checks if connection to db is available.
-        /// In case of success save current measurement on detector to db, in the other case use
+        /// Checks if connection to db is available. In case of success save current measurement on detector to db, in the other case use
         /// serialization for save CurrentMeasurement from detector to the local storage. By default path is 'D:\LocalData'
         /// </summary>
         /// <param name="det"></param>

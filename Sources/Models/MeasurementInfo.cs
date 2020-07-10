@@ -16,10 +16,6 @@ namespace Measurements.Core
         [SourceMember(nameof(IrradiationInfo.Id))]
         public int        IrradiationId  { get; set; }
         [Required]
-        public DateTime   IrrJournalDate { get; set; }
-        [Ignore]
-        public int?       LoadNumber     { get; set; }
-        [Required]
         public string     CountryCode    { get; set; }
         [Required]
         public string     ClientNumber   { get; set; }
