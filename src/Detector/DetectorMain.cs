@@ -123,6 +123,10 @@ namespace Measurements.Core
                     _device.Connect(_name, _conOption);
                     Status = DetectorStatus.ready;
                     c.ThrowIfCancellationRequested();
+<<<<<<< HEAD:src/Detector/DetectorMain.cs
+=======
+
+>>>>>>> master:Sources/Detector/DetectorMain.cs
                 }
                 catch (Exception e)
                 {
@@ -356,8 +360,12 @@ namespace Measurements.Core
                 if (Status == DetectorStatus.ready)
                     return;
                 _nLogger.Info($"Attempt to stop the acquiring");
+<<<<<<< HEAD:src/Detector/DetectorMain.cs
                 _device.AcquireStop(StopOptions.aNormalStop);
                 //_device.SendCommand(DeviceCommands.aStop); // use command sending because in this case it will generate AcquireDone message
+=======
+                _device.SendCommand(DeviceCommands.aStop); // use command sending because in this case it will generate AcquireDone message
+>>>>>>> master:Sources/Detector/DetectorMain.cs
                 IsPaused = false;
                 Status = DetectorStatus.ready;
                 _nLogger.Info($"Stop was successful. Acquire done event will be generate. Detector ready to acquire again");

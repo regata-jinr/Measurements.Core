@@ -20,8 +20,7 @@
       <HintPath>refs\Interop.CanberraDataAccessLib.dll</HintPath>
     </Reference>
     <Reference Include="Interop.CanberraDeviceAccessLib">
-        <HintPath>refs\Interop.CanberraDeviceAccessLib.dll</HintPath>
-          </Reference>
+      <HintPath>refs\Interop.CanberraDeviceAccessLib.dll</HintPath>
+    </Reference>
   </ItemGroup>
-
 </Project>
