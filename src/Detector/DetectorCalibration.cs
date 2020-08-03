@@ -1,7 +1,7 @@
 ﻿/***************************************************************************
  *                                                                         *
  *                                                                         *
- * Copyright(c) 2017-2019, REGATA Experiment at FLNP|JINR                  *
+ * Copyright(c) 2017-2020, REGATA Experiment at FLNP|JINR                  *
  * Author: [Boris Rumyantsev](mailto:bdrum@jinr.ru)                        *
  * All rights reserved                                                     *
  *                                                                         *
@@ -27,73 +27,74 @@
 
 using System;
 using System.IO;
+using Regata.Measurements.Managers;
 
-namespace Measurements.Core
+namespace Regata.Measurements.Devices
 {
-    public partial class Detector : IDetector, IDisposable
+  public partial class Detector : IDisposable
+  {
+    public void AddEfficiencyCalibrationFileByHeight(decimal height)
     {
-        public void AddEfficiencyCalibrationFileByHeight(decimal height)
-        {
-            try
-            {
-                // fixme: here some problem with matching decimal values with combobox selected value
-                //        conflict is possible in such manner: 20.0 == 20
-                if (height == 20)   height = 20m;
-                if (height == 10)   height = 10m;
-                if (height == 5)    height = 5m;
-                if (height == 2.5m) height = 2.5m;
+      try
+      {
+        // fixme: here some problem with matching decimal values with combobox selected value
+        //        conflict is possible in such manner: 20.0 == 20
+        if (height == 20) height = 20m;
+        if (height == 10) height = 10m;
+        if (height == 5) height = 5m;
+        if (height == 2.5m) height = 2.5m;
 
-                string effFileName = $"C:\\GENIE2K\\CALFILES\\Efficiency\\{Name}\\{Name}-eff-{height.ToString().Replace('.', ',')}.CAL";
+        string effFileName = $"C:\\GENIE2K\\CALFILES\\Efficiency\\{Name}\\{Name}-eff-{height.ToString().Replace('.', ',')}.CAL";
 
-                if (!File.Exists(effFileName))
-                    throw new FileNotFoundException($"Efficiency file {effFileName} not found!");
-
-                
-                _nLogger.Info($"Efficiency file {effFileName} will add to the detector");
-                var effFile = new CanberraDataAccessLib.DataAccess();
-                effFile.Open(effFileName);
-                effFile.CopyBlock(_device, CanberraDataAccessLib.ClassCodes.CAM_CLS_GEOM);
-                effFile.Close();
-                _device.Save("", true);
-            }
-            catch (FileNotFoundException fnfe)
-            {
-                Handlers.ExceptionHandler.ExceptionNotify(this, fnfe, Handlers.ExceptionLevel.Warn);
-            }
-            catch (Exception e)
-            {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
-            }
-        }
+        if (!File.Exists(effFileName))
+          throw new FileNotFoundException($"Efficiency file {effFileName} not found!");
 
 
-        public void AddEfficiencyCalibrationFileByEnergy()
-        {
-            try
-            {
-                string effFileName = $"C:\\GENIE2K\\CALFILES\\Efficiency\\{Name}\\{Name}-energy.CAL";
-
-                if (!File.Exists(effFileName))
-                    throw new FileNotFoundException($"Efficiency file {effFileName} not found!");
-
-                _nLogger.Info($"Efficiency file {effFileName} will add to the detector");
-                var effFile = new CanberraDataAccessLib.DataAccess();
-                effFile.Open(effFileName);
-                effFile.CopyBlock(_device, CanberraDataAccessLib.ClassCodes.CAM_CLS_SHAPECALRES);
-                effFile.CopyBlock(_device, CanberraDataAccessLib.ClassCodes.CAM_CLS_CALRESULTS);
-                effFile.Close();
-                _device.Save("", true);
-            }
-            catch (FileNotFoundException fnfe)
-            {
-                Handlers.ExceptionHandler.ExceptionNotify(this, fnfe, Handlers.ExceptionLevel.Warn);
-            }
-            catch (Exception e)
-            {
-                Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
-            }
-        }
-
+        _nLogger.Info($"Efficiency file {effFileName} will add to the detector");
+        var effFile = new CanberraDataAccessLib.DataAccess();
+        effFile.Open(effFileName);
+        effFile.CopyBlock(_device, CanberraDataAccessLib.ClassCodes.CAM_CLS_GEOM);
+        effFile.Close();
+        _device.Save("", true);
+      }
+      catch (FileNotFoundException fnfe)
+      {
+        NotificationManager.Notify(fnfe, NotificationLevel.Warning, AppManager.Sender);
+      }
+      catch (Exception e)
+      {
+        NotificationManager.Notify(e, NotificationLevel.Error, AppManager.Sender);
+      }
     }
+
+
+    public void AddEfficiencyCalibrationFileByEnergy()
+    {
+      try
+      {
+        string effFileName = $"C:\\GENIE2K\\CALFILES\\Efficiency\\{Name}\\{Name}-energy.CAL";
+
+        if (!File.Exists(effFileName))
+          throw new FileNotFoundException($"Efficiency file {effFileName} not found!");
+
+        _nLogger.Info($"Efficiency file {effFileName} will add to the detector");
+        var effFile = new CanberraDataAccessLib.DataAccess();
+        effFile.Open(effFileName);
+        effFile.CopyBlock(_device, CanberraDataAccessLib.ClassCodes.CAM_CLS_SHAPECALRES);
+        effFile.CopyBlock(_device, CanberraDataAccessLib.ClassCodes.CAM_CLS_CALRESULTS);
+        effFile.Close();
+        _device.Save("", true);
+      }
+      catch (FileNotFoundException fnfe)
+      {
+        NotificationManager.Notify(fnfe, NotificationLevel.Warning, AppManager.Sender);
+      }
+      catch (Exception e)
+      {
+        NotificationManager.Notify(e, NotificationLevel.Error, AppManager.Sender);
+      }
+    }
+
+  }
 }
 

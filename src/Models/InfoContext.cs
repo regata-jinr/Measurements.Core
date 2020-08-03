@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace Measurements.Core
+namespace Regata.Measurements.Models
 {
   public class InfoContext : DbContext
   {

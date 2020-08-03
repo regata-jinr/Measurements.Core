@@ -1,7 +1,7 @@
 ﻿/***************************************************************************
  *                                                                         *
  *                                                                         *
- * Copyright(c) 2017-2019, REGATA Experiment at FLNP|JINR                  *
+ * Copyright(c) 2017-2020, REGATA Experiment at FLNP|JINR                  *
  * Author: [Boris Rumyantsev](mailto:bdrum@jinr.ru)                        *
  * All rights reserved                                                     *
  *                                                                         *
@@ -27,60 +27,61 @@
 
 using System;
 using CanberraDeviceAccessLib;
+using Regata.Measurements.Managers;
 
-namespace Measurements.Core
+namespace Regata.Measurements.Devices
 {
-    public partial class Detector : IDetector, IDisposable
+  public partial class Detector : IDisposable
+  {
+    public string GetParameterValue(ParamCodes parCode)
     {
-        public string GetParameterValue(ParamCodes parCode)
-        {
-            try
-            {
-                return _device.Param[parCode].ToString();
-            }
-            catch (Exception e)
-            {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"A problem with getting information from device. {parCode} doesn't exist.{Environment.NewLine}{e.Message}"), Handlers.ExceptionLevel.Warn);
-                return string.Empty;
-            }
-        }
-
-        public void SetParameterValue<T>(ParamCodes parCode, T val)
-        {
-            try
-            {
-                if (val == null)
-                    throw new ArgumentNullException($"{parCode} can't be a null");
-
-                _device.Param[parCode] = val;
-                _device.Save("", true);
-            }
-            catch (ArgumentNullException ae)
-            {
-                Handlers.ExceptionHandler.ExceptionNotify(this, ae, Handlers.ExceptionLevel.Warn);
-            }
-            catch (Exception e)
-            {
-                Handlers.ExceptionHandler.ExceptionNotify(this, new Exception($"A problem with saving information to file. {parCode} can't has a value {val}"), Handlers.ExceptionLevel.Warn);
-            }
-        }
-
-        public bool IsHV               => _device.HighVoltage.On;
-        public int PresetRealTime      => int.Parse(GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_PREAL));
-        public int PresetLiveTime      => int.Parse(GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_PLIVE));
-        public decimal ElapsedRealTime => decimal.Parse(GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_EREAL));
-        public decimal ElapsedLiveTime => decimal.Parse(GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_ELIVE));
-      
-        public decimal DeadTime
-        {
-            get
-            {
-                if (ElapsedRealTime == 0)
-                    return 0;
-                else
-                    return Math.Round(100 * (1 - ElapsedLiveTime / ElapsedRealTime), 2);
-            }
-        }
+      try
+      {
+        return _device.Param[parCode].ToString();
+      }
+      catch (Exception e)
+      {
+        NotificationManager.Notify(new Exception($"A problem with getting information from device. {parCode} doesn't exist.{Environment.NewLine}{e.Message}"), NotificationLevel.Warning, AppManager.Sender);
+        return string.Empty;
+      }
     }
+
+    public void SetParameterValue<T>(ParamCodes parCode, T val)
+    {
+      try
+      {
+        if (val == null)
+          throw new ArgumentNullException($"{parCode} can't be a null");
+
+        _device.Param[parCode] = val;
+        _device.Save("", true);
+      }
+      catch (ArgumentNullException ae)
+      {
+        NotificationManager.Notify(ae, NotificationLevel.Warning, AppManager.Sender);
+      }
+      catch (Exception e)
+      {
+        NotificationManager.Notify(new Exception($"A problem with saving information to file. {parCode} can't has a value {val}"), NotificationLevel.Warning, AppManager.Sender);
+      }
+    }
+
+    public bool IsHV => _device.HighVoltage.On;
+    public int PresetRealTime => int.Parse(GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_PREAL));
+    public int PresetLiveTime => int.Parse(GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_PLIVE));
+    public decimal ElapsedRealTime => decimal.Parse(GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_EREAL));
+    public decimal ElapsedLiveTime => decimal.Parse(GetParameterValue(CanberraDeviceAccessLib.ParamCodes.CAM_X_ELIVE));
+
+    public decimal DeadTime
+    {
+      get
+      {
+        if (ElapsedRealTime == 0)
+          return 0;
+        else
+          return Math.Round(100 * (1 - ElapsedLiveTime / ElapsedRealTime), 2);
+      }
+    }
+  }
 }
 

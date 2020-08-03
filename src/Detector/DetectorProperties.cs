@@ -30,8 +30,10 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using CanberraDeviceAccessLib;
+using Regata.Measurements.Managers;
+using Regata.Measurements.Models;
 
-namespace Measurements.Core
+namespace Regata.Measurements.Devices
 {
   /// <summary>
   ///  Enumeration of possible detector's working statuses
@@ -42,13 +44,7 @@ namespace Measurements.Core
   /// </summary>
   public enum DetectorStatus { off, ready, busy, error }
 
-  /// <summary>
-  /// Detector is one of the main class, because detector is the main part of our experiment. It allows to manage real detector and has protection from crashes. You can start, stop and do any basics operations which you have with detector via mvcg.exe. This software based on dlls provided by [Genie2000] (https://www.mirion.com/products/genie-2000-basic-spectroscopy-software) for interactions with [HPGE](https://www.mirion.com/products/standard-high-purity-germanium-detectors) detectors also from [Mirion Tech.](https://www.mirion.com). Personally we are working with [Standard Electrode Coaxial Ge Detectors](https://www.mirion.com/products/sege-standard-electrode-coaxial-ge-detectors)
-  /// </summary>
-  /// <seealso cref="https://www.mirion.com/products/genie-2000-basic-spectroscopy-software"/>
-
-
-  public partial class Detector : IDetector, IDisposable
+  public partial class Detector : IDisposable
   {
     private readonly DeviceAccessClass _device;
     private readonly string _name;
@@ -81,13 +77,13 @@ namespace Measurements.Core
         {
           Status = DetectorStatus.error;
           ErrorMessage = $"Detector with name '{name}' wasn't find in the MID wizard list. Status will change to 'error'";
-          Handlers.ExceptionHandler.ExceptionNotify(this, new ArgumentException(ErrorMessage), Handlers.ExceptionLevel.Error);
+          NotificationManager.Notify(new ArgumentException(ErrorMessage), NotificationLevel.Error, AppManager.Sender);
           return false;
         }
       }
       catch (Exception e)
       {
-        Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
+        NotificationManager.Notify(e, NotificationLevel.Error, AppManager.Sender);
         return false;
       }
     }
@@ -114,7 +110,7 @@ namespace Measurements.Core
     /// </summary>
     public string ErrorMessage { get; private set; }
 
-  }
+  } //  public partial class Detector : IDisposable
 
   /// <summary>
   /// This class shared information about events occured on the detector between callers.
@@ -126,4 +122,5 @@ namespace Measurements.Core
     public int AcquireMessageParam;
     public string Message;
   }
-}
+
+} // namespace Regata.Measurements.Devices
