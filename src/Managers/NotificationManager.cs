@@ -24,6 +24,7 @@ namespace Regata.Measurements.Managers
   public enum NotificationLevel { Error, Info, Warning, Success }
   public static class NotificationManager
   {
+    // TODO: add subscriptions
     public static List<string> _mailSubs;
 
     public static void SubscribeEmail(string email)

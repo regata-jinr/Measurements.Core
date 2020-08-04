@@ -9,6 +9,11 @@
  ***************************************************************************/
 
 using System;
+using System.Linq;
+using System.Collections.Generic;
+using System.IO;
+using System.Text.Json;
+using Regata.Measurements.Models;
 
 namespace Regata.Measurements.Managers
 {
@@ -34,6 +39,48 @@ namespace Regata.Measurements.Managers
       }
     }
 
+    /// <summary>
+    /// This internal method will be call when ConnectionRestoreEvent will occur <see cref="SessionControllerSingleton.ConectionRestoreEvent"/>
+    /// It upload all files into memory via usage of desirilizer and then upload it to database.
+    /// </summary>
+    /// <returns>List of object with MeasurementInfo type that will be load to the data base. <seealso cref="MeasurementInfo"/></returns>
+    private static List<MeasurementInfo> LoadMeasurementsFiles()
+    {
+
+      StreamReader fileStream = null;
+      var MeasurementsInfoForUpload = new List<MeasurementInfo>();
+
+      try
+      {
+        logger.Info($"Deserilization has begun");
+        var dir = new DirectoryInfo(@"D:\MeasurementsLocalData");
+
+        if (!dir.Exists)
+          return MeasurementsInfoForUpload;
+
+        var files = dir.GetFiles("*.json").ToList();
+        string fileName = "";
+
+        foreach (var file in files)
+        {
+          // fileName = file.Name;
+          // fileStream = File.OpenText(file.FullName);
+          // JsonSerializer serializer = new JsonSerializer();
+          // MeasurementsInfoForUpload.Add((MeasurementInfo)serializer.Deserialize(fileStream, typeof(MeasurementInfo)));
+          // fileStream.Close();
+        }
+      }
+      catch (Exception e)
+      {
+        NotificationManager.Notify(e, NotificationLevel.Error, Sender);
+      }
+      finally
+      {
+        fileStream?.Dispose();
+      }
+
+      return MeasurementsInfoForUpload;
+    }
 
     public static bool CheckLocalStorage()
     {

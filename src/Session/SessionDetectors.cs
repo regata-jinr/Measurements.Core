@@ -1,7 +1,7 @@
 /***************************************************************************
  *                                                                         *
  *                                                                         *
- * Copyright(c) 2017-2019, REGATA Experiment at FLNP|JINR                  *
+ * Copyright(c) 2017-2020, REGATA Experiment at FLNP|JINR                  *
  * Author: [Boris Rumyantsev](mailto:bdrum@jinr.ru)                        *
  * All rights reserved                                                     *
  *                                                                         *
@@ -12,8 +12,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
+using Microsoft.Data.SqlClient;
+using Regata.Measurements.Devices;
+using Regata.Measurements.Managers;
 
-namespace Measurements.Core
+namespace Regata.Measurements
 {
   // this file contains methods that related with managing of detector
   // Session class divided by few files:
@@ -22,7 +25,7 @@ namespace Measurements.Core
   // ├── SessionInfo.cs             - contains fields of Session for EF core interaction
   // └── SessionMain.cs             - contains general fields and methods of the Session class.
 
-  public partial class Session : ISession, IDisposable
+  public partial class Session : IDisposable
   {
     /// <summary>
     /// Start asquisition process on all managed detectors by the session
@@ -35,7 +38,7 @@ namespace Measurements.Core
         {
           if (det.CurrentMeasurement == null || det.RelatedIrradiation == null)
           {
-            Handlers.ExceptionHandler.ExceptionNotify(this, new ArgumentNullException($"User should initialize sample on the detector {det.Name} before start of measurement"), Handlers.ExceptionLevel.Warn);
+            NotificationManager.Notify(new ArgumentNullException($"User should initialize sample on the detector {det.Name} before start of measurement"), NotificationLevel.Warning, AppManager.Sender);
             break;
           }
 
@@ -45,7 +48,7 @@ namespace Measurements.Core
       }
       catch (Exception e)
       {
-        Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
+        NotificationManager.Notify(e, NotificationLevel.Error, AppManager.Sender);
       }
     }
 
@@ -63,11 +66,11 @@ namespace Measurements.Core
       }
       catch (Exception e)
       {
-        Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
+        NotificationManager.Notify(e, NotificationLevel.Error, AppManager.Sender);
       }
     }
 
-    public void StopMeasurementsOnDetector(ref IDetector det)
+    public void StopMeasurementsOnDetector(ref Detector det)
     {
       try
       {
@@ -76,7 +79,7 @@ namespace Measurements.Core
       }
       catch (Exception e)
       {
-        Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
+        NotificationManager.Notify(e, NotificationLevel.Error, AppManager.Sender);
       }
     }
 
@@ -84,12 +87,12 @@ namespace Measurements.Core
     /// Save asquisition process on specified detector into the cnf file
     /// Name of file will generate automatically <see cref="GenerateFileSpectraName(string)"/>
     /// </summary>.
-    public void SaveSpectraOnDetectorToFile(ref IDetector d)
+    public void SaveSpectraOnDetectorToFile(ref Detector d)
     {
       try
       {
         if (!string.IsNullOrEmpty(d.CurrentMeasurement.FileSpectra))
-          Handlers.ExceptionHandler.ExceptionNotify(this, new ArgumentException($"Current sample '{d.CurrentMeasurement}' from detector {d.Name} already has the name of FileSpectra - '{d.CurrentMeasurement.FileSpectra}'. New file will be create and new record will be added to db, the old one will not modify."), Handlers.ExceptionLevel.Warn);
+          NotificationManager.Notify(new ArgumentException($"Current sample '{d.CurrentMeasurement}' from detector {d.Name} already has the name of FileSpectra - '{d.CurrentMeasurement.FileSpectra}'. New file will be create and new record will be added to db, the old one will not modify."), NotificationLevel.Warning, AppManager.Sender);
 
 
         d.CurrentMeasurement.FileSpectra = GenerateFileSpectraName(d.Name);
@@ -98,11 +101,11 @@ namespace Measurements.Core
       }
       catch (Exception e)
       {
-        Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
+        NotificationManager.Notify(e, NotificationLevel.Error, AppManager.Sender);
       };
     }
 
-    public void SaveSpectraOnDetectorToFileAndDataBase(ref IDetector d)
+    public void SaveSpectraOnDetectorToFileAndDataBase(ref Detector d)
     {
       try
       {
@@ -111,7 +114,7 @@ namespace Measurements.Core
       }
       catch (Exception e)
       {
-        Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
+        NotificationManager.Notify(e, NotificationLevel.Error, AppManager.Sender);
       };
     }
 
@@ -128,7 +131,7 @@ namespace Measurements.Core
       }
       catch (Exception e)
       {
-        Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
+        NotificationManager.Notify(e, NotificationLevel.Error, AppManager.Sender);
       };
     }
 
@@ -146,7 +149,7 @@ namespace Measurements.Core
       }
       catch (Exception e)
       {
-        Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
+        NotificationManager.Notify(e, NotificationLevel.Error, AppManager.Sender);
       };
     }
 
@@ -163,7 +166,7 @@ namespace Measurements.Core
       }
       catch (Exception e)
       {
-        Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
+        NotificationManager.Notify(e, NotificationLevel.Error, AppManager.Sender);
       };
     }
 
@@ -179,14 +182,14 @@ namespace Measurements.Core
       _nLogger.Info($"will take a control for detector '{dName}'");
       try
       {
-        if (SessionControllerSingleton.AvailableDetectors == null || SessionControllerSingleton.AvailableDetectors.Count == 0)
+        if (AppManager.AvailableDevices == null || AppManager.AvailableDevices.Count == 0)
           throw new InvalidOperationException();
 
-        var det = SessionControllerSingleton.AvailableDetectors.Find(d => d.Name == dName);
+        var det = AppManager.AvailableDevices[dName];
         if (det != null)
         {
           ManagedDetectors.Add(det);
-          SessionControllerSingleton.AvailableDetectors.Remove(det);
+          AppManager.AvailableDevices.Remove(dName);
           det.AcquiringStatusChanged += ProcessAcquiringMessage;
           _nLogger.Info($"successfuly attached detector {det.Name}");
           DetectorsListsChanged?.Invoke();
@@ -196,15 +199,15 @@ namespace Measurements.Core
       }
       catch (ArgumentNullException ae)
       {
-        Handlers.ExceptionHandler.ExceptionNotify(this, ae, Handlers.ExceptionLevel.Error);
+        NotificationManager.Notify(ae, NotificationLevel.Error, AppManager.Sender);
       }
       catch (InvalidOperationException ie)
       {
-        Handlers.ExceptionHandler.ExceptionNotify(this, ie, Handlers.ExceptionLevel.Error);
+        NotificationManager.Notify(ie, NotificationLevel.Error, AppManager.Sender);
       }
       catch (Exception e)
       {
-        Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
+        NotificationManager.Notify(e, NotificationLevel.Error, AppManager.Sender);
       }
     }
     /// <summary>
@@ -223,7 +226,7 @@ namespace Measurements.Core
         var det = ManagedDetectors.Find(d => d.Name == dName);
         if (det != null)
         {
-          SessionControllerSingleton.AvailableDetectors.Add(det);
+          AppManager.AvailableDevices.Add(dName, det);
           ManagedDetectors.Remove(det);
           det.AcquiringStatusChanged -= ProcessAcquiringMessage;
           _nLogger.Info($"Successfuly detached detector {det.Name}");
@@ -234,15 +237,15 @@ namespace Measurements.Core
       }
       catch (ArgumentNullException ae)
       {
-        Handlers.ExceptionHandler.ExceptionNotify(this, ae, Handlers.ExceptionLevel.Error);
+        NotificationManager.Notify(ae, NotificationLevel.Error, AppManager.Sender);
       }
       catch (InvalidOperationException ie)
       {
-        Handlers.ExceptionHandler.ExceptionNotify(this, ie, Handlers.ExceptionLevel.Error);
+        NotificationManager.Notify(ie, NotificationLevel.Error, AppManager.Sender);
       }
       catch (Exception e)
       {
-        Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
+        NotificationManager.Notify(e, NotificationLevel.Error, AppManager.Sender);
       }
     }
 
@@ -253,18 +256,18 @@ namespace Measurements.Core
     /// </summary>
     /// <param name="det">Detector that generated event of measurements has done</param>
     /// <param name="eventArgs"></param>
-    private void MeasurementDoneHandler(string detName)
-    {
-      _nLogger.Info($"Detector {detName} has done measurement process");
-      _countOfDetectorsWichDone++;
+    // private void MeasurementDoneHandler(string detName)
+    // {
+    //   _nLogger.Info($"Detector {detName} has done measurement process");
+    //   _countOfDetectorsWichDone++;
 
-      if (_countOfDetectorsWichDone == ManagedDetectors.Count)
-      {
-        _nLogger.Info($"All detectors [{(string.Join(",", ManagedDetectors.Select(d => d.Name).ToArray()))}] has done measurement process");
-        _countOfDetectorsWichDone = 0;
-        SessionComplete?.Invoke();
-      }
-    }
+    //   if (_countOfDetectorsWichDone == ManagedDetectors.Count)
+    //   {
+    //     _nLogger.Info($"All detectors [{(string.Join(",", ManagedDetectors.Select(d => d.Name).ToArray()))}] has done measurement process");
+    //     _countOfDetectorsWichDone = 0;
+    //     SessionComplete?.Invoke();
+    //   }
+    // }
 
     /// <summary>
     /// This internal method process message from the detector. <see cref="Detector.ProcessDeviceMessages(int, int, int)"/>
@@ -275,7 +278,7 @@ namespace Measurements.Core
     {
       try
       {
-        var d = o as IDetector;
+        var d = o as Detector;
 
         if (d.Status == DetectorStatus.ready && args.AcquireMessageParam == (int)CanberraDeviceAccessLib.AdviseMessageMasks.amAcquireDone && !d.IsPaused)
         {
@@ -285,11 +288,11 @@ namespace Measurements.Core
       }
       catch (ArgumentException ae)
       {
-        Handlers.ExceptionHandler.ExceptionNotify(this, ae, Handlers.ExceptionLevel.Error);
+        NotificationManager.Notify(ae, NotificationLevel.Error, AppManager.Sender);
       }
       catch (Exception e)
       {
-        Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
+        NotificationManager.Notify(e, NotificationLevel.Error, AppManager.Sender);
       }
     }
 
@@ -315,41 +318,38 @@ namespace Measurements.Core
       _nLogger.Info($"will generate file spectra name for the detector {detName}");
       var typeDict = new Dictionary<string, string> { { "SLI", "0" }, { "LLI-1", "1" }, { "LLI-2", "2" } };
       int maxNumber = DateTime.Now.Second;
-      using (var ic = new InfoContext())
+      try
       {
-        try
-        {
-          maxNumber = ic.Measurements.Where(m =>
-                                                      (
-                                                          m.FileSpectra.Length == 7 &&
-                                                          m.Type == Type &&
-                                                          IsNumber(m.FileSpectra) &&
-                                                          m.FileSpectra.Substring(0, 1) == detName.Substring(1, 1)
-                                                      )
-                                                      ).
-                                                 Select(m => new
-                                                 {
-                                                   FileNumber = int.Parse(m.FileSpectra.Substring(2, 5))
-                                                 }
-                                                                 ).
-                                                 Max(m => m.FileNumber);
+        maxNumber = AppManager.DbContext.Measurements.Where(m =>
+                                                    (
+                                                        m.FileSpectra.Length == 7 &&
+                                                        m.Type == Type &&
+                                                        IsNumber(m.FileSpectra) &&
+                                                        m.FileSpectra.Substring(0, 1) == detName.Substring(1, 1)
+                                                    )
+                                                    ).
+                                               Select(m => new
+                                               {
+                                                 FileNumber = int.Parse(m.FileSpectra.Substring(2, 5))
+                                               }
+                                                               ).
+                                               Max(m => m.FileNumber);
 
-          return $"{detName.Substring(1, 1)}{typeDict[Type]}{(++maxNumber).ToString("D5")}";
-        }
-        catch (System.Data.SqlClient.SqlException sqle)
-        {
-          Handlers.ExceptionHandler.ExceptionNotify(this, sqle, Handlers.ExceptionLevel.Warn);
-          return GenerateFileSpectraNameBasedOnLocalStorage(detName);
-        }
-        catch (Microsoft.EntityFrameworkCore.DbUpdateException dbe) // for duplicates
-        {
-          Handlers.ExceptionHandler.ExceptionNotify(this, dbe, Handlers.ExceptionLevel.Error);
-          return GenerateFileSpectraNameBasedOnLocalStorage(detName);
-        }
-        catch (Exception e)
-        {
-          Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
-        }
+        return $"{detName.Substring(1, 1)}{typeDict[Type]}{(++maxNumber).ToString("D5")}";
+      }
+      catch (SqlException sqle)
+      {
+        NotificationManager.Notify(sqle, NotificationLevel.Warning, AppManager.Sender);
+        return GenerateFileSpectraNameBasedOnLocalStorage(detName);
+      }
+      catch (Microsoft.EntityFrameworkCore.DbUpdateException dbe) // for duplicates
+      {
+        NotificationManager.Notify(dbe, NotificationLevel.Error, AppManager.Sender);
+        return GenerateFileSpectraNameBasedOnLocalStorage(detName);
+      }
+      catch (Exception e)
+      {
+        NotificationManager.Notify(e, NotificationLevel.Error, AppManager.Sender);
       }
       return $"{detName[1]}{typeDict[Type]}{maxNumber}";
     }
@@ -384,7 +384,7 @@ namespace Measurements.Core
       }
       catch (Exception e)
       {
-        Handlers.ExceptionHandler.ExceptionNotify(this, e, Handlers.ExceptionLevel.Error);
+        NotificationManager.Notify(e, NotificationLevel.Error, AppManager.Sender);
         return "";
       }
     }

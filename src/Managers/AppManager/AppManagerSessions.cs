@@ -10,6 +10,7 @@
 
 using System.Collections.Generic;
 using System;
+using Regata.Measurements;
 
 namespace Regata.Measurements.Managers
 {

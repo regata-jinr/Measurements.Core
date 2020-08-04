@@ -14,6 +14,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="3.1.6" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="3.1.6" />
     <PackageReference Include="NLog" Version="4.7.2" />
+    <PackageReference Include="npgsql" Version="4.1.4" />
     <PackageReference Include="polly" Version="7.2.1" />
     <PackageReference Include="System.Text.Json" Version="4.7.2" />
     <Reference Include="Interop.CanberraDataAccessLib">
@@ -22,5 +23,8 @@
     <Reference Include="Interop.CanberraDeviceAccessLib">
       <HintPath>refs\Interop.CanberraDeviceAccessLib.dll</HintPath>
     </Reference>
+    <None Include="NLog.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>

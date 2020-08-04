@@ -27,6 +27,7 @@ namespace Regata.Measurements.Managers
     public const string MainDbCredTarget = "MeasurementsMainConnectionString";
     public const string LogDbCredTarget = "MeasurementsLogConnectionString";
     public const string MailServiceTarget = "RegataMail";
+    public const string DiskJinrTarget = "MeasurementsDiskJinr";
 
     public async static Task Login(string user = "", string PinOrPass = "")
     {
@@ -34,6 +35,7 @@ namespace Regata.Measurements.Managers
       {
         logger.Info($"Application has started by user {user}");
         UserId = user;
+        logger.WithProperty("Assistant", UserId);
 
         if (string.IsNullOrEmpty(user) || string.IsNullOrEmpty(PinOrPass))
         {
@@ -121,5 +123,33 @@ namespace Regata.Measurements.Managers
       }
     }
 
+    /// <summary>
+    /// Upload local file to the database in order to keep data after connection lost. 
+    /// In case of success loading local files wil be delete.
+    /// </summary>
+    private static void UploadLocalDataToDB()
+    {
+      // var fileList = LoadMeasurementsFiles();
+      // if (fileList.Count == 0) return;
+
+      // using (var ic = new InfoContext())
+      // {
+      //   try
+      //   {
+      //     _nLogger.Info($"Local data has found. It will deserialize, load into db and then delete from local storage");
+
+      //     ic.Measurements.UpdateRange(fileList);
+      //     ic.SaveChanges();
+      //     var dir = new DirectoryInfo(@"D:\LocalData");
+      //     var files = dir.GetFiles("*.json").ToList();
+      //     foreach (var file in files)
+      //       file.Delete();
+      //   }
+      //   catch (Exception e)
+      //   {
+      //     NotificationManager.Notify(e, NotificationLevel.Error, Sender);
+      //   }
+      // }
+    }
   } // public static partial class AppManager
 } // namespace Regata.Measurements.Managers

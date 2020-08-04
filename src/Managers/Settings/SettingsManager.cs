@@ -9,112 +9,114 @@ using Microsoft.Extensions.Configuration.Json;
 
 namespace Regata.Measurements.Core
 {
-    public enum Languages { Russian, English };
+  public enum Languages { Russian, English };
 
-    public class BaseParams
+  public class BaseParams
+  {
+    public Languages CurrentLanguage { get; set; }
+    public string UserID { get; set; }
+  }
+
+  public class SessionParams
+  {
+
+  }
+
+  public class Secrets
+  {
+    public string LogConnectionString { get; set; }
+    public string GenConnectionStringBase { get; set; }
+  }
+
+  public static class SettingsManager
+  {
+    public static string FilePath
     {
-        public Languages CurrentLanguage { get; set; }
-        public string UserID { get; set; }
+      get
+      {
+        if (string.IsNullOrEmpty(AssemblyName)) throw new ArgumentNullException("You must specify name of calling assembly. Just use 'System.Reflection.Assembly.GetExecutingAssembly().GetName().Name' as argument.");
+        return $"{Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)}\\Regata\\{AssemblyName}\\settings.json";
+      }
     }
 
-    public class SessionParams
-    {
+    public static string UserId { get; private set; }
 
+    public static BaseParams BasicParams { get; private set; }
+    public static SessionParams SessionParameters { get; private set; }
+    public static Secrets ConnectionParameters { get; private set; }
+
+    private static string _assmName;
+
+    public static string AssemblyName
+    {
+      get { return _assmName; }
+      set
+      {
+        _assmName = value;
+        ReadSettings();
+      }
     }
 
-    public class Secrets
+    private static Languages _currentLanguage;
+
+    public static Languages CurrentLanguage
     {
-        public string LogConnectionString { get; set; }
-        public string GenConnectionStringBase { get; set; }
+      get { return _currentLanguage; }
+      set
+      {
+        _currentLanguage = value;
+        LanguageChanged?.Invoke();
+        SaveSettings();
+      }
     }
 
-    public static class SettingsManager
+    public static event Action LanguageChanged;
+
+    private static void ReadSettings()
     {
-        public static string FilePath
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(AssemblyName)) throw new ArgumentNullException("You must specify name of calling assembly. Just use 'System.Reflection.Assembly.GetExecutingAssembly().GetName().Name' as argument.");
-                return $"{Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)}\\Regata\\{AssemblyName}\\settings.json";
-            }
-        }
+      try
+      {
+        if (!File.Exists(FilePath))
+          ResetFileSettings();
 
-        public static string UserId { get; private set; }
+        var config = new ConfigurationBuilder()
+        .AddUserSecrets<Secrets>()
+        .AddJsonFile(FilePath, optional: false, reloadOnChange: true)
+        .Build();
 
-        public static BaseParams BasicParams { get; private set; }
-        public static SessionParams SessionParameters { get; private set; }
-        public static Secrets ConnectionParameters { get; private set; }
+        BasicParams = new BaseParams();
+        SessionParameters = new SessionParams();
+        ConnectionParameters = new Secrets();
 
-        private static string _assmName;
+        config.GetSection(nameof(BaseParams)).Bind(BasicParams);
+        config.GetSection(nameof(SessionParams)).Bind(SessionParameters);
+        config.GetSection(nameof(Secrets)).Bind(ConnectionParameters);
 
-        public static string AssemblyName
-        {
-            get { return _assmName; }
-            set
-            {
-                _assmName = value;
-                ReadSettings();
-            }
-        }
-       
-        public static Languages CurrentLanguage
-        {
-            get { return _currentLanguage; }
-            set
-            {
-                _currentLanguage = value;
-                LanguageChanged?.Invoke();
-                SaveSettings();
-            }
-        }
+      }
+      catch (JsonException)
+      {
+        ResetFileSettings();
+      }
+    }
 
-        public static event Action LanguageChanged;
+    private static void ResetFileSettings()
+    {
+      Directory.CreateDirectory(Path.GetDirectoryName(FilePath));
+      using (var f = File.CreateText(FilePath))
+      { }
 
-        private static void ReadSettings()
-        {
-            try
-            {
-                if (!File.Exists(FilePath))
-                    ResetFileSettings();
+      CurrentLanguage = Languages.English;
+      SaveSettings();
+    }
 
-                var config = new ConfigurationBuilder()
-                .AddUserSecrets<Secrets>()
-                .AddJsonFile(FilePath, optional: false, reloadOnChange: true)
-                .Build();
+    public static void SaveSettings()
+    {
+      var options = new JsonSerializerOptions();
+      options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
+      options.WriteIndented = true;
+      File.WriteAllText(FilePath, JsonSerializer.Serialize(new BaseParams { CurrentLanguage = CurrentLanguage }, options));
+      File.AppendAllText(FilePath, JsonSerializer.Serialize(new SessionParams { }, options));
+    }
 
-                BasicParams = new BaseParams();
-                SessionParameters = new SessionParams();
-                ConnectionParameters = new Secrets();
-
-                config.GetSection(nameof(BaseParams)).Bind(BasicParams);
-                config.GetSection(nameof(SessionParams)).Bind(SessionParameters);
-                config.GetSection(nameof(Secrets)).Bind(ConnectionParameters);
-
-            }
-            catch (JsonException)
-            {
-                ResetFileSettings();
-            }
-        }
-
-        private static void ResetFileSettings()
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(FilePath));
-            using (var f = File.CreateText(FilePath))
-            { }
-
-            CurrentLanguage = Languages.English;
-            SaveSettings();
-        }
-
-        public static void SaveSettings()
-        {
-            var options = new JsonSerializerOptions();
-            options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
-            options.WriteIndented = true;
-            File.WriteAllText(FilePath, JsonSerializer.Serialize(new BaseParams { CurrentLanguage = CurrentLanguage}, options));
-            File.AppendAllText(FilePath, JsonSerializer.Serialize(new SessionParams{ }, options));
-        }
-
-    } // public class Settings
+  } // public class Settings
 } // namespace Regata.UITemplates
