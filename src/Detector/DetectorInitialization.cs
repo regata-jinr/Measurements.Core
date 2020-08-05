@@ -46,7 +46,9 @@ namespace Regata.Measurements.Devices
     {
       try
       {
-        _nLogger = AppManager.logger.WithProperty("Sender", $"{typeof(Detector).Name} {name}");
+        _nLogger = NLog.LogManager.GetCurrentClassLogger();
+        _nLogger.SetProperty("Sender", $"Detector {name}");
+        _nLogger.SetProperty("Assistant", AppManager.UserId);
         _nLogger.Info($"Initialization of the detector '{name}' with mode {ConnectOptions.aReadWrite} and timeout limit {10} seconds");
 
         _conOption = ConnectOptions.aReadWrite;

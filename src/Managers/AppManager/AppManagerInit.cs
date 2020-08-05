@@ -53,8 +53,8 @@ namespace Regata.Measurements.Managers
     {
       NLog.GlobalDiagnosticsContext.Set("LogConnectionString", SecretsManager.GetCredential(LogDbCredTarget).Secret);
       logger = NLog.LogManager.GetCurrentClassLogger();
-      logger.WithProperty("Sender", "AppManager");
-      logger.Info("Initialization of Session Controller instance has begun");
+            logger.SetProperty("Sender", typeof(AppManager).Name);
+      logger.Info("Initialization of Measurements application has begun");
 
       _isDisposed = false;
       LocalMode = false;

@@ -12,7 +12,6 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 using Regata.Measurements.Models;
-using Polly;
 
 namespace Regata.Measurements.Managers
 {
@@ -35,7 +34,7 @@ namespace Regata.Measurements.Managers
       {
         logger.Info($"Application has started by user {user}");
         UserId = user;
-        logger.WithProperty("Assistant", UserId);
+        logger.SetProperty("Assistant", UserId);
 
         if (string.IsNullOrEmpty(user) || string.IsNullOrEmpty(PinOrPass))
         {
