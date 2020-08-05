@@ -28,7 +28,7 @@ namespace Regata.Measurements.Managers
     public const string MailServiceTarget = "RegataMail";
     public const string DiskJinrTarget = "MeasurementsDiskJinr";
 
-    public async static Task Login(string user = "", string PinOrPass = "")
+    public static async Task Login(string user = "", string PinOrPass = "")
     {
       try
       {
@@ -58,6 +58,7 @@ namespace Regata.Measurements.Managers
 
         logger.Info($"Trying to connect");
         DbContext = new InfoContext(_mainConnectionStringBuilder.ConnectionString);
+        await IsDbConnectedAsync();
 
         logger.Info($"Connection with DB successful");
       }
@@ -80,10 +81,16 @@ namespace Regata.Measurements.Managers
 
     public static void CreatePin(string pin)
     {
+      if (DbContext == null || !DbContext.Database.CanConnect())
+        throw new ArgumentNullException("Before pin creating you have to login to the app");
+
+      logger.Info($"Pin creation for user {UserId}");
       if (pin.Length != 4 || !int.TryParse(pin, out _))
         throw new ArgumentException("Pin should have olny 4 digits");
 
       SecretsManager.SetCredential($"Pin_{UserId}", UserId, pin);
+      SecretsManager.SetCredential($"Password_{UserId}", UserId, _mainConnectionStringBuilder.Password);
+      logger.Info($"Pin has created successfully");
     }
 
     public static bool IsPinExist()
@@ -96,8 +103,13 @@ namespace Regata.Measurements.Managers
 
     public static void RemovePin()
     {
+      if (DbContext == null || !DbContext.Database.CanConnect())
+        throw new ArgumentNullException("Before pin removing you have to login to the app");
+
+      logger.Info($"Pin removing for user {UserId}");
       if (IsPinExist())
         SecretsManager.RemoveCredentials($"Pin_{UserId}");
+      logger.Info($"Pin has removed successfully");
     }
 
     /// <summary>
@@ -106,20 +118,30 @@ namespace Regata.Measurements.Managers
     public static event Action DbConnectionStateChanged;
 
     private static DbConnectionStatus _dbConnCurrentState = DbConnectionStatus.Off;
-    public static DbConnectionStatus DbConnectionState
+    public static DbConnectionStatus IsDbConnected()
     {
-      get
-      {
-        var _newDbConnectionState = DbContext.Database.CanConnect() ? DbConnectionStatus.On : DbConnectionStatus.Off;
+      var _newDbConnectionState = DbContext.Database.CanConnect() ? DbConnectionStatus.On : DbConnectionStatus.Off;
 
-        if (_newDbConnectionState != _dbConnCurrentState)
-        {
-          DbConnectionStateChanged?.Invoke();
-          LocalMode = (_newDbConnectionState == DbConnectionStatus.Off);
-          return _newDbConnectionState;
-        }
-        return _dbConnCurrentState;
+      if (_newDbConnectionState != _dbConnCurrentState)
+      {
+        DbConnectionStateChanged?.Invoke();
+        LocalMode = (_newDbConnectionState == DbConnectionStatus.Off);
+        return _newDbConnectionState;
       }
+      return _dbConnCurrentState;
+    }
+
+    public static async Task<DbConnectionStatus> IsDbConnectedAsync()
+    {
+      var _newDbConnectionState = await DbContext.Database.CanConnectAsync() ? DbConnectionStatus.On : DbConnectionStatus.Off;
+
+      if (_newDbConnectionState != _dbConnCurrentState)
+      {
+        DbConnectionStateChanged?.Invoke();
+        LocalMode = (_newDbConnectionState == DbConnectionStatus.Off);
+        return _newDbConnectionState;
+      }
+      return _dbConnCurrentState;
     }
 
     /// <summary>

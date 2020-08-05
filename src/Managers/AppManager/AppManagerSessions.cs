@@ -29,7 +29,7 @@ namespace Regata.Measurements.Managers
     {
       logger.Info("Creating of the new session instance");
       var session = new Session();
-      ActiveSessions.Add(session.Name, session);
+      ActiveSessions.Add($"{session.Name}_{ActiveSessions.Count}", session);
       return session;
     }
 
