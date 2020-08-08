@@ -3,9 +3,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.IO;
 using System.Collections.Generic;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Configuration.UserSecrets;
-using Microsoft.Extensions.Configuration.Json;
 
 namespace Regata.Measurements.Core
 {
@@ -14,18 +11,28 @@ namespace Regata.Measurements.Core
   public class BaseParams
   {
     public Languages CurrentLanguage { get; set; }
-    public string UserID { get; set; }
+    public List<string> SubscribedEmails { get; set; }
   }
 
   public class SessionParams
   {
+    // TODO: to be done... 
 
   }
 
-  public class Secrets
+  public class MeasurementsParams
   {
-    public string LogConnectionString { get; set; }
-    public string GenConnectionStringBase { get; set; }
+    // TODO: to be done... 
+    // count mode
+    // duration
+    // height
+    // iscyclic
+    // pause
+  }
+
+  public class SampleChangerParams
+  {
+    // TODO: to be done... 
   }
 
   public static class SettingsManager
@@ -39,12 +46,8 @@ namespace Regata.Measurements.Core
       }
     }
 
-    public static string UserId { get; private set; }
-
     public static BaseParams BasicParams { get; private set; }
     public static SessionParams SessionParameters { get; private set; }
-    public static Secrets ConnectionParameters { get; private set; }
-
     private static string _assmName;
 
     public static string AssemblyName
@@ -79,18 +82,6 @@ namespace Regata.Measurements.Core
         if (!File.Exists(FilePath))
           ResetFileSettings();
 
-        var config = new ConfigurationBuilder()
-        .AddUserSecrets<Secrets>()
-        .AddJsonFile(FilePath, optional: false, reloadOnChange: true)
-        .Build();
-
-        BasicParams = new BaseParams();
-        SessionParameters = new SessionParams();
-        ConnectionParameters = new Secrets();
-
-        config.GetSection(nameof(BaseParams)).Bind(BasicParams);
-        config.GetSection(nameof(SessionParams)).Bind(SessionParameters);
-        config.GetSection(nameof(Secrets)).Bind(ConnectionParameters);
 
       }
       catch (JsonException)

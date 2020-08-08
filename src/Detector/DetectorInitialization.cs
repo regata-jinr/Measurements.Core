@@ -128,5 +128,28 @@ namespace Regata.Measurements.Devices
       }
     }
 
+    public static bool IsDetectorAvailable(string name)
+    {
+      var isAvailable = false;
+      try
+      {
+        AppManager.logger.Info($"Checks connection with the detector '{name}'");
+        var dev = new DeviceAccess();
+        dev.Connect(name);
+        if (dev.IsConnected)
+        {
+          isAvailable = true;
+          dev.Disconnect();
+          AppManager.logger.Info($"Connection with the detector '{name}' were successful");
+        }
+      }
+      catch (Exception e)
+      {
+        AppManager.logger.Info($"Connection with the detector '{name}' were unsuccessful. Please, see log for details");
+        NotificationManager.Notify(e, NotificationLevel.Warning, AppManager.Sender);
+      }
+      return isAvailable;
+    }
+
   } //  public partial class Detector : IDisposable
 } // namespace Regata.Measurements.Devices

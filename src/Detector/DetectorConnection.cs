@@ -122,5 +122,7 @@ namespace Regata.Measurements.Devices
 
     public bool IsConnected => _device.IsConnected;
 
+
+
   } //  public partial class Detector : IDisposable
 } // namespace Regata.Measurements.Devices

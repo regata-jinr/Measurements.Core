@@ -18,380 +18,130 @@ using Regata.Measurements.Managers;
 
 namespace Regata.Measurements
 {
-  // this file contains methods that related with managing of detector
-  // Session class divided by few files:
-  // ├── ISession.cs                - interface of Session class
-  // ├── SessionDetectorsControl.cs --> opened
-  // ├── SessionInfo.cs             - contains fields of Session for EF core interaction
-  // └── SessionMain.cs             - contains general fields and methods of the Session class.
+    // this file contains methods that related with managing of detector
+    // Session class divided by few files:
+    // ├── ISession.cs                - interface of Session class
+    // ├── SessionDetectorsControl.cs --> opened
+    // ├── SessionInfo.cs             - contains fields of Session for EF core interaction
+    // └── SessionMain.cs             - contains general fields and methods of the Session class.
 
-  public partial class Session : IDisposable
-  {
-    /// <summary>
-    /// Start asquisition process on all managed detectors by the session
-    /// </summary>
-    public void StartMeasurements()
+    public partial class Session : IDisposable
     {
-      try
-      {
-        foreach (var det in ManagedDetectors)
+
+        /// <summary>
+        /// Attach detector defined by the name to the session
+        /// Chosen detector will remove from available detectors list that SessionControllerSingleton controled
+        /// </summary>
+        /// <param name="dName">Name of detector</param>
+        public void AttachDetector(string dName)
         {
-          if (det.CurrentMeasurement == null || det.RelatedIrradiation == null)
-          {
-            NotificationManager.Notify(new ArgumentNullException($"User should initialize sample on the detector {det.Name} before start of measurement"), NotificationLevel.Warning, AppManager.Sender);
-            break;
-          }
+            _nLogger.Info($"Session takes a control for the detector '{dName}'");
+            try
+            {
+                if (!AppManager.AvailableDevices.Contains(dName))
+                    throw new InvalidOperationException("Detector doesn't available for connection");
 
-          _nLogger.Info($"Session will start measurements of the sample {det.CurrentMeasurement.ToString()} on detector {det.Name}");
-          det.Start();
+                var det = new Detector(dName);
+                if (det.IsConnected)
+                {
+                    ManagedDetectors[dName] = det;
+                    det.AcquiringStatusChanged += ProcessAcquiringMessage;
+                    _nLogger.Info($"Successfully attached detector '{det.Name}' to the Session '{Name}'");
+                }
+                else
+                    throw new ArgumentNullException($"{dName}. The most probably you are already use this detector");
+            }
+            catch (ArgumentNullException ae)
+            {
+                NotificationManager.Notify(ae, NotificationLevel.Error, AppManager.Sender);
+            }
+            catch (InvalidOperationException ie)
+            {
+                NotificationManager.Notify(ie, NotificationLevel.Error, AppManager.Sender);
+            }
+            catch (Exception e)
+            {
+                NotificationManager.Notify(e, NotificationLevel.Error, AppManager.Sender);
+            }
         }
-      }
-      catch (Exception e)
-      {
-        NotificationManager.Notify(e, NotificationLevel.Error, AppManager.Sender);
-      }
-    }
-
-    ///<summary>
-    /// Stops asquisition process on all managed detectors by the session. 
-    /// **This generate acqusition done event**
-    /// </summary>.
-    public void StopMeasurements()
-    {
-      try
-      {
-        _nLogger.Info($"Session will stop measurements by user command");
-        foreach (var d in ManagedDetectors)
-          d.Stop();
-      }
-      catch (Exception e)
-      {
-        NotificationManager.Notify(e, NotificationLevel.Error, AppManager.Sender);
-      }
-    }
-
-    public void StopMeasurementsOnDetector(ref Detector det)
-    {
-      try
-      {
-        _nLogger.Info($"Session will stop measurements on detector {det.Name} by user command");
-        det.Stop();
-      }
-      catch (Exception e)
-      {
-        NotificationManager.Notify(e, NotificationLevel.Error, AppManager.Sender);
-      }
-    }
-
-    ///<summary>
-    /// Save asquisition process on specified detector into the cnf file
-    /// Name of file will generate automatically <see cref="GenerateFileSpectraName(string)"/>
-    /// </summary>.
-    public void SaveSpectraOnDetectorToFile(ref Detector d)
-    {
-      try
-      {
-        if (!string.IsNullOrEmpty(d.CurrentMeasurement.FileSpectra))
-          NotificationManager.Notify(new ArgumentException($"Current sample '{d.CurrentMeasurement}' from detector {d.Name} already has the name of FileSpectra - '{d.CurrentMeasurement.FileSpectra}'. New file will be create and new record will be added to db, the old one will not modify."), NotificationLevel.Warning, AppManager.Sender);
-
-
-        d.CurrentMeasurement.FileSpectra = GenerateFileSpectraName(d.Name);
-        _nLogger.Info($"Detector {d.Name} will save spectra to file with name - '{d.CurrentMeasurement.FileSpectra}'");
-        d.Save();
-      }
-      catch (Exception e)
-      {
-        NotificationManager.Notify(e, NotificationLevel.Error, AppManager.Sender);
-      };
-    }
-
-    public void SaveSpectraOnDetectorToFileAndDataBase(ref Detector d)
-    {
-      try
-      {
-        SaveSpectraOnDetectorToFile(ref d);
-        SaveMeasurement(ref d);
-      }
-      catch (Exception e)
-      {
-        NotificationManager.Notify(e, NotificationLevel.Error, AppManager.Sender);
-      };
-    }
-
-    ///<summary>
-    /// Continue asquisition process on all managed detectors by the session
-    /// </summary>.
-    public void ContinueMeasurements()
-    {
-      try
-      {
-        _nLogger.Info($"Session will continue measurements on all detectors by user command");
-        foreach (var d in ManagedDetectors)
-          d.Start();
-      }
-      catch (Exception e)
-      {
-        NotificationManager.Notify(e, NotificationLevel.Error, AppManager.Sender);
-      };
-    }
-
-    ///<summary>
-    /// Pause asquisition process on all managed detectors by the session
-    /// In case you just stop acquisition and then continue use this method
-    /// </summary>.
-    public void PauseMeasurements()
-    {
-      try
-      {
-        _nLogger.Info($"Session will pause measurements on all detectors by user command");
-        foreach (var d in ManagedDetectors)
-          d.Pause();
-      }
-      catch (Exception e)
-      {
-        NotificationManager.Notify(e, NotificationLevel.Error, AppManager.Sender);
-      };
-    }
-
-    ///<summary>
-    /// Clear asquisition process on all managed detectors by the session
-    /// </summary>.
-    public void ClearMeasurements()
-    {
-      try
-      {
-        _nLogger.Info($"Session will clear measurements on all detectors by user command");
-        foreach (var d in ManagedDetectors)
-          d.Clear();
-      }
-      catch (Exception e)
-      {
-        NotificationManager.Notify(e, NotificationLevel.Error, AppManager.Sender);
-      };
-    }
-
-    private event Action DetectorsListsChanged;
-
-    /// <summary>
-    /// Attach detector defined by the name to the session
-    /// Chosen detector will remove from available detectors list that SessionControllerSingleton controled
-    /// </summary>
-    /// <param name="dName">Name of detector</param>
-    public void AttachDetector(string dName)
-    {
-      _nLogger.Info($"will take a control for detector '{dName}'");
-      try
-      {
-        if (AppManager.AvailableDevices == null || AppManager.AvailableDevices.Count == 0)
-          throw new InvalidOperationException();
-
-        var det = AppManager.AvailableDevices[dName];
-        if (det != null)
+        /// <summary>
+        /// Remove detector given by name from list of managed detectors by the session
+        /// Such detector will add to the list of available detectors that controlled by SessionControllerSingleton
+        /// </summary>
+        /// <param name="dName">Name of detector</param>
+        public void DetachDetector(string dName)
         {
-          ManagedDetectors.Add(det);
-          AppManager.AvailableDevices.Remove(dName);
-          det.AcquiringStatusChanged += ProcessAcquiringMessage;
-          _nLogger.Info($"successfuly attached detector {det.Name}");
-          DetectorsListsChanged?.Invoke();
-        }
-        else
-          throw new ArgumentNullException($"{dName}. The most probably you are already use this detector");
-      }
-      catch (ArgumentNullException ae)
-      {
-        NotificationManager.Notify(ae, NotificationLevel.Error, AppManager.Sender);
-      }
-      catch (InvalidOperationException ie)
-      {
-        NotificationManager.Notify(ie, NotificationLevel.Error, AppManager.Sender);
-      }
-      catch (Exception e)
-      {
-        NotificationManager.Notify(e, NotificationLevel.Error, AppManager.Sender);
-      }
-    }
-    /// <summary>
-    /// Remove detector given by name from list of managed detectors by the session
-    /// Such detector will add to the list of available detectors that controlled by SessionControllerSingleton
-    /// </summary>
-    /// <param name="dName">Name of detector</param>
-    public void DetachDetector(string dName)
-    {
-      _nLogger.Info($"will detach detector 'dName'");
-      try
-      {
-        if (ManagedDetectors == null && ManagedDetectors.Count == 0)
-          throw new InvalidOperationException();
+            _nLogger.Info($"Session leaves a control for the detector '{dName}'");
+            try
+            {
+                if (!ManagedDetectors.ContainsKey(dName)) return;
 
-        var det = ManagedDetectors.Find(d => d.Name == dName);
-        if (det != null)
+                ManagedDetectors[dName].Disconnect();
+                ManagedDetectors[dName].AcquiringStatusChanged -= ProcessAcquiringMessage;
+                ManagedDetectors.Remove(dName);
+                _nLogger.Info($"Successfuly detached the detector '{dName}'");
+            }
+            catch (ArgumentNullException ae)
+            {
+                NotificationManager.Notify(ae, NotificationLevel.Error, AppManager.Sender);
+            }
+            catch (InvalidOperationException ie)
+            {
+                NotificationManager.Notify(ie, NotificationLevel.Error, AppManager.Sender);
+            }
+            catch (Exception e)
+            {
+                NotificationManager.Notify(e, NotificationLevel.Error, AppManager.Sender);
+            }
+        }
+
+        /// <summary>
+        /// This is the handler of MeasurementDone events. In case of detector has done measurements process, 
+        /// this method add counter <see cref="_countOfDetectorsWichDone"/> and will check it with number of managed detectors.
+        /// In case of matching <see cref="SessionComplete"/> will invoke.
+        /// </summary>
+        /// <param name="det">Detector that generated event of measurements has done</param>
+        /// <param name="eventArgs"></param>
+        // private void MeasurementDoneHandler(string detName)
+        // {
+        //   _nLogger.Info($"Detector {detName} has done measurement process");
+        //   _countOfDetectorsWichDone++;
+
+        //   if (_countOfDetectorsWichDone == ManagedDetectors.Count)
+        //   {
+        //     _nLogger.Info($"All detectors [{(string.Join(",", ManagedDetectors.Select(d => d.Name).ToArray()))}] has done measurement process");
+        //     _countOfDetectorsWichDone = 0;
+        //     SessionComplete?.Invoke();
+        //   }
+        // }
+
+        /// <summary>
+        /// This internal method process message from the detector. <see cref="Detector.ProcessDeviceMessages(int, int, int)"/>
+        /// </summary>
+        /// <param name="o">Boxed detector</param>
+        /// <param name="args"><see cref="DetectorEventsArgs"/></param>
+        private void ProcessAcquiringMessage(object o, DetectorEventsArgs args)
         {
-          AppManager.AvailableDevices.Add(dName, det);
-          ManagedDetectors.Remove(det);
-          det.AcquiringStatusChanged -= ProcessAcquiringMessage;
-          _nLogger.Info($"Successfuly detached detector {det.Name}");
-          DetectorsListsChanged?.Invoke();
+            try
+            {
+                var d = o as Detector;
+                if (d == null) return;
+
+                if (d.Status == DetectorStatus.ready && args.AcquireMessageParam == (int)CanberraDeviceAccessLib.AdviseMessageMasks.amAcquireDone && !d.IsPaused)
+                {
+                    //SaveSpectraOnDetectorToFileAndDataBase(ref d);
+                    MeasurementOfSampleDone?.Invoke(d.CurrentMeasurement);
+                }
+            }
+            catch (ArgumentException ae)
+            {
+                NotificationManager.Notify(ae, NotificationLevel.Error, AppManager.Sender);
+            }
+            catch (Exception e)
+            {
+                NotificationManager.Notify(e, NotificationLevel.Error, AppManager.Sender);
+            }
         }
-        else
-          throw new ArgumentNullException();
-      }
-      catch (ArgumentNullException ae)
-      {
-        NotificationManager.Notify(ae, NotificationLevel.Error, AppManager.Sender);
-      }
-      catch (InvalidOperationException ie)
-      {
-        NotificationManager.Notify(ie, NotificationLevel.Error, AppManager.Sender);
-      }
-      catch (Exception e)
-      {
-        NotificationManager.Notify(e, NotificationLevel.Error, AppManager.Sender);
-      }
-    }
 
-    /// <summary>
-    /// This is the handler of MeasurementDone events. In case of detector has done measurements process, 
-    /// this method add counter <see cref="_countOfDetectorsWichDone"/> and will check it with number of managed detectors.
-    /// In case of matching <see cref="SessionComplete"/> will invoke.
-    /// </summary>
-    /// <param name="det">Detector that generated event of measurements has done</param>
-    /// <param name="eventArgs"></param>
-    // private void MeasurementDoneHandler(string detName)
-    // {
-    //   _nLogger.Info($"Detector {detName} has done measurement process");
-    //   _countOfDetectorsWichDone++;
-
-    //   if (_countOfDetectorsWichDone == ManagedDetectors.Count)
-    //   {
-    //     _nLogger.Info($"All detectors [{(string.Join(",", ManagedDetectors.Select(d => d.Name).ToArray()))}] has done measurement process");
-    //     _countOfDetectorsWichDone = 0;
-    //     SessionComplete?.Invoke();
-    //   }
-    // }
-
-    /// <summary>
-    /// This internal method process message from the detector. <see cref="Detector.ProcessDeviceMessages(int, int, int)"/>
-    /// </summary>
-    /// <param name="o">Boxed detector</param>
-    /// <param name="args"><see cref="DetectorEventsArgs"/></param>
-    private void ProcessAcquiringMessage(object o, DetectorEventsArgs args)
-    {
-      try
-      {
-        var d = o as Detector;
-
-        if (d.Status == DetectorStatus.ready && args.AcquireMessageParam == (int)CanberraDeviceAccessLib.AdviseMessageMasks.amAcquireDone && !d.IsPaused)
-        {
-          SaveSpectraOnDetectorToFileAndDataBase(ref d);
-          MeasurementOfSampleDone?.Invoke(d.CurrentMeasurement);
-        }
-      }
-      catch (ArgumentException ae)
-      {
-        NotificationManager.Notify(ae, NotificationLevel.Error, AppManager.Sender);
-      }
-      catch (Exception e)
-      {
-        NotificationManager.Notify(e, NotificationLevel.Error, AppManager.Sender);
-      }
-    }
-
-    /// <summary>
-    /// Generator of unique name of file spectra
-    /// Name of file spectra should be unique and it has constraint in data base
-    /// There is an algorithm:
-    /// For the specified type it determines maximum of spectra number from the numbers that might be converted to integer number
-    /// Then it choose the max number and convert it to string using next code:
-    /// First digit of name spectra is the digit from the name of detector
-    /// Second digit is number of type - {SLI - 0} {LLI-1 - 1} {LLI-2 - 2}
-    /// The next five digits is number of spectra
-    /// Typical name of spectra file: 1006261 means
-    /// The spectra was acquried on detector 'D1' it was SLI type and it has a number 6261.
-    /// **Pay attention that beside FileSpectra filed in MeasurementInfo**
-    /// **each Detector has a property with FullName that included path on local storage**
-    /// <see cref="Detector.FullFileSpectraName"/>
-    /// </summary>
-    /// <param name="detName">Name of detector which save acquiring session to file</param>
-    /// <returns>Name of spectra file</returns>
-    private string GenerateFileSpectraName(string detName)
-    {
-      _nLogger.Info($"will generate file spectra name for the detector {detName}");
-      var typeDict = new Dictionary<string, string> { { "SLI", "0" }, { "LLI-1", "1" }, { "LLI-2", "2" } };
-      int maxNumber = DateTime.Now.Second;
-      try
-      {
-        maxNumber = AppManager.DbContext.Measurements.Where(m =>
-                                                    (
-                                                        m.FileSpectra.Length == 7 &&
-                                                        m.Type == Type &&
-                                                        IsNumber(m.FileSpectra) &&
-                                                        m.FileSpectra.Substring(0, 1) == detName.Substring(1, 1)
-                                                    )
-                                                    ).
-                                               Select(m => new
-                                               {
-                                                 FileNumber = int.Parse(m.FileSpectra.Substring(2, 5))
-                                               }
-                                                               ).
-                                               Max(m => m.FileNumber);
-
-        return $"{detName.Substring(1, 1)}{typeDict[Type]}{(++maxNumber).ToString("D5")}";
-      }
-      catch (SqlException sqle)
-      {
-        NotificationManager.Notify(sqle, NotificationLevel.Warning, AppManager.Sender);
-        return GenerateFileSpectraNameBasedOnLocalStorage(detName);
-      }
-      catch (Microsoft.EntityFrameworkCore.DbUpdateException dbe) // for duplicates
-      {
-        NotificationManager.Notify(dbe, NotificationLevel.Error, AppManager.Sender);
-        return GenerateFileSpectraNameBasedOnLocalStorage(detName);
-      }
-      catch (Exception e)
-      {
-        NotificationManager.Notify(e, NotificationLevel.Error, AppManager.Sender);
-      }
-      return $"{detName[1]}{typeDict[Type]}{maxNumber}";
-    }
-
-    private string GenerateFileSpectraNameBasedOnLocalStorage(string detName)
-    {
-      _nLogger.Info($"will generate file spectra name for the detector {detName}");
-      var typeDict = new Dictionary<string, string> { { "SLI", "0" }, { "LLI-1", "1" }, { "LLI-2", "2" } };
-      int maxNumber = 0;
-      try
-      {
-        if (!Directory.Exists(@"D:\Spectra"))
-          throw new Exception("Spectra Directory doesn't exist");
-
-        var dir = new DirectoryInfo(@"D:\Spectra");
-        var files = dir.GetFiles("*.cnf", SearchOption.AllDirectories).Where(f => f.CreationTime >= DateTime.Now.AddDays(-30)).ToList();
-
-        maxNumber = files.Where(f =>
-                                    f.Name.Length == 11 &&
-                                    f.Name.Substring(1, 1) == typeDict[Type] &&
-                                    IsNumber(Path.GetFileNameWithoutExtension(f.Name)) &&
-                                    f.Name.Substring(0, 1) == detName.Substring(1, 1)
-                               ).
-                          Select(f => new
-                          {
-                            FileNumber = int.Parse(f.Name.Substring(2, 5))
-                          }
-                                ).
-                          Max(f => f.FileNumber);
-
-        return $"{detName.Substring(1, 1)}{typeDict[Type]}{(++maxNumber).ToString("D5")}";
-      }
-      catch (Exception e)
-      {
-        NotificationManager.Notify(e, NotificationLevel.Error, AppManager.Sender);
-        return "";
-      }
-    }
-
-    private bool IsNumber(string str)
-    {
-      return int.TryParse(str, out _);
-    }
-  }
-}
+    } // public partial class Session : IDisposable
+}    //namespace Regata.Measurements

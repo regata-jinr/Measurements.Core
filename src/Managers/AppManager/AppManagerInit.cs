@@ -13,8 +13,6 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using Microsoft.Data.SqlClient;
-using Regata.Measurements.Devices;
-using Polly;
 
 /// <summary>
 /// More information about the design of this core, general schemas and content see in the readme file of this repository:
@@ -60,10 +58,7 @@ namespace Regata.Measurements.Managers
       LocalMode = false;
       _mainConnectionStringBuilder = new SqlConnectionStringBuilder();
       _mainConnectionStringBuilder.ConnectionString = SecretsManager.GetCredential(MainDbCredTarget).Secret;
-      AvailableDevices = new Dictionary<string, Detector>();
       ActiveSessions = new Dictionary<string, Session>();
-
-      GetDevicesList();
 
       // TODO: in case of db update error local mode
       // TODO: in case of network problem local mode should be turning on automatically and this have to lead to local mode behaviour
@@ -93,9 +88,6 @@ namespace Regata.Measurements.Managers
         if (isDisposing)
         {
           ActiveSessions.Clear();
-          foreach (var d in AvailableDevices.Values)
-            d.Dispose();
-          AvailableDevices.Clear();
           DbContext.Dispose();
         }
       }
