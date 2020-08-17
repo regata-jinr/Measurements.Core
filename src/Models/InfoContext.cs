@@ -2,10 +2,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Regata.Measurements.Models
 {
+
   public class InfoContext : DbContext
   {
     public DbSet<IrradiationInfo> Irradiations { get; set; }
     public DbSet<MeasurementInfo> Measurements { get; set; }
+    public DbSet<MeasurementsRegisterInfo> MeasurementsRegister { get; set; }
 
     private readonly string _conString;
 
@@ -13,7 +15,6 @@ namespace Regata.Measurements.Models
     {
       _conString = conStr;
     }
-
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -25,7 +26,7 @@ namespace Regata.Measurements.Models
       modelBuilder.Entity<MeasurementInfo>()
           .HasIndex(c => c.FileSpectra)
           .IsUnique();
-
     }
+
   }
 }

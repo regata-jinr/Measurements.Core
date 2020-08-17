@@ -39,7 +39,50 @@ namespace Regata.Measurements
         /// </summary>
         private NLog.Logger _nLogger;
 
-        public string Type { get; set; }
+        private string _activeMeasurementsRegister;
+
+        public bool IsCyclic { get; set; }
+
+        public uint CyclicPauseTime { get; set; }
+
+        /// <summary>
+        /// List of irradiated samples with specified date and type. <see cref="IrradiationInfo"/>
+        /// </summary>
+        public List<IrradiationInfo> IrradiationList { get; private set; }
+
+        private string _type;
+
+        /// <summary>
+        /// Type of measurement characterize some internal working logic for analysis. <seealso cref="MeasurementTypes"/>
+        /// After type will specify. List of the irradiations date become available for the usage.
+        /// </summary>
+        public string Type
+        {
+            get { return _type; }
+            set
+            {
+                try
+                {
+                    _nLogger.Info($"Type of measurement is {value}. List of irradiations dates will be prepare");
+
+                    if (!MeasurementInfo.SessionTypeMapStr.Values.Contains(value))
+                        throw new ArgumentException($"Type of measurement should contained in this list [{string.Join(",", MeasurementInfo.SessionTypeMapStr.Values)}]");
+
+                    _type = value;
+
+                    IrradiationDateList.Clear();
+                    IrradiationDateList.AddRange(AppManager.DbContext.Irradiations.Where(i => i.DateTimeStart.HasValue && i.Type == _type).Select(i => i.DateTimeStart.Value.Date).Distinct().OrderByDescending(d => d.Date).ToList());
+                }
+                catch (ArgumentException ae)
+                {
+                    NotificationManager.Notify(ae, NotificationLevel.Warning, AppManager.Sender);
+                }
+                catch (Exception e)
+                {
+                    NotificationManager.Notify(e, NotificationLevel.Error, AppManager.Sender);
+                }
+            }
+        }
 
         public override string ToString() => $"{Name}-{Type}";
 
@@ -87,6 +130,8 @@ namespace Regata.Measurements
         /// </summary>
         public Dictionary<string, Detector> ManagedDetectors { get; private set; }
 
+        public Dictionary<string, List<MeasurementInfo>> MeasurementsRegisters { get; private set; }
+
         /// <summary>
         /// Default constructor of the session class. This initialize field and specify some default values. For more details see the code.
         /// </summary>
@@ -97,6 +142,7 @@ namespace Regata.Measurements
             _nLogger.Info("Initialisation of session has begun");
 
             ManagedDetectors = new Dictionary<string, Detector>();
+            MeasurementsRegisters = new Dictionary<string, List<MeasurementInfo>>();
             CountMode = CanberraDeviceAccessLib.AcquisitionModes.aCountToRealTime;
             // MeasurementDone += MeasurementDoneHandler;
         }

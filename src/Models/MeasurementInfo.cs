@@ -14,44 +14,50 @@ namespace Regata.Measurements.Models
     {
         [Key]
         [Ignore]
-        public int Id { get; set; }
+        public int       Id                   { get; set; }
         [Required]
         [SourceMember(nameof(IrradiationInfo.Id))]
-        public int IrradiationId { get; set; }
-        [Required]
-        public DateTime IrrJournalDate { get; set; }
+        public int       IrradiationId        { get; set; }
         [Ignore]
-        public int? LoadNumber { get; set; }
+        public int       MRegId               { get; set; }
         [Required]
-        public string CountryCode { get; set; }
+        public string    CountryCode          { get; set; }
         [Required]
-        public string ClientNumber { get; set; }
+        public string    ClientNumber         { get; set; }
         [Required]
-        public string Year { get; set; }
+        public string    Year                 { get; set; }
         [Required]
-        public string SetNumber { get; set; }
+        public string    SetNumber            { get; set; }
         [Required]
-        public string SetIndex { get; set; }
+        public string    SetIndex             { get; set; }
         [Required]
-        public string SampleNumber { get; set; }
+        public string    SampleNumber         { get; set; }
         [Required]
-        public string Type { get; set; }
+        public string    Type                 { get; set; }
         [Ignore]
-        public decimal? Height { get; set; }
+        public string    AcqMode              { get; set; }
         [Ignore]
-        public DateTime? DateTimeStart { get; set; }
+        public uint?      DiskPosition         { get; set; }
         [Ignore]
-        public int? Duration { get; set; }
+        public DateTime? DateTimeStart        { get; set; }
         [Ignore]
-        public DateTime? DateTimeFinish { get; set; }
-        public string FileSpectra { get; set; }
-        public string Detector { get; set; }
-        public string Token { get; set; }
+        public uint?      Duration             { get; set; }
         [Ignore]
-        public string Assistant { get; set; }
-
+        public DateTime? DateTimeFinish       { get; set; }
         [Ignore]
-        public string Note 
+        public float?    DeadTime             { get; set; }
+        [Ignore]
+        public float?    Height               { get; set; }
+        [Ignore]
+        public string    FileSpectra          { get; set; }
+        [Ignore]
+        public string    Detector             { get; set; }
+        [Ignore]
+        public string    Token                { get; set; }
+        [Ignore]
+        public string    Assistant            { get; set; }
+        [Ignore]
+        public string    Note 
         {
             get
             {
